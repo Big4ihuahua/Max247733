@@ -84,7 +84,7 @@ export function Testimonials() {
     <section id="reviews" ref={root} data-section="reviews" className="section reviews">
       <div className="reviews-header">
         <div>
-          <SectionLabel index="08" label="Отзывы" />
+          <SectionLabel id="reviews" />
           <h2 className="h2" data-split>
             Что говорят
             <br />

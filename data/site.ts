@@ -29,6 +29,7 @@ export const sections = [
   { id: "services", label: "Услуги" },
   { id: "process", label: "Процесс" },
   { id: "cases", label: "Кейсы" },
+  { id: "works", label: "Живые примеры" },
   { id: "tech", label: "Технологии" },
   { id: "stats", label: "Цифры" },
   { id: "reviews", label: "Отзывы" },
@@ -40,12 +41,16 @@ export const sections = [
 
 export type SectionId = (typeof sections)[number]["id"];
 
+export const sectionNumber = (id: SectionId) => String(sections.findIndex((s) => s.id === id) + 1).padStart(2, "0");
+export const sectionTotal = String(sections.length).padStart(2, "0");
+export const sectionLabel = (id: SectionId) => sections.find((s) => s.id === id)?.label ?? "";
+
 export const menuLinks: { id: SectionId; label: string }[] = [
   { id: "services", label: "Услуги" },
-  { id: "process", label: "Процесс" },
   { id: "cases", label: "Кейсы" },
+  { id: "works", label: "Примеры" },
+  { id: "process", label: "Процесс" },
   { id: "pricing", label: "Тарифы" },
-  { id: "faq", label: "Вопросы" },
   { id: "contact", label: "Контакты" },
 ];
 

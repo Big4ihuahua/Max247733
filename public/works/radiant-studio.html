@@ -1,0 +1,1334 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<!-- skill:chrome -->
+<style>
+/* Credit line — bottom-right */
+.design-ui-credit {
+  position: fixed;
+  bottom: 12px;
+  right: 12px;
+  font: 11px/1 system-ui, sans-serif;
+  color: rgba(128,128,128,0.5);
+  pointer-events: none;
+  z-index: 2147483647;
+  transition: opacity 0.4s ease;
+  user-select: none;
+  letter-spacing: 0.02em;
+}
+
+/* Hide chrome on touch devices */
+@media (hover: none) {
+  .design-ui-credit { display: none; }
+}
+
+/* Print fixes */
+@media print {
+  * {
+    transition: none !important;
+    animation: none !important;
+    box-shadow: none !important;
+  }
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  .design-ui-credit { display: none !important; }
+}
+
+</style>
+<script>
+(function () {
+    // Design-ui pages are single compositions, so the whole body is editable.
+    function markEditable() {
+        document.body.classList.add('artifact-editable');
+    }
+
+    // Credit badge with idle-fade. Hover devices only.
+    function initChromeUI() {
+        if (!matchMedia('(hover: hover)').matches) return;
+
+        var credit = document.createElement('div');
+        credit.className = 'design-ui-credit';
+        credit.setAttribute('aria-hidden', 'true');
+        credit.innerHTML = '\u{1F49C} by ClickUp Brain';
+        document.body.appendChild(credit);
+
+        var timer = null;
+        var fade = function (out) { credit.style.opacity = out ? '0' : ''; };
+        fade(true);
+        var show = function () {
+            fade(false);
+            clearTimeout(timer);
+            timer = setTimeout(function () { fade(true); }, 3000);
+        };
+        document.addEventListener('mousemove', show);
+        show();
+    }
+
+    function init() {
+        markEditable();
+        initChromeUI();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+
+</script>
+<!-- /skill:chrome -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Radiant · студия разработки</title>
+<meta name="description" content="Radiant пишет код, который сияет: веб-сервисы, мобильные приложения и backend под высокой нагрузкой.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;800&family=Sofia+Sans+Extra+Condensed:ital,wght@0,700;0,800;0,900;1,800;1,900&family=Sofia+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --paper: oklch(96.4% 0.012 45);
+  --paper-deep: oklch(92.6% 0.018 45);
+  --rule: oklch(84% 0.022 45);
+  --field-line: oklch(64% 0.03 45);
+  --ink: oklch(22% 0.04 268);
+  --ink-soft: oklch(40% 0.035 268);
+  --ink-faint: oklch(52% 0.025 268);
+  --verm: oklch(63% 0.215 33);
+  --verm-deep: oklch(53% 0.2 31);
+  --verm-press: oklch(47% 0.185 30);
+  --verm-tint: oklch(89% 0.055 35);
+  --ultra: oklch(46% 0.2 266);
+
+  --font-display: "Sofia Sans Extra Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --font-body: "Sofia Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --space-2xs: 4px; --space-xs: 8px; --space-sm: 12px; --space-md: 16px; --space-lg: 24px;
+  --space-xl: 32px; --space-2xl: 48px; --space-3xl: 64px; --space-4xl: 96px; --space-5xl: 144px;
+
+  --gutter: clamp(20px, 4.5vw, 72px);
+  --header-h: 64px;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-quart: cubic-bezier(0.25, 1, 0.5, 1);
+
+  --z-canvas: 0; --z-content: 2; --z-header: 30; --z-grain: 60;
+}
+
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none !important}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--font-body);font-size:1.125rem;line-height:1.55;
+  font-optical-sizing:auto;-webkit-font-smoothing:antialiased;overflow-x:clip;
+}
+svg,canvas{display:block}
+a{color:inherit}
+::selection{background:var(--verm);color:var(--paper)}
+
+#scene{position:fixed;top:0;left:0;width:100%;height:100vh;height:100lvh;z-index:var(--z-canvas);pointer-events:none}
+.grain{
+  position:fixed;inset:0;z-index:var(--z-grain);pointer-events:none;opacity:.5;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .12 0 0 0 0 .1 0 0 0 0 .22 .9 0 0 0 -.4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+}
+main{position:relative;z-index:var(--z-content)}
+
+/* ---------- header ---------- */
+.site-header{
+  position:fixed;top:0;left:0;right:0;height:var(--header-h);z-index:var(--z-header);
+  display:grid;grid-template-columns:1fr auto 1fr;align-items:center;column-gap:var(--space-md);
+  padding-inline:var(--gutter);background:var(--paper);
+}
+.brand{
+  justify-self:start;display:inline-flex;align-items:center;gap:10px;text-decoration:none;
+  font-family:var(--font-display);font-weight:800;font-size:1.75rem;line-height:1;letter-spacing:.005em;
+  min-height:44px;
+}
+.brand:focus-visible{outline:2px solid var(--ink);outline-offset:4px;border-radius:2px}
+.brand-mark{transition:transform .8s var(--ease-out)}
+.brand:hover .brand-mark{transform:rotate(30deg)}
+.bm-core{fill:var(--verm)}
+.bm-dot{fill:var(--ultra)}
+.readout{
+  margin:0;display:flex;align-items:baseline;gap:12px;white-space:nowrap;
+  font-family:var(--font-mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);
+}
+.ro-num{color:var(--verm-deep);font-weight:500}
+.ro-name{color:var(--ink);font-weight:500}
+.header-cta{justify-self:end}
+.progress{position:absolute;left:var(--gutter);right:var(--gutter);bottom:0;height:1px;background:var(--rule)}
+.progress-fill{position:absolute;inset:0;background:var(--ink);transform-origin:0 50%;transform:scaleX(0)}
+.tick{
+  position:absolute;top:0;width:28px;height:28px;margin:-14px 0 0 -14px;padding:0;border:0;background:none;cursor:pointer;
+}
+.tick::before{
+  content:"";position:absolute;left:50%;top:50%;width:3px;height:11px;background:var(--ink-faint);
+  transform:translate(-50%,-50%) scale(.34,.64);transition:transform .3s var(--ease-out),background-color .3s var(--ease-out);
+}
+.tick.is-active::before{transform:translate(-50%,-50%) scale(1);background:var(--verm)}
+.tick::after{
+  content:attr(data-label);position:absolute;top:26px;left:50%;transform:translate(-50%,-4px);
+  padding:6px 8px;background:var(--ink);color:var(--paper);white-space:nowrap;pointer-events:none;
+  font:500 .75rem/1 var(--font-mono);letter-spacing:.04em;opacity:0;
+  transition:opacity .2s var(--ease-out),transform .2s var(--ease-out);
+}
+.tick:hover::after,.tick:focus-visible::after{opacity:1;transform:translate(-50%,0)}
+.tick:focus-visible{outline:2px solid var(--ink);outline-offset:-6px;border-radius:50%}
+
+/* ---------- buttons & links ---------- */
+.btn{
+  --bg:var(--verm-deep);
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:52px;padding:0 24px;
+  border:0;border-radius:2px;background:var(--bg);color:var(--paper);cursor:pointer;text-decoration:none;
+  font:600 1.0625rem/1 var(--font-body);letter-spacing:.005em;
+  transition:background-color .15s var(--ease-out),transform .15s var(--ease-out);
+}
+.btn:hover{--bg:var(--verm-press)}
+.btn:active{transform:translateY(1px)}
+.btn:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.btn svg{width:18px;height:18px;transition:transform .3s var(--ease-out)}
+.btn:hover svg{transform:translate(2px,-2px)}
+.btn--sm{min-height:40px;padding:0 16px;font-size:.9375rem}
+.btn[disabled]{cursor:progress;--bg:var(--verm-press)}
+.link-arrow{
+  display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0;border:0;background:none;cursor:pointer;
+  font:600 1.0625rem/1.2 var(--font-body);color:var(--ink);
+  text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:6px;text-decoration-color:var(--field-line);
+  transition:color .15s var(--ease-out),text-decoration-color .15s var(--ease-out);
+}
+.link-arrow:hover{color:var(--verm-deep);text-decoration-color:currentColor}
+.link-arrow:focus-visible{outline:2px solid var(--ink);outline-offset:4px;border-radius:2px}
+.link-arrow svg{width:18px;height:18px;transition:transform .3s var(--ease-out)}
+.link-arrow:hover svg{transform:translateY(3px)}
+
+/* ---------- stages ---------- */
+.stage{
+  position:relative;min-height:120vh;
+  display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--space-lg);align-items:center;
+  padding:var(--space-4xl) var(--gutter);
+}
+.stage>.copy{grid-row:1;grid-column:1/span 5;position:relative;z-index:1}
+.stage>.slot{grid-row:1;grid-column:7/-1;height:min(74vh,760px);margin:0;position:relative}
+.stage[data-side="left"]>.copy{grid-column:8/-1}
+.stage[data-side="left"]>.slot{grid-column:1/span 6}
+.stage.hero{min-height:100vh;min-height:100svh;padding-top:calc(var(--header-h) + var(--space-2xl));padding-bottom:var(--space-3xl)}
+.stage.hero>.copy{grid-column:1/span 6}
+.stage.hero>.slot{grid-column:6/-1;height:min(80vh,820px)}
+.stage.work>.copy{grid-column:7/-1}
+.stage.work>.slot{grid-column:1/span 6}
+.stage.final{
+  min-height:100vh;grid-template-rows:auto auto auto;align-content:end;row-gap:var(--space-2xl);
+  padding-top:calc(var(--header-h) + var(--space-xl));padding-bottom:var(--space-lg);
+}
+.stage.final>.slot{grid-row:1;grid-column:1/-1;height:34vh;min-height:220px}
+.stage.final>.copy{
+  grid-row:2;grid-column:1/-1;
+  display:grid;grid-template-columns:repeat(12,minmax(0,1fr));column-gap:var(--space-lg);row-gap:var(--space-2xl);align-items:start;
+}
+.copy-head{grid-column:1/span 5}
+.brief,.success{grid-column:7/-1}
+
+.fig{
+  position:absolute;left:50%;bottom:0;transform:translateX(-50%);margin:0;white-space:nowrap;
+  font:400 .75rem/1.4 var(--font-mono);letter-spacing:.02em;color:var(--ink-faint);
+}
+.fig b{font-weight:500;color:var(--verm-deep);margin-right:.8em}
+
+/* ---------- type ---------- */
+.eyebrow,.label{
+  margin:0 0 var(--space-lg);display:flex;align-items:center;gap:10px;
+  font:500 .75rem/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);
+}
+.label::before{content:"";flex:none;width:9px;height:9px;border-radius:50%;background:var(--verm)}
+.h1,.h2{margin:0;font-family:var(--font-display);font-weight:800;line-height:.9;letter-spacing:-.004em;color:var(--ink);text-wrap:balance}
+.h1{font-size:clamp(3.4rem,8vw,9rem);line-height:.86}
+.h2{font-size:clamp(2.75rem,5vw,5.5rem)}
+.h1 em,.h2 em{font-style:italic;font-weight:900;color:var(--verm-deep)}
+.lead{margin:var(--space-xl) 0 0;max-width:30rem;font-size:1.375rem;line-height:1.45;color:var(--ink-soft);text-wrap:pretty}
+.body{margin:var(--space-lg) 0 0;max-width:34rem;color:var(--ink-soft);text-wrap:pretty}
+.actions{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-md) var(--space-xl);margin-top:var(--space-2xl)}
+.note{margin:var(--space-3xl) 0 0;max-width:31rem;font:400 .8125rem/1.65 var(--font-mono);color:var(--ink-soft)}
+.note .hint{color:var(--ink-faint)}
+
+.stack{
+  list-style:none;padding:0;margin:var(--space-2xl) 0 0;display:flex;flex-wrap:wrap;row-gap:6px;
+  font:500 .9375rem/1.4 var(--font-mono);color:var(--ink);
+}
+.stack li+li::before{content:"/";color:var(--ink-faint);margin:0 .65em}
+
+.facts{margin:var(--space-2xl) 0 0;max-width:34rem;display:grid;grid-template-columns:max-content 1fr;column-gap:var(--space-lg)}
+.facts dt,.facts dd{margin:0;padding:var(--space-sm) 0;border-top:1px solid var(--rule)}
+.facts dt{font:500 1.125rem/1.45 var(--font-mono);color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.facts dd{font-size:1rem;line-height:1.5;color:var(--ink-soft);padding-top:calc(var(--space-sm) + 2px)}
+
+.cases{list-style:none;margin:var(--space-2xl) 0 0;padding:0;max-width:40rem}
+.case{display:grid;grid-template-columns:2.5rem minmax(0,1fr);column-gap:var(--space-md);padding:var(--space-lg) 0;border-top:1px solid var(--rule)}
+.case:last-child{border-bottom:1px solid var(--rule)}
+.case-num{font:500 .75rem/2.4 var(--font-mono);color:var(--ink-faint)}
+.case-head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-md)}
+.case-name{margin:0;font:800 2rem/1 var(--font-display);color:var(--ink)}
+.case-tag{font:500 .75rem/1 var(--font-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
+.case-desc{margin:var(--space-xs) 0 0;color:var(--ink)}
+.case-meta{margin:var(--space-sm) 0 0;display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px var(--space-md);font-size:.9375rem}
+.case-stack{font:400 .8125rem/1.7 var(--font-mono);color:var(--ink-soft)}
+.case-result{font-weight:600;color:var(--verm-deep)}
+
+/* ---------- form ---------- */
+.direct{margin:var(--space-xl) 0 0;display:flex;flex-wrap:wrap;gap:var(--space-xs) var(--space-lg);font:500 1rem/1.4 var(--font-mono)}
+.direct a{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:5px;text-decoration-color:var(--field-line);min-height:44px;display:inline-flex;align-items:center}
+.direct a:hover{color:var(--verm-deep);text-decoration-color:currentColor}
+.direct a:focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:2px}
+.brief{display:grid;gap:var(--space-lg);padding-top:var(--space-2xs)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-lg)}
+.field{display:grid;gap:var(--space-xs);align-content:start}
+.field label,.budget legend{font:500 .75rem/1 var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+.input{
+  width:100%;padding:14px;border:1px solid var(--field-line);border-radius:2px;background:var(--paper);color:var(--ink);
+  font:400 1.0625rem/1.4 var(--font-body);
+  transition:border-color .15s var(--ease-out),box-shadow .15s var(--ease-out);
+}
+.input::placeholder{color:var(--ink-faint)}
+.input:hover{border-color:var(--ink-soft)}
+.input:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 3px var(--verm-tint)}
+.input[aria-invalid="true"]{border-color:var(--verm-deep)}
+.input[aria-invalid="true"]:focus{box-shadow:0 0 0 3px var(--verm-tint)}
+textarea.input{min-height:104px;resize:vertical}
+.error{margin:0;font-size:.875rem;line-height:1.4;color:var(--verm-deep)}
+.budget{margin:0;padding:0;border:0;min-width:0}
+.budget legend{padding:0;margin-bottom:var(--space-xs)}
+.chips{display:flex;flex-wrap:wrap;gap:var(--space-xs)}
+.chip{position:relative}
+.chip input{position:absolute;opacity:0;width:1px;height:1px}
+.chip span{
+  display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border:1px solid var(--field-line);border-radius:2px;
+  background:var(--paper);font-size:.9375rem;cursor:pointer;transition:background-color .15s var(--ease-out),color .15s var(--ease-out),border-color .15s var(--ease-out);
+}
+.chip span:hover{border-color:var(--ink-soft)}
+.chip input:checked+span{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.chip input:focus-visible+span{outline:2px solid var(--ink);outline-offset:2px}
+.submit-row{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-md) var(--space-lg);margin-top:var(--space-xs)}
+.fine{margin:0;font-size:.875rem;color:var(--ink-soft)}
+.success{padding-top:var(--space-xs)}
+.success:focus{outline:none}
+.success-title{margin:0;font:800 clamp(2.25rem,3.4vw,3.25rem)/.95 var(--font-display);color:var(--verm-deep)}
+.success .body{margin-top:var(--space-md)}
+.success .link-arrow{margin-top:var(--space-lg)}
+
+.site-footer{
+  grid-row:3;grid-column:1/-1;display:flex;flex-wrap:wrap;justify-content:space-between;gap:var(--space-xs) var(--space-lg);
+  padding-top:var(--space-md);border-top:1px solid var(--rule);font:400 .75rem/1.5 var(--font-mono);color:var(--ink-soft);
+}
+
+/* ---------- reveal ---------- */
+.js .reveal>*{opacity:0;transform:translateY(24px);transition:opacity .7s var(--ease-out),transform .9s var(--ease-out);transition-delay:calc(var(--i,0) * 70ms)}
+.js .reveal.is-in>*{opacity:1;transform:none}
+
+/* ---------- no webgl fallback ---------- */
+.no-webgl #scene{display:none}
+.no-webgl .slot::before{
+  content:"";position:absolute;inset:8%;opacity:.6;
+  background:radial-gradient(circle,var(--verm) 0 1.4px,transparent 1.9px) 0 0/9px 9px;
+  -webkit-mask:radial-gradient(closest-side,var(--ink) 55%,transparent 100%);
+  mask:radial-gradient(closest-side,var(--ink) 55%,transparent 100%);
+}
+
+@media (prefers-reduced-motion:reduce){
+  .js .reveal>*{transform:none;transition:opacity .4s linear}
+  .brand-mark,.btn svg,.link-arrow svg{transition:none}
+}
+
+/* ---------- small screens: redesign, not shrink ---------- */
+@media (max-width:899px){
+  :root{--header-h:56px}
+  body{font-size:1.0625rem}
+  .brand{font-size:1.5rem}
+  .ro-name,.tick{display:none}
+  .stage{
+    min-height:100svh;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto;align-content:center;row-gap:var(--space-md);
+    padding:calc(var(--header-h) + var(--space-md)) var(--gutter) var(--space-2xl);
+  }
+  .stage>.slot,.stage[data-side="left"]>.slot,.stage.work>.slot{grid-row:1;grid-column:1;height:42svh}
+  .stage>.copy,.stage[data-side="left"]>.copy,.stage.work>.copy{grid-row:2;grid-column:1}
+  .stage.hero{align-content:end;padding-bottom:var(--space-xl)}
+  .stage.hero>.slot{position:absolute;grid-column:auto;grid-row:auto;top:var(--header-h);left:0;right:0;height:50svh}
+  .stage.hero>.copy{grid-row:1;grid-column:1}
+  .h1{font-size:clamp(3rem,14vw,5rem)}
+  .lead{font-size:1.125rem;margin-top:var(--space-lg)}
+  .actions{margin-top:var(--space-xl)}
+  .note{margin-top:var(--space-xl)}
+  .fig{display:none}
+  .stage.final{min-height:auto;align-content:start;row-gap:var(--space-xl)}
+  .stage.final>.slot{height:22svh;min-height:150px}
+  .stage.final>.copy{grid-template-columns:minmax(0,1fr)}
+  .copy-head,.brief,.success{grid-column:1}
+  .field-row{grid-template-columns:1fr}
+  .submit-row .btn{width:100%}
+  .case-name{font-size:1.75rem}
+}
+@media (max-width:420px){
+  .readout{display:none}
+  .site-header{grid-template-columns:1fr auto}
+  .header-cta{padding:0 12px;font-size:.875rem}
+}
+</style>
+</head>
+<body>
+<canvas id="scene" aria-hidden="true"></canvas>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="site-header">
+  <a class="brand" href="#top" data-stage="0" aria-label="Radiant, в начало">
+    <svg class="brand-mark" viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">
+      <circle class="bm-core" cx="16" cy="16" r="6.5"/>
+      <g class="bm-dot">
+        <circle cx="28" cy="16" r="1.7"/><circle cx="26.39" cy="22" r="1.3"/><circle cx="22" cy="26.39" r="1.7"/>
+        <circle cx="16" cy="28" r="1.3"/><circle cx="10" cy="26.39" r="1.7"/><circle cx="5.61" cy="22" r="1.3"/>
+        <circle cx="4" cy="16" r="1.7"/><circle cx="5.61" cy="10" r="1.3"/><circle cx="10" cy="5.61" r="1.7"/>
+        <circle cx="16" cy="4" r="1.3"/><circle cx="22" cy="5.61" r="1.7"/><circle cx="26.39" cy="10" r="1.3"/>
+      </g>
+    </svg>
+    <span>Radiant</span>
+  </a>
+  <p class="readout" aria-hidden="true"><span class="ro-num">fig.00</span><span class="ro-name">Сияние</span></p>
+  <a class="btn btn--sm header-cta" href="#contact" data-stage="6">Обсудить проект</a>
+  <div class="progress">
+    <span class="progress-fill"></span>
+    <button class="tick is-active" type="button" data-label="00 Сияние" aria-label="Начало"></button>
+    <button class="tick" type="button" data-label="01 Код" aria-label="Код"></button>
+    <button class="tick" type="button" data-label="02 Архитектура" aria-label="Архитектура"></button>
+    <button class="tick" type="button" data-label="03 Качество" aria-label="Качество"></button>
+    <button class="tick" type="button" data-label="04 Запуск" aria-label="Запуск"></button>
+    <button class="tick" type="button" data-label="05 Проекты" aria-label="Проекты"></button>
+    <button class="tick" type="button" data-label="06 Контакт" aria-label="Контакт"></button>
+  </div>
+</header>
+
+<main id="top">
+  <section class="stage hero" data-side="right" aria-labelledby="h-hero">
+    <div class="copy reveal">
+      <p class="eyebrow">Студия разработки · с 2016 года</p>
+      <h1 class="h1" id="h-hero">Пишем код, который <em>сияет</em>.</h1>
+      <p class="lead">Веб-сервисы, мобильные приложения и backend под высокой нагрузкой. Проектируем, пишем и запускаем: от первого коммита до продакшена за 8 недель.</p>
+      <div class="actions">
+        <a class="btn" href="#contact" data-stage="6">Обсудить проект
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>
+        </a>
+        <a class="link-arrow" href="#code" data-stage="1">Как мы работаем
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+        </a>
+      </div>
+      <p class="note">Листайте: <span data-count>42 000</span> частиц пересоберутся в новую форму. Это не видео, всё рисует код в реальном времени.<br><span class="hint">Наведите курсор на частицы или кликните по пустому месту.</span></p>
+    </div>
+    <figure class="slot" aria-hidden="true"><figcaption class="fig"><b>fig.00</b>radiant.sphere({ corona: true })</figcaption></figure>
+  </section>
+
+  <section class="stage" id="code" data-side="left" aria-labelledby="h-code">
+    <div class="copy reveal">
+      <p class="label">01 · Код</p>
+      <h2 class="h2" id="h-code">Чистый код с первого коммита.</h2>
+      <p class="body">Никаких «потом отрефакторим». Строгая типизация, ревью каждого пулл-реквеста и документация, которую действительно читают. Репозиторий, доступы и знания принадлежат вам с первого дня.</p>
+      <ul class="stack" aria-label="Технологии">
+        <li>TypeScript</li><li>Go</li><li>Rust</li><li>Swift</li><li>Kotlin</li><li>Python</li>
+      </ul>
+    </div>
+    <figure class="slot" aria-hidden="true"><figcaption class="fig"><b>fig.01</b>glyph("&lt;/&gt;", { depth: 0.6 })</figcaption></figure>
+  </section>
+
+  <section class="stage" id="architecture" data-side="right" aria-labelledby="h-arch">
+    <div class="copy reveal">
+      <p class="label">02 · Архитектура</p>
+      <h2 class="h2" id="h-arch">Сложные системы, простые решения.</h2>
+      <p class="body">Проектируем архитектуру, которая выдерживает рост в десять раз без переписывания. Микросервисы там, где они окупаются, монолит там, где он честнее. Каждое решение фиксируем в ADR, чтобы через год было понятно, почему так.</p>
+      <dl class="facts">
+        <dt>p99 &lt; 80 мс</dt><dd>время ответа API под пиковой нагрузкой</dd>
+        <dt>12 млн</dt><dd>запросов в минуту на самом нагруженном сервисе</dd>
+      </dl>
+    </div>
+    <figure class="slot" aria-hidden="true"><figcaption class="fig"><b>fig.02</b>torusKnot({ p: 2, q: 3 })</figcaption></figure>
+  </section>
+
+  <section class="stage" id="quality" data-side="left" aria-labelledby="h-quality">
+    <div class="copy reveal">
+      <p class="label">03 · Качество</p>
+      <h2 class="h2" id="h-quality">Качество зашито в ДНК.</h2>
+      <p class="body">Автотесты пишем вместе с фичами, а не после. CI проверяет каждый коммит, релиз выходит по кнопке, откат занимает минуту. Баги находим мы, а не ваши пользователи.</p>
+      <dl class="facts">
+        <dt>92%</dt><dd>среднее покрытие кода тестами</dd>
+        <dt>40+</dt><dd>релизов в месяц без ночных авралов</dd>
+      </dl>
+    </div>
+    <figure class="slot" aria-hidden="true"><figcaption class="fig"><b>fig.03</b>helix({ strands: 2, turns: 2.4 })</figcaption></figure>
+  </section>
+
+  <section class="stage" id="launch" data-side="right" aria-labelledby="h-launch">
+    <div class="copy reveal">
+      <p class="label">04 · Запуск</p>
+      <h2 class="h2" id="h-launch">Выводим на орбиту и держим курс.</h2>
+      <p class="body">Запускаем продукт, настраиваем мониторинг и алерты, дежурим 24/7. Пока вы спите, система работает. А если что-то пошло не так, мы узнаем об этом первыми.</p>
+      <dl class="facts">
+        <dt>99,98%</dt><dd>аптайм по SLA за последний год</dd>
+        <dt>15 мин</dt><dd>максимальное время реакции на инцидент</dd>
+      </dl>
+    </div>
+    <figure class="slot" aria-hidden="true"><figcaption class="fig"><b>fig.04</b>planet({ rings: 3, moons: 1 })</figcaption></figure>
+  </section>
+
+  <section class="stage work" id="work" data-side="left" aria-labelledby="h-work">
+    <div class="copy reveal">
+      <p class="label">05 · Проекты</p>
+      <h2 class="h2" id="h-work">Вселенная запущенных продуктов.</h2>
+      <p class="body">120 проектов за девять лет. Вот несколько, о которых можно рассказать.</p>
+      <ol class="cases">
+        <li class="case">
+          <span class="case-num">01</span>
+          <div>
+            <div class="case-head"><h3 class="case-name">«Монета»</h3><span class="case-tag">финтех</span></div>
+            <p class="case-desc">Платёжный шлюз на 2 млн пользователей</p>
+            <p class="case-meta"><span class="case-stack">Go · Kafka · Kubernetes</span><span class="case-result">Платёж за 0,8 с вместо 4 с</span></p>
+          </div>
+        </li>
+        <li class="case">
+          <span class="case-num">02</span>
+          <div>
+            <div class="case-head"><h3 class="case-name">«Полка»</h3><span class="case-tag">ритейл</span></div>
+            <p class="case-desc">Мобильное приложение с AR-примеркой</p>
+            <p class="case-meta"><span class="case-stack">Swift · Kotlin · ARKit</span><span class="case-result">+34% к конверсии в покупку</span></p>
+          </div>
+        </li>
+        <li class="case">
+          <span class="case-num">03</span>
+          <div>
+            <div class="case-head"><h3 class="case-name">«Маршрут»</h3><span class="case-tag">логистика</span></div>
+            <p class="case-desc">Трекинг 40 000 грузовиков в реальном времени</p>
+            <p class="case-meta"><span class="case-stack">Rust · ClickHouse</span><span class="case-result">Задержка данных меньше 2 с</span></p>
+          </div>
+        </li>
+        <li class="case">
+          <span class="case-num">04</span>
+          <div>
+            <div class="case-head"><h3 class="case-name">«Пульс»</h3><span class="case-tag">медтех</span></div>
+            <p class="case-desc">Телемедицина для 300 клиник</p>
+            <p class="case-meta"><span class="case-stack">TypeScript · WebRTC</span><span class="case-result">1,2 млн консультаций в год</span></p>
+          </div>
+        </li>
+      </ol>
+    </div>
+    <figure class="slot" aria-hidden="true"><figcaption class="fig"><b>fig.05</b>galaxy({ arms: 3, stars: 120 })</figcaption></figure>
+  </section>
+
+  <section class="stage final" id="contact" aria-labelledby="h-contact">
+    <figure class="slot" aria-hidden="true"></figure>
+    <div class="copy reveal">
+      <div class="copy-head">
+        <p class="label">06 · Контакт</p>
+        <h2 class="h2" id="h-contact">Ваш код <em>следующий</em>.</h2>
+        <p class="body">Расскажите о задаче. В течение рабочего дня вернёмся с первыми идеями, оценкой сроков и бюджета.</p>
+        <p class="direct"><a href="mailto:hello@radiant.dev">hello@radiant.dev</a><a href="https://t.me/radiant_dev" target="_blank" rel="noopener">t.me/radiant_dev</a></p>
+      </div>
+      <form class="brief" id="brief" novalidate>
+        <div class="field-row">
+          <div class="field">
+            <label for="f-name">Имя</label>
+            <input class="input" id="f-name" name="name" autocomplete="name" placeholder="Как к вам обращаться" aria-describedby="e-name" required>
+            <p class="error" id="e-name" hidden></p>
+          </div>
+          <div class="field">
+            <label for="f-contact">Телеграм или почта</label>
+            <input class="input" id="f-contact" name="contact" autocomplete="email" placeholder="@username или mail@company.ru" aria-describedby="e-contact" required>
+            <p class="error" id="e-contact" hidden></p>
+          </div>
+        </div>
+        <div class="field">
+          <label for="f-about">Что строим?</label>
+          <textarea class="input" id="f-about" name="about" rows="3" placeholder="Пара предложений о продукте, сроках и команде"></textarea>
+        </div>
+        <fieldset class="budget">
+          <legend>Бюджет</legend>
+          <div class="chips">
+            <label class="chip"><input type="radio" name="budget" value="lt1"><span>до 1 млн ₽</span></label>
+            <label class="chip"><input type="radio" name="budget" value="1to5"><span>от 1 до 5 млн ₽</span></label>
+            <label class="chip"><input type="radio" name="budget" value="gt5"><span>больше 5 млн ₽</span></label>
+            <label class="chip"><input type="radio" name="budget" value="unknown"><span>пока не знаю</span></label>
+          </div>
+        </fieldset>
+        <div class="submit-row">
+          <button class="btn" type="submit"><span class="btn-label">Отправить заявку</span></button>
+          <p class="fine">Без спама. Только ответ на вашу заявку.</p>
+        </div>
+      </form>
+      <div class="success" id="brief-ok" tabindex="-1" role="status" hidden>
+        <p class="success-title">Заявка у нас.</p>
+        <p class="body">Ответим до конца рабочего дня. Если горит, пишите сразу в <a href="https://t.me/radiant_dev" target="_blank" rel="noopener">телеграм</a>.</p>
+        <button class="link-arrow" type="button" id="brief-again">Отправить ещё одну</button>
+      </div>
+    </div>
+    <footer class="site-footer">
+      <span>© 2026 Radiant</span>
+      <span>Москва · Белград · удалённо</span>
+      <span>Эта страница: <span data-count>42 000</span> частиц и один шейдер</span>
+    </footer>
+  </section>
+</main>
+<script>
+document.documentElement.classList.add('js');
+(function () {
+'use strict';
+
+/*SHAPES-START*/
+/* ---------- color: OKLCH -> sRGB for the shader inks ---------- */
+function oklch(L, C, h) {
+  const hr = h * Math.PI / 180, a = C * Math.cos(hr), b = C * Math.sin(hr);
+  const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
+  const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
+  const s_ = L - 0.0894841775 * a - 1.2914855480 * b;
+  const l = l_ * l_ * l_, m = m_ * m_ * m_, s = s_ * s_ * s_;
+  const lin = [
+    4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+    -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+    -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s
+  ];
+  return lin.map(function (x) {
+    x = Math.min(1, Math.max(0, x));
+    return x <= 0.0031308 ? 12.92 * x : 1.055 * Math.pow(x, 1 / 2.4) - 0.055;
+  });
+}
+const PAPER = oklch(0.964, 0.012, 45);
+const INK = {
+  verm: oklch(0.655, 0.205, 35),
+  ultra: oklch(0.5, 0.19, 266),
+  pink: oklch(0.735, 0.17, 355),
+  deep: oklch(0.34, 0.1, 272)
+};
+
+/* ---------- seeded randomness ---------- */
+let seed = 20160925;
+function rng() {
+  seed = (seed + 0x6D2B79F5) | 0;
+  let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+function gauss() {
+  let u = 0, v = 0;
+  while (u === 0) u = rng();
+  while (v === 0) v = rng();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(6.283185307 * v);
+}
+function randDir(o) {
+  const z = rng() * 2 - 1, a = rng() * 6.283185307, r = Math.sqrt(1 - z * z);
+  o[0] = r * Math.cos(a); o[1] = z; o[2] = r * Math.sin(a);
+  return o;
+}
+
+/* ---------- tiny column-major mat4 ---------- */
+const _t = new Float32Array(16);
+const M4 = {
+  ident(o) { o = o || new Float32Array(16); o.fill(0); o[0] = o[5] = o[10] = o[15] = 1; return o; },
+  mul(a, b, o) {
+    o = o || new Float32Array(16);
+    for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) {
+      _t[c * 4 + r] = a[r] * b[c * 4] + a[4 + r] * b[c * 4 + 1] + a[8 + r] * b[c * 4 + 2] + a[12 + r] * b[c * 4 + 3];
+    }
+    o.set(_t); return o;
+  },
+  rotX(a, o) { o = M4.ident(o); const c = Math.cos(a), s = Math.sin(a); o[5] = c; o[6] = s; o[9] = -s; o[10] = c; return o; },
+  rotY(a, o) { o = M4.ident(o); const c = Math.cos(a), s = Math.sin(a); o[0] = c; o[2] = -s; o[8] = s; o[10] = c; return o; },
+  rotZ(a, o) { o = M4.ident(o); const c = Math.cos(a), s = Math.sin(a); o[0] = c; o[1] = s; o[4] = -s; o[5] = c; return o; },
+  trs(x, y, z, sc, o) { o = M4.ident(o); o[0] = o[5] = o[10] = sc; o[12] = x; o[13] = y; o[14] = z; return o; },
+  persp(fovy, aspect, near, far, o) {
+    o = o || new Float32Array(16); o.fill(0);
+    const f = 1 / Math.tan(fovy / 2), nf = 1 / (near - far);
+    o[0] = f / aspect; o[5] = f; o[10] = (far + near) * nf; o[11] = -1; o[14] = 2 * far * near * nf;
+    return o;
+  }
+};
+
+/* ---------- shape builders: every form is plain math ---------- */
+function makeShape(N, fn) {
+  const P = new Float32Array(N * 3), C = new Float32Array(N * 4);
+  const p = [0, 0, 0], c = [0, 0, 0, 1];
+  for (let i = 0; i < N; i++) {
+    fn(p, c, i);
+    P[i * 3] = p[0]; P[i * 3 + 1] = p[1]; P[i * 3 + 2] = p[2];
+    C[i * 4] = c[0]; C[i * 4 + 1] = c[1]; C[i * 4 + 2] = c[2]; C[i * 4 + 3] = c[3];
+  }
+  return { P: P, C: C };
+}
+function ink(c, col, a) { c[0] = col[0]; c[1] = col[1]; c[2] = col[2]; c[3] = a; }
+function inkMix(c, A, B, t, a) {
+  c[0] = A[0] + (B[0] - A[0]) * t; c[1] = A[1] + (B[1] - A[1]) * t; c[2] = A[2] + (B[2] - A[2]) * t; c[3] = a;
+}
+
+// 00: radiant sphere with a streaked corona
+function buildSun(N) {
+  const R = 1.18, d = [0, 0, 0], RAYS = 170, rays = [];
+  for (let k = 0; k < RAYS; k++) { const r = randDir([0, 0, 0]); r.push(0.45 + rng() * 0.9); rays.push(r); }
+  return makeShape(N, function (p, c) {
+    const u = rng();
+    if (u < 0.5) {
+      randDir(d); const r = R * (1 + gauss() * 0.01);
+      p[0] = d[0] * r; p[1] = d[1] * r; p[2] = d[2] * r;
+      if (rng() < 0.16) ink(c, INK.pink, 0.62); else ink(c, INK.verm, 0.58);
+    } else if (u < 0.57) {
+      randDir(d); const r = R * Math.cbrt(rng()) * 0.95;
+      p[0] = d[0] * r; p[1] = d[1] * r; p[2] = d[2] * r;
+      ink(c, INK.pink, 0.4);
+    } else {
+      const ray = rays[(rng() * RAYS) | 0];
+      const len = -Math.log(1 - rng() * 0.95) * 0.3 * ray[3];
+      const r = R * 1.03 + len, j = 0.022 * (1 + len * 1.6);
+      p[0] = ray[0] * r + gauss() * j; p[1] = ray[1] * r + gauss() * j; p[2] = ray[2] * r + gauss() * j;
+      const t = Math.min(1, len / 1.1);
+      if (t < 0.3) ink(c, INK.verm, 0.6);
+      else if (t < 0.7) ink(c, INK.pink, 0.55);
+      else ink(c, INK.ultra, 0.5);
+    }
+  });
+}
+
+// 02: (2,3) torus knot, a tube with a three-ink gradient
+function buildKnot(N) {
+  const PP = 2, QQ = 3, S = 0.6, TUBE = 0.29, e = 0.002;
+  const inks = [INK.verm, INK.pink, INK.ultra];
+  const a = [0, 0, 0], b = [0, 0, 0], m = [0, 0, 0];
+  function curve(t, o) {
+    const r = Math.cos(QQ * t) + 2;
+    o[0] = r * Math.cos(PP * t) * S; o[1] = r * Math.sin(PP * t) * S; o[2] = -Math.sin(QQ * t) * S;
+  }
+  return makeShape(N, function (p, c) {
+    const t = rng() * Math.PI * 2;
+    curve(t, m); curve(t - e, a); curve(t + e, b);
+    let tx = b[0] - a[0], ty = b[1] - a[1], tz = b[2] - a[2];
+    let tl = Math.hypot(tx, ty, tz); tx /= tl; ty /= tl; tz /= tl;
+    let nx = a[0] + b[0] - 2 * m[0], ny = a[1] + b[1] - 2 * m[1], nz = a[2] + b[2] - 2 * m[2];
+    const dt = nx * tx + ny * ty + nz * tz; nx -= dt * tx; ny -= dt * ty; nz -= dt * tz;
+    const nl = Math.hypot(nx, ny, nz) || 1; nx /= nl; ny /= nl; nz /= nl;
+    const bx = ty * nz - tz * ny, by = tz * nx - tx * nz, bz = tx * ny - ty * nx;
+    const phi = rng() * Math.PI * 2, rr = TUBE * (0.93 + rng() * 0.14);
+    const cp = Math.cos(phi) * rr, sp = Math.sin(phi) * rr;
+    p[0] = m[0] + cp * nx + sp * bx; p[1] = m[1] + cp * ny + sp * by; p[2] = m[2] + cp * nz + sp * bz;
+    const g = t / (Math.PI * 2) * 3, seg = Math.floor(g) % 3, f = g - Math.floor(g);
+    const sm = f * f * (3 - 2 * f);
+    inkMix(c, inks[seg], inks[(seg + 1) % 3], sm, 0.58);
+  });
+}
+
+// 03: double helix with base-pair rungs
+function buildHelix(N) {
+  const H = 4.3, R = 0.82, TURNS = 2.4, RUNGS = 26, twist = TURNS * Math.PI * 2 / H;
+  return makeShape(N, function (p, c) {
+    if (rng() < 0.6) {
+      const s = rng() < 0.5 ? 0 : 1, y = (rng() - 0.5) * H, th = y * twist + s * Math.PI;
+      p[0] = Math.cos(th) * R + gauss() * 0.05; p[1] = y + gauss() * 0.05; p[2] = Math.sin(th) * R + gauss() * 0.05;
+      ink(c, s ? INK.verm : INK.ultra, 0.6);
+    } else {
+      const k = (rng() * RUNGS) | 0, y = -H / 2 + (k + 0.5) * (H / RUNGS), th = y * twist;
+      let t = rng();
+      if (Math.abs(t - 0.5) < 0.035) t += t < 0.5 ? -0.05 : 0.05;
+      const x0 = Math.cos(th) * R, z0 = Math.sin(th) * R, q = 1 - 2 * t;
+      p[0] = x0 * q + gauss() * 0.018; p[1] = y + gauss() * 0.018; p[2] = z0 * q + gauss() * 0.018;
+      if (t < 0.5) ink(c, k % 2 ? INK.pink : INK.verm, 0.5); else ink(c, k % 2 ? INK.ultra : INK.pink, 0.45);
+    }
+  });
+}
+
+// 04: banded planet, three rings, one moon
+function buildPlanet(N) {
+  const R = 0.98, d = [0, 0, 0];
+  return makeShape(N, function (p, c) {
+    const u = rng();
+    if (u < 0.46) {
+      randDir(d); const r = R * (1 + gauss() * 0.006);
+      p[0] = d[0] * r; p[1] = d[1] * r; p[2] = d[2] * r;
+      const lon = Math.atan2(d[2], d[0]);
+      const band = Math.sin(d[1] * 11 + Math.sin(lon * 2 + d[1] * 4) * 0.5);
+      if (band > 0.55) ink(c, INK.pink, 0.6); else ink(c, INK.ultra, 0.55);
+    } else if (u < 0.965) {
+      const q = rng();
+      const ring = q < 0.42 ? [1.38, 1.7] : q < 0.88 ? [1.78, 2.16] : [2.24, 2.36];
+      const r = ring[0] + (ring[1] - ring[0]) * rng(), a = rng() * Math.PI * 2;
+      p[0] = Math.cos(a) * r; p[1] = gauss() * 0.01; p[2] = Math.sin(a) * r;
+      inkMix(c, INK.verm, INK.pink, (r - 1.38) / 0.98, 0.5);
+    } else {
+      randDir(d);
+      p[0] = 2.55 + d[0] * 0.17; p[1] = 0.5 + d[1] * 0.17; p[2] = -0.9 + d[2] * 0.17;
+      ink(c, INK.verm, 0.7);
+    }
+  });
+}
+
+// 05: three-arm spiral galaxy
+function buildGalaxy(N) {
+  const ARMS = 3, RMAX = 2.35, SPIN = 2.4;
+  return makeShape(N, function (p, c) {
+    if (rng() < 0.13) {
+      p[0] = gauss() * 0.26; p[1] = gauss() * 0.14; p[2] = gauss() * 0.26;
+      ink(c, rng() < 0.7 ? INK.verm : INK.pink, 0.55);
+    } else {
+      const r = 0.12 + Math.pow(rng(), 1.35) * RMAX, arm = (rng() * ARMS) | 0;
+      const ang = arm / ARMS * Math.PI * 2 + r * SPIN, sp = 0.5 * (0.25 + r / RMAX);
+      const ox = Math.pow(rng(), 2.2) * (rng() < 0.5 ? -1 : 1) * sp;
+      const oz = Math.pow(rng(), 2.2) * (rng() < 0.5 ? -1 : 1) * sp;
+      p[0] = Math.cos(ang) * r + ox; p[1] = gauss() * 0.06 * (1.2 - r / RMAX); p[2] = Math.sin(ang) * r + oz;
+      const t = Math.min(1, r / RMAX);
+      if (rng() < 0.08) ink(c, INK.pink, 0.66);
+      else inkMix(c, INK.verm, INK.ultra, Math.min(1, t * 1.6), 0.56 - t * 0.16);
+    }
+  });
+}
+
+// 01 and 06: text sampled from a canvas, extruded into 3D
+function sampleText(N, draw, opt) {
+  const w = opt.w, h = opt.h;
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const ctx = cv.getContext('2d', { willReadFrequently: true });
+  ctx.fillStyle = 'rgb(0,0,0)'; ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = 'rgb(255,255,255)';
+  draw(ctx, w, h);
+  const d = ctx.getImageData(0, 0, w, h).data, on = new Uint8Array(w * h);
+  for (let i = 0; i < w * h; i++) on[i] = d[i * 4] > 127 ? 1 : 0;
+  const fill = [], edge = [];
+  let x0 = w, x1 = 0, y0 = h, y1 = 0;
+  for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+    const i = y * w + x;
+    if (!on[i]) continue;
+    fill.push(i);
+    if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+    if (!on[i - 1] || !on[i + 1] || !on[i - w] || !on[i + w]) edge.push(i);
+  }
+  if (fill.length < 60 || !edge.length) return buildSun(N);
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, s = opt.worldH / Math.max(1, y1 - y0), D = opt.depth;
+  const nf = fill.length, ne = edge.length;
+  return makeShape(N, function (p, c) {
+    const u = rng();
+    if (u < opt.front + opt.back) {
+      const i = fill[(rng() * nf) | 0], front = u < opt.front;
+      p[0] = ((i % w) + rng() - cx) * s; p[1] = -(((i / w) | 0) + rng() - cy) * s;
+      p[2] = (front ? D : -D) + gauss() * 0.008;
+      if (front) ink(c, INK.verm, opt.aFront); else ink(c, INK.ultra, opt.aBack);
+    } else {
+      const i = edge[(rng() * ne) | 0], t = rng();
+      p[0] = ((i % w) + rng() - cx) * s; p[1] = -(((i / w) | 0) + rng() - cy) * s;
+      p[2] = -D + t * 2 * D;
+      inkMix(c, INK.ultra, INK.verm, t, 0.28 + 0.3 * t);
+    }
+  });
+}
+function buildGlyph(N) {
+  return sampleText(N, function (ctx, w, h) {
+    const font = function (sz) { return '800 ' + Math.round(sz) + 'px "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace'; };
+    let size = h * 0.8; ctx.font = font(size);
+    let adv = ctx.measureText('0').width;
+    if (adv * 3.2 > w * 0.94) { size *= (w * 0.94) / (adv * 3.2); ctx.font = font(size); adv = ctx.measureText('0').width; }
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ['<', '/', '>'].forEach(function (ch, k) { ctx.fillText(ch, w / 2 + (k - 1) * adv * 1.04, h / 2); });
+  }, { w: 1000, h: 420, worldH: 2.5, depth: 0.3, front: 0.55, back: 0.15, aFront: 0.52, aBack: 0.26 });
+}
+function buildWord(N) {
+  return sampleText(N, function (ctx, w, h) {
+    const font = function (sz) { return '900 ' + Math.round(sz) + 'px "Sofia Sans Extra Condensed", "Arial Narrow", "Roboto Condensed", sans-serif'; };
+    let size = h * 0.9; ctx.font = font(size);
+    if ('letterSpacing' in ctx) ctx.letterSpacing = Math.round(size * 0.035) + 'px';
+    const m = ctx.measureText('RADIANT').width;
+    if (m > w * 0.94) {
+      size *= (w * 0.94) / m; ctx.font = font(size);
+      if ('letterSpacing' in ctx) ctx.letterSpacing = Math.round(size * 0.035) + 'px';
+    }
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('RADIANT', w / 2, h / 2);
+  }, { w: 1500, h: 420, worldH: 1.75, depth: 0.17, front: 0.58, back: 0.14, aFront: 0.56, aBack: 0.26 });
+}
+
+/* every shape sorted top-to-bottom, so "sweep" transitions print the new form line by line */
+function sortByHeight(sh, m) {
+  const P = sh.P, C = sh.C, N = P.length / 3;
+  const key = new Float32Array(N), idx = new Uint32Array(N);
+  for (let i = 0; i < N; i++) {
+    key[i] = m[1] * P[i * 3] + m[5] * P[i * 3 + 1] + m[9] * P[i * 3 + 2] + (rng() - 0.5) * 0.02;
+    idx[i] = i;
+  }
+  idx.sort(function (a, b) { return key[b] - key[a]; });
+  const P2 = new Float32Array(N * 3), C2 = new Float32Array(N * 4);
+  for (let n = 0; n < N; n++) {
+    const j = idx[n];
+    P2[n * 3] = P[j * 3]; P2[n * 3 + 1] = P[j * 3 + 1]; P2[n * 3 + 2] = P[j * 3 + 2];
+    C2[n * 4] = C[j * 4]; C2[n * 4 + 1] = C[j * 4 + 1]; C2[n * 4 + 2] = C[j * 4 + 2]; C2[n * 4 + 3] = C[j * 4 + 3];
+  }
+  sh.P = P2; sh.C = C2;
+}
+function extents(sh, def) {
+  const P = sh.P, N = P.length / 3, xs = [], ys = [];
+  const angles = def.text ? [-0.42, 0, 0.42] : [0, 0.785, 1.571, 2.356];
+  const rot = new Float32Array(16), m = new Float32Array(16);
+  angles.forEach(function (a) {
+    M4.mul(def.tilt, M4.rotY(a, rot), m);
+    for (let i = 0; i < N; i += 7) {
+      const x = P[i * 3], y = P[i * 3 + 1], z = P[i * 3 + 2];
+      xs.push(Math.abs(m[0] * x + m[4] * y + m[8] * z));
+      ys.push(Math.abs(m[1] * x + m[5] * y + m[9] * z));
+    }
+  });
+  const q = function (arr) { arr.sort(function (a, b) { return a - b; }); return arr[Math.floor(arr.length * 0.985)]; };
+  return { w: 2 * q(xs), h: 2 * q(ys) };
+}
+
+const DEFS = [
+  { build: buildSun,    tilt: M4.ident(),                                spin: function (t) { return t * 0.14; },               dens: 0.9 },
+  { build: buildGlyph,  tilt: M4.ident(),                                spin: function (t) { return Math.sin(t * 0.45) * 0.42; }, dens: 0.72, text: true },
+  { build: buildKnot,   tilt: M4.rotX(0.35),                             spin: function (t) { return t * 0.3; },                dens: 0.85 },
+  { build: buildHelix,  tilt: M4.mul(M4.rotZ(-0.55), M4.rotX(0.22)),     spin: function (t) { return t * 0.45; },               dens: 1.0 },
+  { build: buildPlanet, tilt: M4.mul(M4.rotZ(-0.28), M4.rotX(0.42)),     spin: function (t) { return t * 0.16; },               dens: 1.0 },
+  { build: buildGalaxy, tilt: M4.mul(M4.rotZ(0.22), M4.rotX(1.0)),       spin: function (t) { return -t * 0.07; },              dens: 1.05 },
+  { build: buildWord,   tilt: M4.ident(),                                spin: function (t) { return Math.sin(t * 0.38) * 0.2; },  dens: 0.8, text: true }
+];
+// how each morph behaves: sweep = printed top-down, swirl = vortex, burst = explosion
+const STYLES = [
+  { sweep: 0.85, swirl: 2.2, burst: 0.45 },
+  { sweep: 0.15, swirl: -3.4, burst: 0.9 },
+  { sweep: 0.9, swirl: 4.2, burst: 0.25 },
+  { sweep: 0.35, swirl: -1.4, burst: 1.3 },
+  { sweep: 0.1, swirl: 5.2, burst: 0.35 },
+  { sweep: 0.95, swirl: -1.2, burst: 0.5 }
+];
+function prepare(k, N) {
+  const def = DEFS[k], sh = def.build(N);
+  sortByHeight(sh, def.tilt);
+  def.ext = extents(sh, def);
+  return sh;
+}
+/*SHAPES-END*/
+
+const $ = function (s, r) { return (r || document).querySelector(s); };
+const $$ = function (s, r) { return Array.from((r || document).querySelectorAll(s)); };
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const coarse = matchMedia('(pointer: coarse)').matches;
+
+const stages = $$('.stage');
+const NAMES = ['Сияние', 'Код', 'Архитектура', 'Качество', 'Запуск', 'Проекты', 'Контакт'];
+const LAST = stages.length - 1;
+const COUNT = innerWidth < 640 ? 18000 : (innerWidth < 1100 || coarse) ? 28000 : 42000;
+
+$$('[data-count]').forEach(function (el) { el.textContent = COUNT.toLocaleString('ru-RU'); });
+const hint = $('.hint');
+if (hint && coarse) hint.textContent = 'Коснитесь пустого места, чтобы пустить волну.';
+
+/* ---------- layout: where each form lives, and at which scroll position ---------- */
+const header = $('.site-header');
+const progressFill = $('.progress-fill');
+const roNum = $('.ro-num'), roName = $('.ro-name');
+const ticks = $$('.tick');
+const stops = stages.map(function () { return 0; });
+const slots = stages.map(function () { return { cx: 0, cy: 0, w: 1, h: 1 }; });
+let maxScroll = 1;
+
+function measure() {
+  const vh = innerHeight, sy = scrollY, hh = header.offsetHeight;
+  maxScroll = Math.max(1, document.documentElement.scrollHeight - vh);
+  stages.forEach(function (sec, k) {
+    const sr = $('.slot', sec).getBoundingClientRect();
+    const cr = $('.copy', sec).getBoundingClientRect();
+    const top = Math.min(sr.top, cr.top) + sy, bottom = Math.max(sr.bottom, cr.bottom) + sy;
+    let stop;
+    if (k === 0) stop = 0;
+    else if (bottom - top <= vh - hh - 48) stop = (top + bottom) / 2 - (vh + hh) / 2;
+    else stop = top - hh - 24;
+    stop = Math.min(Math.max(stop, 0), maxScroll);
+    if (k > 0) stop = Math.max(stop, Math.min(maxScroll, stops[k - 1] + 1));
+    stops[k] = stop;
+    slots[k] = { cx: sr.left + sr.width / 2, cy: sr.top + sy + sr.height / 2 - stop, w: sr.width, h: sr.height };
+  });
+  ticks.forEach(function (t, k) { t.style.left = (stops[k] / maxScroll * 100).toFixed(3) + '%'; });
+}
+function scrollToS(y) {
+  if (y <= stops[0]) return 0;
+  for (let k = 0; k < LAST; k++) {
+    if (y < stops[k + 1]) {
+      const gap = stops[k + 1] - stops[k];
+      return gap > 0.5 ? k + (y - stops[k]) / gap : k + 1;
+    }
+  }
+  return LAST;
+}
+let shownIdx = -1;
+function updateUI(s) {
+  progressFill.style.transform = 'scaleX(' + Math.min(1, scrollY / maxScroll).toFixed(4) + ')';
+  const idx = Math.max(0, Math.min(LAST, Math.round(s)));
+  if (idx !== shownIdx) {
+    shownIdx = idx;
+    roNum.textContent = 'fig.0' + idx;
+    roName.textContent = NAMES[idx];
+    ticks.forEach(function (t, k) { t.classList.toggle('is-active', k === idx); });
+  }
+}
+function goTo(k) { window.scrollTo({ top: stops[k], behavior: reduceMotion ? 'auto' : 'smooth' }); }
+ticks.forEach(function (t, k) { t.addEventListener('click', function () { goTo(k); }); });
+$$('a[data-stage]').forEach(function (a) {
+  a.addEventListener('click', function (e) { e.preventDefault(); goTo(+a.dataset.stage); });
+});
+
+/* ---------- text reveal ---------- */
+$$('.reveal').forEach(function (el) { Array.from(el.children).forEach(function (c, i) { c.style.setProperty('--i', i); }); });
+if ('IntersectionObserver' in window) {
+  const io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add('is-in'); io.unobserve(en.target); } });
+  }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+  $$('.reveal').forEach(function (el) { io.observe(el); });
+} else {
+  $$('.reveal').forEach(function (el) { el.classList.add('is-in'); });
+}
+
+/* ---------- brief form ---------- */
+let celebrate = function () {};
+const form = $('#brief'), okBox = $('#brief-ok'), again = $('#brief-again');
+const checks = {
+  name: function (v) { return v.trim().length >= 2 ? '' : 'Напишите, как к вам обращаться'; },
+  contact: function (v) {
+    v = v.trim();
+    if (!v) return 'Оставьте телеграм или почту, чтобы мы могли ответить';
+    const tg = /^@?[a-zA-Z0-9_]{5,32}$/.test(v), mail = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
+    return tg || mail ? '' : 'Похоже на опечатку. Нужен @username или адрес почты';
+  }
+};
+function checkField(input) {
+  const msg = checks[input.name](input.value);
+  const err = document.getElementById(input.getAttribute('aria-describedby'));
+  if (msg) { input.setAttribute('aria-invalid', 'true'); err.textContent = msg; err.hidden = false; }
+  else { input.removeAttribute('aria-invalid'); err.textContent = ''; err.hidden = true; }
+  return !msg;
+}
+['name', 'contact'].forEach(function (n) {
+  const input = form.elements[n];
+  input.addEventListener('input', function () { if (input.getAttribute('aria-invalid')) checkField(input); });
+  input.addEventListener('blur', function () { if (input.value.trim()) checkField(input); });
+});
+form.addEventListener('submit', function (e) {
+  e.preventDefault();
+  const okName = checkField(form.elements.name), okContact = checkField(form.elements.contact);
+  if (!okName || !okContact) { (okName ? form.elements.contact : form.elements.name).focus(); return; }
+  const btn = form.querySelector('button[type="submit"]'), label = btn.querySelector('.btn-label');
+  btn.disabled = true; btn.setAttribute('aria-busy', 'true'); label.textContent = 'Отправляем…';
+  setTimeout(function () {
+    form.hidden = true; okBox.hidden = false; okBox.focus({ preventScroll: true });
+    btn.disabled = false; btn.removeAttribute('aria-busy'); label.textContent = 'Отправить заявку';
+    celebrate();
+  }, 1100);
+});
+again.addEventListener('click', function () {
+  form.reset(); okBox.hidden = true; form.hidden = false; form.elements.name.focus({ preventScroll: true });
+});
+
+/* ---------- keep layout fresh ---------- */
+let rafMeasure = 0;
+function scheduleMeasure() {
+  cancelAnimationFrame(rafMeasure);
+  rafMeasure = requestAnimationFrame(function () { measure(); if (onLayout) onLayout(); });
+}
+let onLayout = null;
+let lastW = innerWidth, lastH = innerHeight, resizeTimer = 0;
+addEventListener('resize', function () {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(function () {
+    // ignore the mobile URL bar wobble
+    if (innerWidth === lastW && Math.abs(innerHeight - lastH) < 140 && coarse) return;
+    lastW = innerWidth; lastH = innerHeight; scheduleMeasure();
+  }, 120);
+});
+if ('ResizeObserver' in window) new ResizeObserver(scheduleMeasure).observe(document.body);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(scheduleMeasure);
+measure();
+
+/* =====================================================================
+   WebGL: one draw call, 5 attributes, two shapes bound at a time
+   ===================================================================== */
+const canvas = $('#scene');
+let gl = null;
+try {
+  const opts = { alpha: false, antialias: false, depth: false, stencil: false, premultipliedAlpha: false, powerPreference: 'high-performance' };
+  gl = canvas.getContext('webgl', opts) || canvas.getContext('experimental-webgl', opts);
+} catch (err) { gl = null; }
+function noGL() {
+  document.documentElement.classList.add('no-webgl');
+  const loop = function () { updateUI(scrollToS(scrollY)); requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+}
+if (!gl) { noGL(); return; }
+
+const VERT = [
+  'precision highp float;',
+  'attribute vec3 aFrom; attribute vec3 aTo; attribute vec4 aColFrom; attribute vec4 aColTo; attribute vec4 aRand;',
+  'uniform mat4 uProj, uView, uMFrom, uMTo;',
+  'uniform vec3 uCFrom, uCTo, uMouse, uEnergy;',
+  'uniform vec4 uPulse;',
+  'uniform vec2 uSize, uAlpha;',
+  'uniform float uMix, uTime, uIntro, uSweep, uSwirl, uBurst, uDpr, uPulseAmp, uVel, uMotion, uCam;',
+  'varying vec3 vColor; varying float vAlpha;',
+  'vec3 flow(vec3 p, float t){',
+  '  return vec3(sin(p.y*1.31 + t*0.9) + 0.6*sin(p.z*2.13 - t*0.7),',
+  '              sin(p.z*1.73 + t*1.1) + 0.6*sin(p.x*1.91 + t*0.5),',
+  '              sin(p.x*1.57 - t*0.8) + 0.6*sin(p.y*2.37 + t*0.6));',
+  '}',
+  'void main(){',
+  '  vec3 pf = (uMFrom * vec4(aFrom, 1.0)).xyz;',
+  '  vec3 pt = (uMTo * vec4(aTo, 1.0)).xyz;',
+  '  float delay = mix(aRand.x, aRand.w, uSweep);',
+  '  float t = clamp((uMix - delay*0.5) * 2.0, 0.0, 1.0);',
+  '  float e = t < 0.5 ? 4.0*t*t*t : 1.0 - pow(2.0 - 2.0*t, 3.0)*0.5;',
+  '  float bump = sin(t * 3.14159265);',
+  '  float m = bump * uMotion;',
+  '  vec3 c = mix(uCFrom, uCTo, e);',
+  '  vec3 p = mix(pf, pt, e) - c;',
+  '  float ang = m * uSwirl * (0.55 + aRand.z*0.9);',
+  '  float sa = sin(ang), ca = cos(ang);',
+  '  p.xz = vec2(ca*p.x - sa*p.z, sa*p.x + ca*p.z);',
+  '  p += normalize(p + vec3(0.0001, 0.0002, 0.0003)) * m * uBurst * (0.35 + aRand.y);',
+  '  p += c;',
+  '  p += flow(p*0.85 + aRand.xyz*3.0, uTime*0.7) * m * 0.42;',
+  '  p += flow(p*1.9 + aRand.w*9.0, uTime*0.8) * (0.012 + uVel*0.05) * uMotion;',
+  '  float it = clamp((uIntro - aRand.w*0.45) / 0.55, 0.0, 1.0);',
+  '  float ie = 1.0 - pow(1.0 - it, 4.0);',
+  '  vec3 dust = (aRand.xyz*2.0 - 1.0) * vec3(7.5, 4.6, 3.0) + flow(aRand.zyx*5.0, uTime*0.5)*0.3;',
+  '  p = mix(dust, p, ie);',
+  '  vec2 dm = p.xy - uMouse.xy;',
+  '  float dd = length(dm);',
+  '  float force = uMouse.z * (1.0 - smoothstep(0.0, 1.15, dd));',
+  '  p.xy += dm / (dd + 0.001) * force * 0.5;',
+  '  p.z += force * 0.35;',
+  '  if (uPulse.w >= 0.0) {',
+  '    vec3 dp = p - uPulse.xyz;',
+  '    float d = length(dp);',
+  '    float q = (d - uPulse.w*3.6) * 1.8;',
+  '    float ring = exp(-q*q) * exp(-uPulse.w*1.3);',
+  '    p += dp / (d + 0.001) * ring * uPulseAmp;',
+  '  }',
+  '  vec4 mv = uView * vec4(p, 1.0);',
+  '  gl_Position = uProj * mv;',
+  '  float dist = max(0.5, -mv.z);',
+  '  float size = mix(uSize.x, uSize.y, e) * (0.6 + aRand.y*0.75) * (uCam / dist) * (1.0 + bump*0.45);',
+  '  gl_PointSize = max(size * uDpr, 1.0);',
+  '  vec4 col = mix(aColFrom, aColTo, e);',
+  '  vColor = mix(col.rgb, uEnergy, bump*0.45);',
+  '  float fog = clamp(1.0 - (dist - uCam + 1.0) / 5.0, 0.28, 1.0);',
+  '  vAlpha = 1.22 * col.a * mix(uAlpha.x, uAlpha.y, e) * fog * (0.7 + aRand.z*0.3) * (1.0 - bump*0.25) * mix(0.3, 1.0, ie);',
+  '}'
+].join('\n');
+
+const FRAG = [
+  '#ifdef GL_FRAGMENT_PRECISION_HIGH',
+  'precision highp float;',
+  '#else',
+  'precision mediump float;',
+  '#endif',
+  'varying vec3 vColor; varying float vAlpha;',
+  'float hash(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }',
+  'void main(){',
+  '  vec2 q = gl_PointCoord - 0.5;',
+  '  float a = (1.0 - smoothstep(0.24, 0.5, length(q))) * vAlpha;',
+  '  a *= 0.78 + 0.22 * hash(gl_FragCoord.xy);',
+  '  if (a < 0.004) discard;',
+  '  gl_FragColor = vec4(mix(vec3(1.0), vColor, min(a, 1.0)), 1.0);',
+  '}'
+].join('\n');
+
+function compile(type, src) {
+  const sh = gl.createShader(type);
+  gl.shaderSource(sh, src); gl.compileShader(sh);
+  if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) { console.warn(gl.getShaderInfoLog(sh)); return null; }
+  return sh;
+}
+const vs = compile(gl.VERTEX_SHADER, VERT), fs = compile(gl.FRAGMENT_SHADER, FRAG);
+const prog = gl.createProgram();
+if (vs && fs) { gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog); }
+if (!vs || !fs || !gl.getProgramParameter(prog, gl.LINK_STATUS)) { console.warn(gl.getProgramInfoLog(prog)); noGL(); return; }
+gl.useProgram(prog);
+
+const A = {};
+['aFrom', 'aTo', 'aColFrom', 'aColTo', 'aRand'].forEach(function (n) {
+  A[n] = gl.getAttribLocation(prog, n);
+  if (A[n] >= 0) gl.enableVertexAttribArray(A[n]);
+});
+const U = {};
+['uProj', 'uView', 'uMFrom', 'uMTo', 'uCFrom', 'uCTo', 'uMouse', 'uEnergy', 'uPulse', 'uSize', 'uAlpha', 'uMix', 'uTime',
+ 'uIntro', 'uSweep', 'uSwirl', 'uBurst', 'uDpr', 'uPulseAmp', 'uVel', 'uMotion', 'uCam'].forEach(function (n) {
+  U[n] = gl.getUniformLocation(prog, n);
+});
+
+/* buffers: one position + one color buffer per shape, built once */
+const posBufs = [], colBufs = [];
+function upload(k, sh) {
+  if (!posBufs[k]) { posBufs[k] = gl.createBuffer(); colBufs[k] = gl.createBuffer(); }
+  gl.bindBuffer(gl.ARRAY_BUFFER, posBufs[k]); gl.bufferData(gl.ARRAY_BUFFER, sh.P, gl.STATIC_DRAW);
+  gl.bindBuffer(gl.ARRAY_BUFFER, colBufs[k]); gl.bufferData(gl.ARRAY_BUFFER, sh.C, gl.STATIC_DRAW);
+}
+let randBuf = null;
+function buildAll() {
+  for (let k = 0; k < DEFS.length; k++) upload(k, prepare(k, COUNT));
+  const randArr = new Float32Array(COUNT * 4);
+  for (let i = 0; i < COUNT; i++) {
+    randArr[i * 4] = rng(); randArr[i * 4 + 1] = rng(); randArr[i * 4 + 2] = rng();
+    randArr[i * 4 + 3] = Math.min(1, Math.max(0, i / COUNT + (rng() - 0.5) * 0.03));
+  }
+  randBuf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, randBuf); gl.bufferData(gl.ARRAY_BUFFER, randArr, gl.STATIC_DRAW);
+  gl.vertexAttribPointer(A.aRand, 4, gl.FLOAT, false, 0, 0);
+  // rebuild the text forms once the real fonts arrive
+  if (document.fonts && document.fonts.load) {
+    const timeout = new Promise(function (res) { setTimeout(res, 3000); });
+    Promise.race([
+      Promise.all([
+        document.fonts.load('800 200px "JetBrains Mono"', '</>'),
+        document.fonts.load('900 200px "Sofia Sans Extra Condensed"', 'RADIANT')
+      ]),
+      timeout
+    ]).then(function () { upload(1, prepare(1, COUNT)); upload(6, prepare(6, COUNT)); }).catch(function () {});
+  }
+}
+
+gl.disable(gl.DEPTH_TEST);
+gl.enable(gl.BLEND);
+gl.blendFunc(gl.DST_COLOR, gl.ZERO); // multiply: ink on paper, like a riso print
+gl.clearColor(PAPER[0], PAPER[1], PAPER[2], 1);
+
+/* ---------- camera ---------- */
+const FOV = 35 * Math.PI / 180, CAM = 10, SIZE_K = 3.3;
+let cw = 1, ch = 1, dpr = 1, halfH = 1, halfW = 1;
+function resizeGL() {
+  cw = canvas.clientWidth || innerWidth; ch = canvas.clientHeight || innerHeight;
+  const W = Math.max(1, Math.round(cw * dpr)), H = Math.max(1, Math.round(ch * dpr));
+  if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
+  gl.viewport(0, 0, W, H);
+  halfH = Math.tan(FOV / 2) * CAM; halfW = halfH * cw / ch;
+  gl.uniformMatrix4fv(U.uProj, false, M4.persp(FOV, cw / ch, 0.1, 100));
+  gl.uniformMatrix4fv(U.uView, false, M4.trs(0, 0, -CAM, 1));
+  gl.clear(gl.COLOR_BUFFER_BIT); // never flash an empty buffer: start on paper
+}
+dpr = Math.min(window.devicePixelRatio || 1, innerWidth < 700 ? 1.75 : 2);
+resizeGL();
+onLayout = resizeGL;
+
+/* ---------- pointer ---------- */
+let mX = -9999, mY = -9999, nX = 0, nY = 0, lastMove = -99, inside = false;
+let parX = 0, parY = 0, force = 0;
+let pulse = null;
+addEventListener('pointermove', function (e) {
+  mX = e.clientX; mY = e.clientY; lastMove = time; inside = true;
+  if (e.pointerType === 'mouse') { nX = mX / cw * 2 - 1; nY = mY / ch * 2 - 1; }
+}, { passive: true });
+document.addEventListener('mouseout', function (e) { if (!e.relatedTarget) inside = false; });
+addEventListener('pointerup', function (e) { if (e.pointerType !== 'mouse') inside = false; }, { passive: true });
+function toWorld(x, y) { return [(x / cw * 2 - 1) * halfW, -(y / ch * 2 - 1) * halfH]; }
+addEventListener('click', function (e) {
+  if (e.target.closest('a, button, input, textarea, select, label, form, .success')) return;
+  const w = toWorld(e.clientX, e.clientY);
+  pulse = { x: w[0], y: w[1], z: 0, t0: time, amp: 0.6 };
+});
+celebrate = function () {
+  const c = centers[LAST];
+  pulse = { x: c[0], y: c[1], z: 0, t0: time, amp: 1.25 };
+};
+
+/* ---------- frame ---------- */
+const MF = new Float32Array(16), MT = new Float32Array(16);
+const mA = new Float32Array(16), mB = new Float32Array(16), mPar = new Float32Array(16), mTS = new Float32Array(16), mTmp = new Float32Array(16);
+const centers = DEFS.map(function () { return [0, 0, 0]; });
+const sizes = DEFS.map(function () { return [2, 1]; });
+
+function modelFor(k, out) {
+  const def = DEFS[k], sl = slots[k], wpp = (2 * halfH) / ch;
+  const drift = (scrollY - stops[k]) * (k === LAST && scrollY > stops[k] ? 1 : 0.22);
+  const x = (sl.cx - cw / 2) * wpp;
+  const y = (ch / 2 - (sl.cy - drift)) * wpp;
+  const sc = Math.max(0.05, Math.min(sl.w * wpp / def.ext.w, sl.h * wpp / def.ext.h) * 0.94);
+  M4.rotY(reduceMotion ? 0 : def.spin(time), mA);
+  M4.mul(def.tilt, mA, mTS);
+  M4.rotX(parY, mA); M4.rotY(parX, mB); M4.mul(mB, mA, mPar);
+  M4.mul(mPar, mTS, mTmp);
+  M4.trs(x, y, 0, sc, mA);
+  M4.mul(mA, mTmp, out);
+  centers[k][0] = x; centers[k][1] = y; centers[k][2] = 0;
+  const raw = SIZE_K * sc * (1 / wpp) / Math.sqrt(COUNT) * def.dens;
+  sizes[k][0] = Math.min(3.4, Math.max(1.35, raw));
+  sizes[k][1] = raw < 1.35 ? Math.max(0.45, (raw / 1.35) * (raw / 1.35)) : 1;
+}
+function bind(loc, buf, n) { gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.vertexAttribPointer(loc, n, gl.FLOAT, false, 0, 0); }
+function smooth(a, b, x) { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); }
+
+let time = 0, last = performance.now(), start = last;
+let sCur = scrollToS(scrollY), sPrev = sCur, vel = 0;
+let slowFrames = 0, frames = 0;
+gl.uniform3f(U.uEnergy, INK.pink[0], INK.pink[1], INK.pink[2]);
+gl.uniform1f(U.uCam, CAM);
+gl.uniform1f(U.uMotion, reduceMotion ? 0 : 1);
+
+function frame(now) {
+  const rawDt = (now - last) / 1000, dt = Math.min(0.05, rawDt);
+  last = now; time += dt;
+
+  // adaptive quality: drop resolution if the GPU struggles
+  frames++;
+  if (frames > 30 && frames < 240 && rawDt > 0.028) slowFrames++;
+  if (slowFrames > 40 && dpr > 1) { dpr = Math.max(1, dpr * 0.7); slowFrames = 0; resizeGL(); }
+
+  const sT = scrollToS(scrollY);
+  sCur += (sT - sCur) * (reduceMotion ? 1 : 1 - Math.exp(-dt * 5));
+  if (Math.abs(sT - sCur) < 1e-4) sCur = sT;
+  vel += (Math.min(1, Math.abs(sCur - sPrev) / Math.max(dt, 1e-3) / 1.6) - vel) * 0.12;
+  sPrev = sCur;
+
+  const i = Math.min(LAST - 1, Math.max(0, Math.floor(sCur)));
+  const mix = smooth(0.1, 0.9, sCur - i);
+
+  parX += ((inside ? nX : 0) * 0.22 - parX) * (1 - Math.exp(-dt * 3));
+  parY += ((inside ? nY : 0) * 0.14 - parY) * (1 - Math.exp(-dt * 3));
+  const want = inside && time - lastMove < 1.2 ? 1 : 0;
+  force += (want - force) * (1 - Math.exp(-dt * 4));
+
+  modelFor(i, MF); modelFor(i + 1, MT);
+  bind(A.aFrom, posBufs[i], 3); bind(A.aTo, posBufs[i + 1], 3);
+  bind(A.aColFrom, colBufs[i], 4); bind(A.aColTo, colBufs[i + 1], 4);
+
+  const st = STYLES[i];
+  gl.uniformMatrix4fv(U.uMFrom, false, MF);
+  gl.uniformMatrix4fv(U.uMTo, false, MT);
+  gl.uniform3f(U.uCFrom, centers[i][0], centers[i][1], 0);
+  gl.uniform3f(U.uCTo, centers[i + 1][0], centers[i + 1][1], 0);
+  gl.uniform1f(U.uMix, mix);
+  gl.uniform1f(U.uTime, time);
+  gl.uniform1f(U.uIntro, reduceMotion ? 1 : Math.min(1, (now - start) / 2600));
+  gl.uniform1f(U.uSweep, st.sweep);
+  gl.uniform1f(U.uSwirl, st.swirl);
+  gl.uniform1f(U.uBurst, st.burst);
+  gl.uniform2f(U.uSize, sizes[i][0], sizes[i + 1][0]);
+  gl.uniform2f(U.uAlpha, sizes[i][1], sizes[i + 1][1]);
+  gl.uniform1f(U.uDpr, dpr);
+  const mw = toWorld(mX, mY);
+  gl.uniform3f(U.uMouse, mw[0], mw[1], reduceMotion ? 0 : force);
+  if (pulse && time - pulse.t0 < 3 && !reduceMotion) {
+    gl.uniform4f(U.uPulse, pulse.x, pulse.y, pulse.z, time - pulse.t0);
+    gl.uniform1f(U.uPulseAmp, pulse.amp);
+  } else {
+    gl.uniform4f(U.uPulse, 0, 0, 0, -1);
+  }
+  gl.uniform1f(U.uVel, vel);
+
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.drawArrays(gl.POINTS, 0, COUNT);
+
+  updateUI(sCur);
+  requestAnimationFrame(frame);
+}
+canvas.addEventListener('webglcontextlost', function (e) { e.preventDefault(); noGL(); });
+// let the page paint first, then build the forms and start the show
+setTimeout(function () {
+  buildAll();
+  measure(); resizeGL();
+  last = start = performance.now();
+  sCur = sPrev = scrollToS(scrollY);
+  requestAnimationFrame(frame);
+}, 60);
+})();
+</script>
+</body>
+</html>

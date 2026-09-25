@@ -91,7 +91,7 @@ export function Services() {
       <div className="services-pin">
         <div className="services-track">
           <div className="services-intro">
-            <SectionLabel index="03" label="Услуги" />
+            <SectionLabel id="services" />
             <h2 className="h2" data-split>
               Что мы
               <br />

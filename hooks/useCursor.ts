@@ -58,6 +58,8 @@ export function useCursor() {
       ring.dataset.state = state;
       dot.dataset.state = state;
       label.textContent = text;
+      // Over an iframe the page stops receiving pointer moves, so hide ours and let the demo's cursor take over.
+      document.documentElement.classList.toggle("cursor-off", state === "hide");
     };
 
     const onDown = () => gsap.to(ring, { scale: 0.82, duration: 0.2 });

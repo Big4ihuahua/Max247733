@@ -6,7 +6,7 @@ import { BriefForm } from "./BriefForm";
 export function Contact() {
   return (
     <section id="contact" data-section="contact" className="section contact">
-      <SectionLabel index="11" label="Заявка" />
+      <SectionLabel id="contact" />
       <h2 className="contact-title">
         <span className="contact-line" data-reveal>
           <span className="fill-hover">Давайте создадим</span>

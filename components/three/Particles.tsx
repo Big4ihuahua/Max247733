@@ -189,7 +189,7 @@ export function Particles({ count, mobile }: { count: number; mobile: boolean })
       const visH = 2 * Math.tan((cam.fov * Math.PI) / 360) * (cam.position.z - tz);
       tx = ((r.left + r.width / 2) / vw - 0.5) * visH * (vw / vh);
       ty = -((r.top + r.height / 2) / vh - 0.5) * visH;
-      ts = ((r.height / vh) * visH) / L.anchorSize;
+      ts = ((Math.min(r.width, r.height) / vh) * visH) / L.anchorSize;
       follow = 7;
     }
     g.position.x = damp(g.position.x, tx, follow, dt);

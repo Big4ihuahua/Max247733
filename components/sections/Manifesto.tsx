@@ -32,7 +32,7 @@ export function Manifesto() {
 
   return (
     <section id="manifesto" ref={root} data-section="manifesto" className="section manifesto">
-      <SectionLabel index="02" label="Манифест" />
+      <SectionLabel id="manifesto" />
       <p className="manifesto-text">
         Мы не просто пишем код — мы превращаем <em className="text-mint">идею</em> в <span className="text-gradient">продукт,</span>{" "}
         которым люди любят пользоваться.

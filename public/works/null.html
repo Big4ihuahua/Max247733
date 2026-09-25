@@ -1,0 +1,1431 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#080a0e">
+<title>NULL — создавай невозможное</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Unbounded:wght@400;500;600;700;800;900&display=swap');
+
+:root {
+  --bg: #080a0e;
+  --panel: #101319;
+  --text: #f0f1f5;
+  --muted: #898e9e;
+  --line: rgba(255,255,255,.10);
+  --accent: #d3ff69;
+  --accent-rgb: 211,255,105;
+  --cyan: #81dfff;
+  --violet: #b49aff;
+  --radius: 24px;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 95px; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Manrope', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+body.ice {
+  --accent: #81dfff;
+  --accent-rgb: 129,223,255;
+}
+body.rose {
+  --accent: #ff9bc9;
+  --accent-rgb: 255,155,201;
+}
+::selection { background: var(--accent); color: #080a0e; }
+button, a, input { -webkit-tap-highlight-color: transparent; }
+button, input { font: inherit; }
+button, a { touch-action: manipulation; }
+button { cursor: pointer; }
+a { color: inherit; text-decoration: none; }
+button { color: inherit; }
+button:focus-visible, a:focus-visible, input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 5px;
+}
+button:disabled { cursor: wait; opacity: .65; }
+.wrap { width: min(1240px, calc(100% - 64px)); margin-inline: auto; }
+.mono { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace; }
+.accent { color: var(--accent); }
+.muted { color: var(--muted); }
+.grid-bg {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.023) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.023) 1px, transparent 1px);
+  background-size: 80px 80px;
+  pointer-events: none;
+  z-index: -1;
+}
+.noise {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: .035;
+  z-index: 30;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='white' filter='url(%23n)' opacity='.5' d='M0 0h180v180H0z'/%3E%3C/svg%3E");
+}
+.scroll-progress {
+  height: 2px;
+  position: fixed;
+  inset: 0 auto auto 0;
+  width: 0;
+  background: var(--accent);
+  box-shadow: 0 0 15px var(--accent);
+  z-index: 100;
+}
+.header {
+  height: 88px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  border-bottom: 1px solid var(--line);
+  background: rgba(8,10,14,.78);
+  backdrop-filter: blur(22px);
+}
+.nav { height: 100%; display: flex; align-items: center; gap: 42px; }
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Unbounded', sans-serif;
+  font-weight: 800;
+  font-size: 24px;
+  letter-spacing: -2px;
+}
+.logo-icon { color: var(--accent); font-size: 30px; font-weight: 400; }
+.logo sup { color: var(--muted); font: 10px monospace; align-self: flex-start; margin-top: 7px; letter-spacing: 0; }
+.nav-links { display: flex; gap: 28px; margin-left: auto; }
+.nav-links a { color: #acb0bd; font-size: 12px; transition: color .2s; }
+.nav-links a:hover { color: var(--accent); }
+.nav-actions { display: flex; align-items: center; gap: 13px; }
+.theme-button {
+  height: 36px; width: 36px;
+  display: grid; place-items: center;
+  border: 1px solid var(--line);
+  background: transparent;
+  border-radius: 50%;
+}
+.theme-button span {
+  height: 13px; width: 13px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 15px rgba(var(--accent-rgb),.3);
+}
+.nav-cta {
+  padding: 11px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 11px;
+  background: rgba(255,255,255,.035);
+}
+.menu-button { display: none; background: none; border: 0; font-size: 24px; }
+.hero { min-height: 760px; position: relative; isolation: isolate; }
+.hero-content { position: relative; z-index: 2; padding-top: 102px; pointer-events: none; }
+.hero-content a, .hero-content button { pointer-events: auto; }
+.eyebrow {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  display: flex; align-items: center; gap: 10px;
+}
+.live-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent);
+  animation: blink 2.5s infinite;
+}
+@keyframes blink { 50% { opacity: .4; } }
+.hero h1 {
+  font-family: 'Unbounded', sans-serif;
+  font-size: clamp(48px, 6.2vw, 86px);
+  line-height: 1.13;
+  font-weight: 700;
+  letter-spacing: -5px;
+  margin: 32px 0 25px;
+  max-width: 780px;
+}
+.hero h1 .outline {
+  color: transparent;
+  -webkit-text-stroke: 1px #727987;
+}
+.hero h1 .last-line { display: block; color: var(--accent); }
+.hero-description {
+  max-width: 405px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.85;
+  margin: 0 0 30px;
+}
+.hero-buttons { display: flex; gap: 14px; align-items: center; }
+.btn {
+  display: inline-flex;
+  align-items: center; justify-content: center; gap: 25px;
+  min-height: 51px;
+  padding: 0 24px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: rgba(16,19,25,.7);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  transition: transform .25s, background .25s, box-shadow .25s;
+}
+.btn:hover { transform: translateY(-3px); background: #1b2029; }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: #10140a; }
+.btn-primary:hover {
+  background: var(--accent);
+  box-shadow: 0 8px 40px rgba(var(--accent-rgb),.2);
+}
+.btn .arrow { font-size: 20px; font-weight: 400; }
+.hero-note { margin-top: 25px; display: flex; gap: 18px; color: #6b7280; font-size: 10px; }
+.hero-note span::before { content: '✓'; color: var(--accent); margin-right: 7px; }
+#universe { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; }
+.hero-glow {
+  position: absolute;
+  width: 620px; height: 620px;
+  right: -80px; top: 20px;
+  background: radial-gradient(ellipse, rgba(var(--accent-rgb),.055), transparent 65%);
+  pointer-events: none;
+  z-index: -2;
+}
+.orbit-label {
+  position: absolute; right: 0; top: 77px;
+  font-size: 9px; color: #858c9b;
+  display: flex; align-items: center; gap: 10px;
+}
+.orbit-label::before { content: ''; width: 30px; height: 1px; background: var(--accent); }
+.float-label {
+  position: absolute;
+  right: 35px; top: 493px;
+  padding: 12px 15px;
+  font-size: 10px;
+  color: #b2b8c2;
+  background: rgba(16,19,25,.65);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  backdrop-filter: blur(12px);
+  transform: rotate(-4deg);
+  pointer-events: none;
+}
+.float-label b { color: var(--accent); font-weight: 400; }
+.hero-bottom {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 70px;
+  padding-bottom: 35px;
+  gap: 25px;
+}
+.shape-switch {
+  display: flex;
+  gap: 4px;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(8,10,14,.75);
+  backdrop-filter: blur(15px);
+}
+.shape-switch button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  padding: 10px 13px;
+  font-size: 10px;
+  border-radius: 6px;
+  transition: .25s;
+}
+.shape-switch button.active { color: #10140a; background: var(--accent); }
+.shape-switch button:not(.active):hover { color: white; background: rgba(255,255,255,.06); }
+.render-stats { display: flex; gap: 32px; color: #777e8e; font-size: 9px; }
+.render-stats b { display: block; margin-bottom: 5px; color: #d1d5df; font-size: 15px; font-weight: 400; }
+.ticker {
+  border-block: 1px solid var(--line);
+  overflow: hidden;
+  padding: 21px 0;
+  background: rgba(255,255,255,.018);
+}
+.ticker-track { display: flex; width: max-content; animation: marquee 35s linear infinite; }
+.ticker-group { display: flex; align-items: center; flex-shrink: 0; }
+.ticker span {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 12px; letter-spacing: 1px; color: #787e8a;
+  margin: 0 30px;
+}
+.ticker i { font-size: 13px; color: var(--accent); font-style: normal; }
+@keyframes marquee { to { transform: translateX(-50%); } }
+.section { padding: 100px 0; }
+.section-head {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  gap: 35px; margin-bottom: 37px;
+}
+.section-tag { color: var(--accent); font-size: 10px; letter-spacing: 2px; margin-bottom: 18px; }
+h2 {
+  font-family: 'Unbounded', sans-serif;
+  font-size: clamp(26px, 3.2vw, 43px);
+  font-weight: 500; line-height: 1.35; letter-spacing: -1.7px;
+  margin: 0;
+}
+h2 span { color: #69707e; }
+.section-head > p { color: var(--muted); font-size: 12px; line-height: 1.9; max-width: 285px; margin: 0 0 3px; }
+.bento { display: grid; grid-template-columns: 1.15fr 1fr 1fr; gap: 17px; }
+.card {
+  position: relative; overflow: hidden;
+  border: 1px solid var(--line);
+  background: linear-gradient(145deg, rgba(23,27,35,.8), rgba(13,16,22,.9));
+  border-radius: var(--radius);
+  padding: 29px;
+  transition: border-color .3s, transform .3s;
+}
+.card:hover { border-color: rgba(var(--accent-rgb),.35); transform: translateY(-4px); }
+.card::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(300px circle at var(--mx,50%) var(--my,0%), rgba(var(--accent-rgb),.065), transparent 70%);
+  pointer-events: none;
+}
+.card-number { font-size: 10px; color: #697180; }
+.card h3 { font-size: 19px; font-weight: 600; letter-spacing: -.6px; margin: 16px 0 10px; }
+.card p { font-size: 12px; color: var(--muted); line-height: 1.9; margin: 0; }
+.card-main { grid-row: span 2; min-height: 480px; display: flex; flex-direction: column; }
+.card-main h3 { font-size: 26px; }
+.card-visual { position: relative; height: 270px; display: grid; place-items: center; flex: 1; }
+.code-planet {
+  position: relative; width: 175px; height: 175px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #303d26, #111910 55%, #060a08);
+  border: 1px solid rgba(var(--accent-rgb),.35);
+  display: grid; place-items: center;
+  box-shadow: inset -12px -10px 30px #000, 0 0 60px rgba(var(--accent-rgb),.06);
+}
+.code-planet::before, .code-planet::after {
+  content: ''; position: absolute;
+  width: 265px; height: 85px;
+  border: 1px solid rgba(var(--accent-rgb),.38);
+  border-radius: 50%;
+  transform: rotate(-32deg);
+}
+.code-planet::after { transform: rotate(45deg); border-color: rgba(129,223,255,.2); }
+.planet-symbol { font: 52px monospace; color: var(--accent); text-shadow: 0 0 30px rgba(var(--accent-rgb),.5); }
+.orbit-dot {
+  position: absolute; left: 15%; top: 36%; width: 7px; height: 7px;
+  border-radius: 50%; background: var(--accent); box-shadow: 0 0 20px var(--accent);
+}
+.tag-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.tag { font-size: 9px; color: #a1a8b5; border: 1px solid var(--line); padding: 6px 8px; border-radius: 5px; }
+.mini-code {
+  margin-top: 23px;
+  font: 11px/1.9 Consolas, monospace;
+  background: rgba(0,0,0,.2);
+  padding: 15px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.04);
+}
+.syntax-purple { color: var(--violet); }
+.syntax-cyan { color: var(--cyan); }
+.syntax-green { color: var(--accent); }
+.syntax-muted { color: #596375; }
+.card-compact { min-height: 220px; }
+.card-icon {
+  width: 39px; height: 39px; display: grid; place-items: center;
+  background: rgba(180,154,255,.08); border: 1px solid rgba(180,154,255,.15);
+  color: var(--violet); border-radius: 10px; font: 19px monospace;
+}
+.card-icon.cyan { color: var(--cyan); background: rgba(129,223,255,.06); border-color: rgba(129,223,255,.15); }
+.card-wide { grid-column: span 2; display: flex; align-items: center; gap: 25px; }
+.activity { display: grid; grid-template-columns: repeat(12, 9px); gap: 4px; flex-shrink: 0; transform: rotate(-5deg); }
+.activity i { width: 9px; height: 9px; background: rgba(var(--accent-rgb),.07); border-radius: 2px; }
+.activity i:nth-child(3n) { background: rgba(var(--accent-rgb),.3); }
+.activity i:nth-child(7n) { background: var(--accent); box-shadow: 0 0 8px rgba(var(--accent-rgb),.2); }
+.activity i:nth-child(11n) { background: rgba(var(--accent-rgb),.6); }
+.learning { border-top: 1px solid var(--line); }
+.learning-grid { display: grid; grid-template-columns: .9fr 1.1fr; gap: 60px; align-items: start; }
+.path-list { display: grid; gap: 10px; margin-top: 32px; }
+.path {
+  width: 100%; display: flex; align-items: center; gap: 16px; text-align: left;
+  padding: 19px 20px; border-radius: 12px;
+  border: 1px solid var(--line); background: rgba(17,20,27,.6);
+  transition: .25s;
+}
+.path:hover { background: #171c24; }
+.path.active { border-color: rgba(var(--accent-rgb),.45); background: rgba(var(--accent-rgb),.04); }
+.path-icon { font: 17px monospace; width: 37px; color: #9198a7; }
+.path.active .path-icon { color: var(--accent); }
+.path strong { font-size: 13px; display: block; margin-bottom: 5px; font-weight: 600; }
+.path small { font-size: 10px; color: var(--muted); }
+.path-arrow { margin-left: auto; color: #657080; }
+.path.active .path-arrow { color: var(--accent); transform: rotate(-45deg); }
+.editor {
+  border-radius: 17px; border: 1px solid #2b303b; overflow: hidden;
+  background: #0d1016;
+  box-shadow: 0 25px 90px rgba(0,0,0,.3);
+}
+.editor-bar { display: flex; align-items: center; gap: 7px; height: 48px; padding: 0 18px; border-bottom: 1px solid var(--line); background: #151820; }
+.window-dot { width: 8px; height: 8px; border-radius: 50%; background: #ff6a6a; }
+.window-dot:nth-child(2) { background: #e8c15b; }
+.window-dot:nth-child(3) { background: #77c58d; }
+.editor-title { margin-left: 13px; color: #7e8593; font-size: 10px; }
+.editor-copy { margin-left: auto; border: 0; background: transparent; color: #929aa9; font-size: 10px; }
+.editor-copy:hover { color: var(--accent); }
+.editor-tab { border-bottom: 1px solid var(--line); height: 43px; display: flex; }
+.editor-tab span { display: flex; align-items: center; gap: 9px; padding: 0 19px; border-right: 1px solid var(--line); border-top: 1px solid var(--accent); font-size: 10px; color: #c0c5d0; background: #0d1016; }
+.editor-tab b { font-weight: 400; color: var(--accent); }
+.code-body { padding: 24px 14px; min-height: 283px; overflow-x: auto; }
+.code-line { display: flex; font: 12px/2 Consolas, monospace; white-space: pre; }
+.line-number { color: #394353; width: 35px; flex-shrink: 0; user-select: none; text-align: right; padding-right: 16px; }
+.code-text { color: #d0d8e7; }
+.editor-output { border-top: 1px solid var(--line); padding: 18px 24px; background: rgba(0,0,0,.12); }
+.output-label { font-size: 9px; letter-spacing: 1px; color: #657080; margin-bottom: 10px; }
+#output-text { font: 11px/1.7 Consolas, monospace; color: var(--accent); min-height: 37px; }
+.editor-status { display: flex; justify-content: space-between; align-items: center; padding: 10px 17px; font: 9px monospace; color: #848d9f; border-top: 1px solid var(--line); }
+.run-button { border: 0; background: rgba(var(--accent-rgb),.1); color: var(--accent); padding: 7px 12px; border-radius: 5px; font: 10px monospace; }
+.syllabus { margin-top: 19px; display: flex; flex-wrap: wrap; gap: 7px; }
+.lab-banner {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(var(--accent-rgb),.2);
+  border-radius: 26px;
+  background: radial-gradient(ellipse at 90% 50%, rgba(var(--accent-rgb),.10), transparent 60%), #10150f;
+  padding: 56px;
+  display: flex; align-items: center; justify-content: space-between; gap: 30px;
+}
+.lab-banner::before {
+  content: '>';
+  position: absolute; right: 270px; top: -55px;
+  font: 300px monospace; color: rgba(var(--accent-rgb),.035);
+  transform: rotate(-12deg);
+}
+.lab-banner h2 { font-size: clamp(25px, 3vw, 38px); }
+.lab-banner p { font-size: 12px; color: #8a9885; line-height: 1.9; margin: 17px 0 0; max-width: 470px; }
+.lab-banner .btn { flex-shrink: 0; z-index: 1; }
+.footer { margin-top: 95px; border-top: 1px solid var(--line); padding: 34px 0; }
+.footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.footer-note { font-size: 10px; color: #697180; }
+.footer-status { display: flex; align-items: center; gap: 8px; font-size: 9px; color: #929b8b; }
+.footer-status .live-dot { width: 5px; height: 5px; }
+.reveal { opacity: 0; transform: translateY(24px); transition: opacity .8s, transform .8s; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.toast {
+  position: fixed; bottom: 25px; left: 50%;
+  transform: translate(-50%, 20px); opacity: 0;
+  pointer-events: none; z-index: 100;
+  padding: 13px 20px; border: 1px solid rgba(var(--accent-rgb),.3);
+  background: #161d16; color: var(--accent);
+  border-radius: 10px; font: 11px monospace;
+  transition: .3s; text-align: center;
+}
+.toast.show { transform: translate(-50%, 0); opacity: 1; }
+dialog {
+  width: min(720px, calc(100% - 28px)); padding: 0;
+  border: 1px solid #394335; border-radius: 16px;
+  color: var(--text); background: #0a0e0b;
+  box-shadow: 0 40px 150px #000;
+}
+dialog::backdrop { background: rgba(0,0,0,.78); backdrop-filter: blur(9px); }
+.terminal-head {
+  padding: 17px 22px; display: flex; justify-content: space-between; align-items: center;
+  background: #141a14; border-bottom: 1px solid #263025;
+  font: 11px monospace; color: #a4b39b;
+}
+.terminal-close { border: 0; color: #b2b9ad; background: transparent; font-size: 21px; padding: 0 4px; }
+.terminal-log { padding: 24px; height: 340px; overflow-y: auto; font: 12px/1.9 Consolas, monospace; }
+.terminal-log p { margin: 0 0 8px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.terminal-log .response { color: #93a08b; }
+.terminal-log .command { color: var(--accent); }
+.terminal-form { display: flex; gap: 12px; padding: 17px 24px; border-top: 1px solid #263025; align-items: center; }
+.terminal-prompt { color: var(--accent); font: 12px monospace; }
+.terminal-input { width: 100%; background: transparent; border: 0; outline: none; color: #ebf3e7; font: 12px monospace; min-width: 0; }
+.terminal-input:focus-visible { outline: none; }
+.terminal-submit { background: transparent; border: 0; color: var(--accent); font: 18px monospace; }
+
+@media (min-width: 1500px) {
+  .hero h1 { font-size: 86px; }
+}
+@media (max-width: 1050px) {
+  .nav { gap: 23px; }
+  .nav-links { gap: 18px; }
+  .hero h1 { font-size: 65px; }
+  .hero-content { padding-top: 85px; }
+  .hero { min-height: 740px; }
+  .orbit-label { right: 15px; }
+  .float-label { right: 0; top: 520px; }
+  .bento { grid-template-columns: 1fr 1fr; }
+  .card-main { grid-row: span 2; }
+  .card-wide { grid-column: span 2; justify-content: center; }
+  .learning-grid { gap: 30px; }
+  .lab-banner { padding: 38px; }
+}
+@media (max-width: 760px) {
+  .wrap { width: calc(100% - 36px); }
+  .header { height: 72px; }
+  .logo { font-size: 21px; }
+  .nav-actions { margin-left: auto; }
+  .nav-cta { display: none; }
+  .menu-button { display: block; }
+  .nav-links {
+    display: none; position: absolute; left: 0; right: 0; top: 72px;
+    background: #101319; padding: 25px; border-bottom: 1px solid var(--line);
+    flex-direction: column; gap: 24px;
+  }
+  .nav-links.open { display: flex; }
+  .hero { min-height: 980px; }
+  .hero-content { padding-top: 54px; }
+  .hero h1 { font-size: clamp(39px, 8.8vw, 65px); letter-spacing: -2.8px; margin-top: 26px; }
+  .hero-description { max-width: 360px; font-size: 12px; }
+  .hero-buttons { gap: 9px; }
+  .btn { font-size: 10px; padding: 0 17px; gap: 17px; min-height: 48px; }
+  .hero-note { gap: 12px; font-size: 8px; margin-top: 21px; }
+  .orbit-label { top: 492px; right: 0; font-size: 8px; }
+  .float-label { top: 745px; right: 8px; font-size: 9px; }
+  .hero-bottom { margin-top: 365px; align-items: flex-start; }
+  .shape-switch button { padding: 9px 10px; font-size: 9px; }
+  .render-stats { gap: 13px; }
+  .render-stats div:last-child { display: none; }
+  .render-stats b { font-size: 12px; }
+  .render-stats { font-size: 8px; }
+  .section { padding: 70px 0; }
+  .section-head { display: block; }
+  .section-head > p { margin-top: 20px; max-width: 370px; }
+  .bento { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .card { padding: 23px; }
+  .card-main { grid-column: span 2; grid-row: auto; min-height: 390px; }
+  .card-visual { min-height: 210px; }
+  .card-main h3 { font-size: 24px; }
+  .card-compact { min-height: 230px; padding: 20px; }
+  .card-compact h3 { font-size: 16px; }
+  .card p { font-size: 11px; }
+  .mini-code { font-size: 9px; padding: 10px; }
+  .card-wide { padding: 26px; gap: 25px; }
+  .activity { grid-template-columns: repeat(9, 7px); gap: 3px; }
+  .activity i { height: 7px; width: 7px; }
+  .learning-grid { grid-template-columns: 1fr; gap: 28px; }
+  .code-body { min-height: 265px; }
+  .lab-banner { display: block; padding: 33px 26px; }
+  .lab-banner .btn { margin-top: 26px; }
+  .footer { margin-top: 70px; }
+  .footer-inner { flex-wrap: wrap; }
+  .footer-note { order: 3; width: 100%; border-top: 1px solid var(--line); padding-top: 20px; }
+}
+@media (max-width: 390px) {
+  .hero-bottom { flex-direction: column; gap: 17px; }
+  .hero { min-height: 1040px; }
+  .hero h1 { font-size: 37px; }
+  .hero-note { flex-wrap: wrap; }
+  .card-compact { grid-column: span 2; min-height: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .reveal { opacity: 1; transform: none; }
+}
+</style>
+</head>
+
+<body>
+<div class="grid-bg"></div>
+<div class="noise"></div>
+<div class="scroll-progress" id="progress"></div>
+
+<header class="header">
+  <nav class="nav wrap" aria-label="Главная навигация">
+    <a class="logo" href="#" aria-label="NULL — на главную">
+      <span class="logo-icon">⌘</span> NULL<sup>®</sup>
+    </a>
+    <div class="nav-links" id="nav-links">
+      <a href="#philosophy">Философия</a>
+      <a href="#directions">Направления</a>
+      <a href="#laboratory">Лаборатория</a>
+    </div>
+    <div class="nav-actions">
+      <button class="theme-button" id="theme-button" aria-label="Сменить акцентный цвет" title="Сменить цвет">
+        <span></span>
+      </button>
+      <button class="nav-cta mono" data-terminal>Открыть терминал ↗</button>
+      <button class="menu-button" id="menu-button" aria-expanded="false" aria-controls="nav-links" aria-label="Открыть меню">☰</button>
+    </div>
+  </nav>
+</header>
+
+<main>
+  <section class="hero wrap" id="home">
+    <canvas id="universe" aria-label="Интерактивная скульптура из частиц"></canvas>
+    <div class="hero-glow"></div>
+
+    <div class="hero-content">
+      <div class="eyebrow mono">
+        <span class="live-dot"></span>
+        Для тех, кто создаёт
+      </div>
+
+      <h1>Всё начинается<br>с <span class="outline">нуля.</span><span class="last-line">Кроме тебя.</span></h1>
+
+      <p class="hero-description">
+        Превращай любопытство в код, а код — в то,
+        чего ещё не существовало. Пространство
+        для нового поколения разработчиков.
+      </p>
+
+      <div class="hero-buttons">
+        <a href="#directions" class="btn btn-primary">Найти свой путь <span class="arrow">↗</span></a>
+        <button class="btn" data-terminal><span class="mono">&gt;_</span> Попробовать</button>
+      </div>
+
+      <div class="hero-note mono">
+        <span>Без лишней теории</span>
+        <span>С первой строки кода</span>
+      </div>
+
+      <div class="hero-bottom">
+        <div class="shape-switch mono" role="group" aria-label="Форма частиц">
+          <button class="active" data-shape="sphere" aria-pressed="true">01 Сфера</button>
+          <button data-shape="helix" aria-pressed="false">02 ДНК</button>
+          <button data-shape="wave" aria-pressed="false">03 Волна</button>
+          <button data-shape="text" aria-pressed="false">04 NULL</button>
+        </div>
+
+        <div class="render-stats mono" aria-label="Статистика визуализации">
+          <div><b id="particle-count">1 200</b>PARTICLES</div>
+          <div><b id="fps">60</b>FPS</div>
+          <div><b>CANVAS</b>REALTIME ENGINE</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="orbit-label mono">FIG. 001 / CREATIVE MATTER</div>
+    <div class="float-label mono"><b>const</b> future = <b>you</b>.create();</div>
+  </section>
+
+  <div class="ticker" aria-label="JavaScript, Python, React, TypeScript, Node.js, WebGL, Git, AI">
+    <div class="ticker-track" aria-hidden="true">
+      <div class="ticker-group">
+        <span>JAVASCRIPT</span><i>✳</i><span>PYTHON</span><i>✳</i><span>REACT</span><i>✳</i><span>TYPESCRIPT</span><i>✳</i><span>NODE.JS</span><i>✳</i><span>WEBGL</span><i>✳</i><span>GIT</span><i>✳</i><span>ARTIFICIAL INTELLIGENCE</span><i>✳</i>
+      </div>
+      <div class="ticker-group">
+        <span>JAVASCRIPT</span><i>✳</i><span>PYTHON</span><i>✳</i><span>REACT</span><i>✳</i><span>TYPESCRIPT</span><i>✳</i><span>NODE.JS</span><i>✳</i><span>WEBGL</span><i>✳</i><span>GIT</span><i>✳</i><span>ARTIFICIAL INTELLIGENCE</span><i>✳</i>
+      </div>
+    </div>
+  </div>
+
+  <section class="section wrap" id="philosophy">
+    <div class="section-head reveal">
+      <div>
+        <div class="section-tag mono">01 / ДРУГОЙ ПОДХОД</div>
+        <h2>Не просто учить.<br><span>Понимать. Создавать.</span></h2>
+      </div>
+      <p>Программирование — не про запоминание синтаксиса. Это новый способ смотреть на мир и менять его.</p>
+    </div>
+
+    <div class="bento">
+      <article class="card card-main reveal">
+        <div class="card-number mono">[ 01 — MINDSET ]</div>
+        <h3>Думай как<br>разработчик.</h3>
+        <p>Разбивай сложное на простое. Находи закономерности. Создавай собственные решения.</p>
+        <div class="card-visual" aria-hidden="true">
+          <div class="code-planet"><span class="planet-symbol">&lt;/&gt;</span></div>
+          <span class="orbit-dot"></span>
+        </div>
+        <div class="tag-row mono">
+          <span class="tag">Логика</span><span class="tag">Алгоритмы</span><span class="tag">Архитектура</span>
+        </div>
+      </article>
+
+      <article class="card card-compact reveal">
+        <div class="card-number mono">[ 02 — PRACTICE ]</div>
+        <h3>Меньше слов.<br>Больше кода.</h3>
+        <p>Каждая идея становится работающим экспериментом.</p>
+        <div class="mini-code"><span class="syntax-purple">while</span> (<span class="syntax-cyan">curious</span>) {<br>&nbsp;&nbsp;<span class="syntax-green">build</span>();<br>&nbsp;&nbsp;<span class="syntax-green">learn</span>();<br>}</div>
+      </article>
+
+      <article class="card card-compact reveal">
+        <div class="card-icon" aria-hidden="true">⌁</div>
+        <h3>Ошибки —<br>часть маршрута.</h3>
+        <p>Ломай. Исследуй. Исправляй. Каждый баг делает тебя немного сильнее.</p>
+        <div class="tag-row mono" style="margin-top:22px"><span class="tag">bug → insight → growth</span></div>
+      </article>
+
+      <article class="card card-wide reveal">
+        <div class="activity" id="activity" aria-hidden="true"></div>
+        <div>
+          <div class="card-number mono">[ 03 — CONSISTENCY ]</div>
+          <h3>Маленькие шаги. Большой commit.</h3>
+          <p>Не нужно знать всё. Достаточно сегодня сделать чуть больше, чем вчера.</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="section learning" id="directions">
+    <div class="wrap learning-grid">
+      <div class="reveal">
+        <div class="section-tag mono">02 / ВЫБЕРИ ВЕКТОР</div>
+        <h2>Один первый шаг.<br><span>Тысячи возможностей.</span></h2>
+
+        <div class="path-list" role="group" aria-label="Направление программирования">
+          <button class="path active" data-path="frontend" aria-pressed="true">
+            <span class="path-icon">[&nbsp;]</span>
+            <span><strong>Frontend Developer</strong><small>Интерфейсы, в которые влюбляются</small></span>
+            <span class="path-arrow">→</span>
+          </button>
+          <button class="path" data-path="python" aria-pressed="false">
+            <span class="path-icon">λ</span>
+            <span><strong>Python & Automation</strong><small>Пусть рутина работает сама</small></span>
+            <span class="path-arrow">→</span>
+          </button>
+          <button class="path" data-path="creative" aria-pressed="false">
+            <span class="path-icon">✳</span>
+            <span><strong>Creative Coding</strong><small>На пересечении искусства и технологий</small></span>
+            <span class="path-arrow">→</span>
+          </button>
+        </div>
+        <div class="syllabus mono" id="syllabus"></div>
+      </div>
+
+      <div class="reveal">
+        <div class="editor">
+          <div class="editor-bar">
+            <span class="window-dot"></span><span class="window-dot"></span><span class="window-dot"></span>
+            <span class="editor-title mono">your-first-step / workspace</span>
+            <button class="editor-copy mono" id="copy-code" aria-label="Скопировать пример кода">copy ⧉</button>
+          </div>
+          <div class="editor-tab"><span><b id="file-type">JS</b><span id="file-name" style="padding:0;border:0">hello.js</span><span style="padding:0;border:0;color:#687080">×</span></span></div>
+          <div class="code-body" id="code-body" aria-label="Пример кода"></div>
+          <div class="editor-output">
+            <div class="output-label mono">OUTPUT / ДЕМОНСТРАЦИЯ РЕЗУЛЬТАТА</div>
+            <div id="output-text" aria-live="polite">Готов к первому запуску.<br>Нажми «Run demo» ↓</div>
+          </div>
+          <div class="editor-status">
+            <span id="editor-language">JavaScript · UTF-8</span>
+            <button class="run-button" id="run-demo">▶ Run demo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap reveal" id="laboratory">
+    <div class="lab-banner">
+      <div>
+        <div class="section-tag mono">03 / BREAK THE INTERFACE</div>
+        <h2>А что, если<br>ты здесь <span class="accent">главный?</span></h2>
+        <p>Открой терминал. Измени форму частиц, перекрась пространство, исследуй команды. Этот интерфейс любит любопытных.</p>
+      </div>
+      <button class="btn btn-primary" data-terminal>Запустить лабораторию <span class="arrow">↗</span></button>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <a class="logo" href="#"><span class="logo-icon">⌘</span> NULL</a>
+    <div class="footer-note mono">© <span id="year"></span> NULL. Сделано из идей, кода и частиц.</div>
+    <div class="footer-status mono"><span class="live-dot"></span> ALWAYS IN DEVELOPMENT</div>
+  </div>
+</footer>
+
+<dialog id="terminal" aria-labelledby="terminal-title">
+  <div class="terminal-head">
+    <span id="terminal-title">null@universe: ~ / interactive laboratory</span>
+    <button class="terminal-close" id="terminal-close" aria-label="Закрыть терминал">×</button>
+  </div>
+  <div class="terminal-log" id="terminal-log" role="log" aria-live="polite"></div>
+  <form class="terminal-form" id="terminal-form">
+    <label class="terminal-prompt" for="terminal-input">guest ~$</label>
+    <input class="terminal-input" id="terminal-input" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="введи help" maxlength="200">
+    <button class="terminal-submit" aria-label="Выполнить команду">↵</button>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ─── Мелочи, которые делают интерфейс живым ───────────────────
+
+  $('#year').textContent = new Date().getFullYear();
+
+  const activity = $('#activity');
+  for (let i = 0; i < 84; i++) activity.append(document.createElement('i'));
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add('visible');
+      observer.unobserve(entry.target);
+    });
+  }, { threshold: .12 });
+  $$('.reveal').forEach(el => observer.observe(el));
+
+  $$('.card').forEach(card => {
+    card.addEventListener('pointermove', event => {
+      const rect = card.getBoundingClientRect();
+      card.style.setProperty('--mx', `${event.clientX - rect.left}px`);
+      card.style.setProperty('--my', `${event.clientY - rect.top}px`);
+    });
+  });
+
+  function updateProgress() {
+    const max = document.documentElement.scrollHeight - innerHeight;
+    $('#progress').style.width = `${max > 0 ? scrollY / max * 100 : 0}%`;
+  }
+  addEventListener('scroll', updateProgress, { passive: true });
+  addEventListener('resize', updateProgress);
+  updateProgress();
+
+  $('#menu-button').addEventListener('click', () => {
+    const open = $('#nav-links').classList.toggle('open');
+    $('#menu-button').setAttribute('aria-expanded', open);
+    $('#menu-button').textContent = open ? '×' : '☰';
+  });
+  $$('#nav-links a').forEach(link => link.addEventListener('click', () => {
+    $('#nav-links').classList.remove('open');
+    $('#menu-button').setAttribute('aria-expanded', 'false');
+    $('#menu-button').textContent = '☰';
+  }));
+
+  let toastTimer;
+  function toast(message) {
+    $('#toast').textContent = message;
+    $('#toast').classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => $('#toast').classList.remove('show'), 2600);
+  }
+
+  const palettes = [
+    { name: 'Lime', rgb: [211,255,105], className: '' },
+    { name: 'Ice', rgb: [129,223,255], className: 'ice' },
+    { name: 'Rose', rgb: [255,155,201], className: 'rose' }
+  ];
+  let paletteIndex = 0;
+  function changeTheme() {
+    paletteIndex = (paletteIndex + 1) % palettes.length;
+    document.body.classList.remove('ice', 'rose');
+    if (palettes[paletteIndex].className) {
+      document.body.classList.add(palettes[paletteIndex].className);
+    }
+    toast(`Палитра: ${palettes[paletteIndex].name}`);
+    requestDraw();
+  }
+  $('#theme-button').addEventListener('click', changeTheme);
+
+  // ─── Particle engine: четыре трёхмерные структуры ─────────────
+
+  const canvas = $('#universe');
+  const ctx = canvas.getContext('2d');
+  const hero = $('#home');
+  const TAU = Math.PI * 2;
+  let W = 0, H = 0, DPR = 1, mobile = false;
+  let particles = [], textPoints = [], sparks = [];
+  let shape = 'sphere';
+  let clock = 0, frameId = 0, previousTime = 0;
+  let heroVisible = true;
+  let frameCount = 0, fpsTime = 0;
+  const pointer = { x: -9999, y: -9999, active: false };
+
+  function makeTextPoints() {
+    const temp = document.createElement('canvas');
+    temp.width = 560; temp.height = 180;
+    const c = temp.getContext('2d');
+    c.fillStyle = '#fff';
+    c.font = '900 145px Arial, sans-serif';
+    c.textAlign = 'center';
+    c.textBaseline = 'middle';
+    c.fillText('NULL', 280, 95);
+
+    const data = c.getImageData(0, 0, 560, 180).data;
+    textPoints = [];
+    for (let y = 0; y < 180; y += 4) {
+      for (let x = 0; x < 560; x += 4) {
+        if (data[(y * 560 + x) * 4 + 3] > 100) {
+          textPoints.push({ x: (x - 280) / 220, y: (y - 90) / 220 });
+        }
+      }
+    }
+  }
+
+  function initParticles() {
+    const count = mobile ? 700 : 1400;
+    particles = Array.from({ length: count }, (_, i) => {
+      const u = (i + .5) / count;
+      const phi = Math.acos(1 - 2 * u);
+      const theta = Math.PI * (3 - Math.sqrt(5)) * i;
+      return {
+        i, u, phi, theta,
+        size: .65 + Math.random() * 1.05,
+        seed: Math.random(),
+        x: Math.sin(phi) * Math.cos(theta),
+        y: Math.cos(phi),
+        z: Math.sin(phi) * Math.sin(theta),
+        sx: 0, sy: 0,
+        px: 0, py: 0,
+        depth: 0
+      };
+    });
+    $('#particle-count').textContent = count.toLocaleString('ru-RU');
+  }
+
+  function resize() {
+    const rect = hero.getBoundingClientRect();
+    const wasMobile = mobile;
+    W = rect.width;
+    H = rect.height;
+    mobile = innerWidth <= 760;
+    DPR = Math.min(devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * DPR);
+    canvas.height = Math.round(H * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    if (!particles.length || wasMobile !== mobile) initParticles();
+    requestDraw();
+  }
+
+  function target(p, time) {
+    if (shape === 'sphere') {
+      const ripple = 1 + .045 * Math.sin(p.phi * 9 + time * .8);
+      return [
+        Math.sin(p.phi) * Math.cos(p.theta) * ripple,
+        Math.cos(p.phi) * ripple,
+        Math.sin(p.phi) * Math.sin(p.theta) * ripple
+      ];
+    }
+    if (shape === 'helix') {
+      const strand = p.i % 2 ? Math.PI : 0;
+      const angle = p.u * TAU * 2.6 + strand;
+      const thickness = .82 + p.seed * .23;
+      if (p.i % 9 === 0) {
+        const linkAngle = Math.round(p.u * 22) / 22 * TAU * 2.6;
+        const position = p.seed * 2 - 1;
+        return [
+          Math.cos(linkAngle) * position * .7,
+          (p.u - .5) * 2.65,
+          Math.sin(linkAngle) * position * .7
+        ];
+      }
+      return [
+        Math.cos(angle) * .7 * thickness,
+        (p.u - .5) * 2.65,
+        Math.sin(angle) * .7 * thickness
+      ];
+    }
+    if (shape === 'wave') {
+      const columns = Math.ceil(Math.sqrt(particles.length));
+      const x = (p.i % columns) / (columns - 1) * 2.6 - 1.3;
+      const z = Math.floor(p.i / columns) / (columns - 1) * 2.6 - 1.3;
+      const y = Math.sin(x * 3 + time) * .22 + Math.cos(z * 3 + time * .75) * .22;
+      return [x, y + .12, z];
+    }
+    const point = textPoints[p.i % textPoints.length];
+    return [point.x, point.y, (p.seed - .5) * .18];
+  }
+
+  function setShape(next) {
+    if (!['sphere', 'helix', 'wave', 'text'].includes(next)) return;
+    shape = next;
+    $$('.shape-switch button').forEach(button => {
+      const active = button.dataset.shape === next;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', active);
+    });
+    requestDraw();
+  }
+  $$('.shape-switch button').forEach(button => {
+    button.addEventListener('click', () => setShape(button.dataset.shape));
+  });
+
+  function burst(x, y) {
+    if (reducedMotion) return;
+    for (let i = 0; i < 50; i++) {
+      const angle = Math.random() * TAU;
+      const speed = 1 + Math.random() * 4.5;
+      sparks.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 1,
+        size: .5 + Math.random() * 1.8
+      });
+    }
+    sparks = sparks.slice(-250);
+    requestDraw();
+  }
+
+  hero.addEventListener('pointermove', event => {
+    if (event.pointerType === 'touch') return;
+    const rect = hero.getBoundingClientRect();
+    pointer.x = event.clientX - rect.left;
+    pointer.y = event.clientY - rect.top;
+    pointer.active = true;
+  });
+  hero.addEventListener('pointerleave', () => { pointer.active = false; });
+  hero.addEventListener('pointerdown', event => {
+    if (event.target.closest('button,a')) return;
+    const rect = hero.getBoundingClientRect();
+    burst(event.clientX - rect.left, event.clientY - rect.top);
+  });
+
+  function draw(now) {
+    frameId = 0;
+    const dt = previousTime ? Math.min((now - previousTime) / 16.667, 2) : 1;
+    previousTime = now;
+    if (!reducedMotion) clock += .009 * dt;
+    ctx.clearRect(0, 0, W, H);
+
+    const centerX = mobile ? W * .50 : W * .775;
+    const centerY = mobile ? 650 : H * .43;
+    const radius = mobile ? Math.min(W * .34, 150) : Math.min(W * .205, 253);
+    const color = palettes[paletteIndex].rgb;
+    const colorString = color.join(',');
+
+    const glow = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius * 1.5);
+    glow.addColorStop(0, `rgba(${colorString},.045)`);
+    glow.addColorStop(1, `rgba(${colorString},0)`);
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, W, H);
+
+    // Тонкие орбитальные направляющие.
+    ctx.save();
+    ctx.translate(centerX, centerY);
+    ctx.rotate(-.35);
+    ctx.strokeStyle = `rgba(${colorString},.10)`;
+    ctx.lineWidth = .7;
+    ctx.setLineDash([3, 8]);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, radius * 1.25, radius * .44, 0, 0, TAU);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.strokeStyle = `rgba(${colorString},.045)`;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, radius * 1.14, radius * 1.14, 0, 0, TAU);
+    ctx.stroke();
+    ctx.restore();
+
+    const rotationY = shape === 'text' ? Math.sin(clock * .4) * .13 : clock * .28;
+    const rotationX = shape === 'wave' ? -.48 : -.12;
+    const cy = Math.cos(rotationY), sy = Math.sin(rotationY);
+    const cx = Math.cos(rotationX), sx = Math.sin(rotationX);
+    const lerp = reducedMotion ? 1 : 1 - Math.pow(.94, dt);
+
+    for (const p of particles) {
+      const [tx, ty, tz] = target(p, clock);
+      p.x += (tx - p.x) * lerp;
+      p.y += (ty - p.y) * lerp;
+      p.z += (tz - p.z) * lerp;
+
+      const x = p.x * cy - p.z * sy;
+      const z = p.x * sy + p.z * cy;
+      const y = p.y * cx - z * sx;
+      const rz = p.y * sx + z * cx;
+      const perspective = 3.8 / (3.8 + rz);
+      let px = centerX + x * radius * perspective;
+      let py = centerY + y * radius * perspective;
+
+      let pushX = 0, pushY = 0;
+      if (pointer.active && !reducedMotion) {
+        const dx = px - pointer.x;
+        const dy = py - pointer.y;
+        const distance = Math.hypot(dx, dy);
+        if (distance < 110 && distance > .1) {
+          const force = Math.pow(1 - distance / 110, 2) * 55;
+          pushX = dx / distance * force;
+          pushY = dy / distance * force;
+        }
+      }
+      p.sx += (pushX - p.sx) * .13;
+      p.sy += (pushY - p.sy) * .13;
+      p.px = px + p.sx;
+      p.py = py + p.sy;
+      p.depth = rz;
+
+      const alpha = Math.max(.13, Math.min(.95, .53 - rz * .25));
+      const size = p.size * perspective * (mobile ? .85 : 1);
+      const alternate = p.i % 11 === 0;
+      ctx.fillStyle = alternate
+        ? `rgba(164,196,255,${alpha * .8})`
+        : `rgba(${colorString},${alpha})`;
+
+      ctx.beginPath();
+      ctx.arc(p.px, p.py, Math.max(.3, size), 0, TAU);
+      ctx.fill();
+
+      if (p.i % 41 === 0 && rz < .1) {
+        ctx.fillStyle = `rgba(${colorString},.06)`;
+        ctx.beginPath();
+        ctx.arc(p.px, p.py, size * 4, 0, TAU);
+        ctx.fill();
+      }
+    }
+
+    // Локальные связи без дорогостоящего полного перебора всех пар.
+    ctx.lineWidth = .45;
+    for (let i = 0; i < particles.length; i += 3) {
+      const a = particles[i];
+      for (let step = 1; step <= 2; step++) {
+        const b = particles[(i + step * 17) % particles.length];
+        const distance = Math.hypot(a.px - b.px, a.py - b.py);
+        if (distance < 39 && distance > 5) {
+          ctx.strokeStyle = `rgba(${colorString},${(1 - distance / 39) * .13})`;
+          ctx.beginPath();
+          ctx.moveTo(a.px, a.py);
+          ctx.lineTo(b.px, b.py);
+          ctx.stroke();
+        }
+      }
+    }
+
+    for (let i = sparks.length - 1; i >= 0; i--) {
+      const p = sparks[i];
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vx *= .98; p.vy *= .98;
+      p.life -= .019 * dt;
+      if (p.life <= 0) { sparks.splice(i, 1); continue; }
+      ctx.fillStyle = `rgba(${colorString},${p.life})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size * p.life, 0, TAU);
+      ctx.fill();
+    }
+
+    frameCount++;
+    if (now - fpsTime > 700) {
+      $('#fps').textContent = reducedMotion
+        ? 'STATIC'
+        : Math.round(frameCount * 1000 / (now - fpsTime));
+      frameCount = 0; fpsTime = now;
+    }
+
+    if (!reducedMotion && heroVisible && !document.hidden) {
+      frameId = requestAnimationFrame(draw);
+    }
+  }
+
+  function requestDraw() {
+    if (!frameId && !document.hidden && heroVisible) {
+      frameId = requestAnimationFrame(draw);
+    }
+  }
+
+  new IntersectionObserver(entries => {
+    heroVisible = entries[0].isIntersecting;
+    if (heroVisible) {
+      previousTime = 0;
+      fpsTime = performance.now();
+      frameCount = 0;
+      requestDraw();
+    }
+  }).observe(hero);
+
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      previousTime = 0;
+      fpsTime = performance.now();
+      frameCount = 0;
+      requestDraw();
+    }
+  });
+
+  makeTextPoints();
+  resize();
+  new ResizeObserver(resize).observe(hero);
+
+  // ─── Примеры направлений: код и демонстрационный результат ────
+
+  const paths = {
+    frontend: {
+      file: 'hello.js',
+      type: 'JS',
+      language: 'JavaScript',
+      tags: ['HTML & CSS', 'JavaScript', 'React', 'Первый интерфейс'],
+      code: [
+        '// Большие вещи начинаются с малого.',
+        'const developer = {',
+        '  name: "Ты",',
+        '  superpower: "создавать",',
+        '  curiosity: Infinity',
+        '};',
+        '',
+        'function start({ name, superpower }) {',
+        '  return `${name} можешь ${superpower}.`;',
+        '}',
+        '',
+        'console.log(start(developer));'
+      ],
+      output: '→ Ты можешь создавать.\n✓ Первая функция. Первый результат.'
+    },
+    python: {
+      file: 'first_step.py',
+      type: 'PY',
+      language: 'Python',
+      tags: ['Основы Python', 'Файлы & данные', 'API', 'Автоматизация'],
+      code: [
+        '# У каждого большого пути есть начало.',
+        'from pathlib import Path',
+        '',
+        'def explore(folder):',
+        '    files = Path(folder).glob("*.py")',
+        '    return [file.name for file in files]',
+        '',
+        'ideas = ["бот", "сервис", "новый мир"]',
+        '',
+        'for number, idea in enumerate(ideas, 1):',
+        '    print(f"{number}. Создать {idea}")',
+        ''
+      ],
+      output: '1. Создать бот\n2. Создать сервис\n3. Создать новый мир'
+    },
+    creative: {
+      file: 'universe.js',
+      type: 'JS',
+      language: 'JavaScript',
+      tags: ['Canvas', 'Математика движения', 'Частицы', 'Generative art'],
+      code: [
+        '// Искусство, которое умеет двигаться.',
+        'const universe = [];',
+        '',
+        'for (let i = 0; i < 1400; i++) {',
+        '  const angle = i * 2.39996;',
+        '  const radius = Math.sqrt(i) * 6;',
+        '',
+        '  universe.push({',
+        '    x: Math.cos(angle) * radius,',
+        '    y: Math.sin(angle) * radius',
+        '  });',
+        '}'
+      ],
+      output: '→ 1400 координат в спирали Ферма.\n✓ Математика тоже бывает красивой.'
+    }
+  };
+  let currentPath = 'frontend';
+  let runTimer;
+
+  function appendHighlighted(element, line) {
+    // Токенизация без вставки пользовательского HTML.
+    const regex = /(\/\/.*|#.*)|("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`[^`]*`)|\b(const|let|function|return|for|from|import|def|in|if)\b|\b(\d+(?:\.\d+)?|Infinity)\b|\b(console|Math|Path|print|range|enumerate)\b/g;
+    let last = 0;
+    for (const match of line.matchAll(regex)) {
+      element.append(document.createTextNode(line.slice(last, match.index)));
+      const token = document.createElement('span');
+      token.className = match[1] ? 'syntax-muted' :
+        match[2] ? 'syntax-green' :
+        match[3] ? 'syntax-purple' : 'syntax-cyan';
+      token.textContent = match[0];
+      element.append(token);
+      last = match.index + match[0].length;
+    }
+    element.append(document.createTextNode(line.slice(last)));
+  }
+
+  function selectPath(key) {
+    currentPath = key;
+    clearTimeout(runTimer);
+    $('#run-demo').disabled = false;
+    const data = paths[key];
+    $$('.path').forEach(button => {
+      const active = button.dataset.path === key;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', active);
+    });
+
+    $('#file-name').textContent = data.file;
+    $('#file-type').textContent = data.type;
+    $('#editor-language').textContent = `${data.language} · UTF-8`;
+    $('#code-body').replaceChildren();
+
+    data.code.forEach((line, i) => {
+      const row = document.createElement('div');
+      row.className = 'code-line';
+      const number = document.createElement('span');
+      number.className = 'line-number';
+      number.textContent = i + 1;
+      const code = document.createElement('span');
+      code.className = 'code-text';
+      appendHighlighted(code, line);
+      row.append(number, code);
+      $('#code-body').append(row);
+    });
+
+    $('#syllabus').replaceChildren();
+    data.tags.forEach(text => {
+      const tag = document.createElement('span');
+      tag.className = 'tag';
+      tag.textContent = text;
+      $('#syllabus').append(tag);
+    });
+    $('#output-text').style.whiteSpace = 'pre-wrap';
+    $('#output-text').textContent = 'Готов к первому запуску.\nНажми «Run demo» ↓';
+  }
+
+  $$('.path').forEach(button => {
+    button.addEventListener('click', () => selectPath(button.dataset.path));
+  });
+
+  $('#run-demo').addEventListener('click', () => {
+    $('#run-demo').disabled = true;
+    $('#output-text').textContent = 'Загружаем демонстрацию…';
+    runTimer = setTimeout(() => {
+      $('#output-text').textContent = paths[currentPath].output;
+      $('#run-demo').disabled = false;
+      if (currentPath === 'creative') setShape('wave');
+    }, reducedMotion ? 0 : 450);
+  });
+
+  $('#copy-code').addEventListener('click', async () => {
+    const code = paths[currentPath].code.join('\n');
+    try {
+      await navigator.clipboard.writeText(code);
+      toast('Код скопирован. Теперь он твой.');
+    } catch {
+      const textarea = document.createElement('textarea');
+      textarea.value = code;
+      textarea.style.cssText = 'position:fixed;left:-9999px;top:0';
+      document.body.append(textarea);
+      textarea.select();
+      let copied = false;
+      try { copied = document.execCommand('copy'); } catch {}
+      textarea.remove();
+      $('#copy-code').focus();
+      toast(copied ? 'Код скопирован.' : 'Выдели код и скопируй его вручную.');
+    }
+  });
+
+  selectPath('frontend');
+
+  // ─── Терминал: настоящие команды управления интерфейсом ──────
+
+  const terminal = $('#terminal');
+  const terminalInput = $('#terminal-input');
+  const terminalLog = $('#terminal-log');
+  let terminalInitiated = false;
+  const history = [];
+  let historyIndex = 0;
+
+  function log(text, className = 'response') {
+    const p = document.createElement('p');
+    p.className = className;
+    p.textContent = text;
+    terminalLog.append(p);
+    while (terminalLog.children.length > 120) {
+      terminalLog.firstElementChild.remove();
+    }
+    terminalLog.scrollTop = terminalLog.scrollHeight;
+  }
+
+  function openTerminal() {
+    if (terminal.open) return;
+    terminal.showModal();
+    if (!terminalInitiated) {
+      log('NULL LABORATORY [version 1.0.0]', 'command');
+      log('Добро пожаловать по ту сторону интерфейса.\nЭто командная панель сайта, не системная оболочка.\nВведи help, чтобы увидеть возможности.');
+      terminalInitiated = true;
+    }
+    terminalInput.focus();
+  }
+
+  $$('[data-terminal]').forEach(button => button.addEventListener('click', openTerminal));
+  $('#terminal-close').addEventListener('click', () => terminal.close());
+  terminal.addEventListener('click', event => {
+    const r = terminal.getBoundingClientRect();
+    if (event.clientX < r.left || event.clientX > r.right ||
+        event.clientY < r.top || event.clientY > r.bottom) terminal.close();
+  });
+
+  const help = [
+    'help             Список команд',
+    'shape sphere     Сфера из частиц',
+    'shape helix      Двойная спираль',
+    'shape wave       Живое волновое поле',
+    'shape text       Морфинг в NULL',
+    'theme            Сменить палитру',
+    'whoami           Небольшое напоминание',
+    'stack            Из чего сделан сайт',
+    'start            К направлениям',
+    'clear            Очистить терминал',
+    'exit             Вернуться в интерфейс',
+    '',
+    '↑ / ↓ — история команд'
+  ].join('\n');
+
+  $('#terminal-form').addEventListener('submit', event => {
+    event.preventDefault();
+    const raw = terminalInput.value.trim();
+    if (!raw) return;
+    terminalInput.value = '';
+    history.push(raw);
+    historyIndex = history.length;
+    log(`guest ~$ ${raw}`, 'command');
+
+    const [command, arg] = raw.toLowerCase().split(/\s+/);
+    switch (command) {
+      case 'help':
+        log(help);
+        break;
+      case 'shape':
+        if (!['sphere','helix','wave','text'].includes(arg)) {
+          log('Укажи форму: sphere | helix | wave | text');
+          break;
+        }
+        setShape(arg);
+        log(`✓ Активирована форма: ${arg}.\nЗакрой терминал — и посмотри наверх.`);
+        break;
+      case 'theme':
+        changeTheme();
+        log(`✓ Новая палитра: ${palettes[paletteIndex].name}`);
+        break;
+      case 'whoami':
+        log('Ты не пользователь.\nТы человек, который может создать следующий интерфейс.\n\nНачни с одной строки.');
+        break;
+      case 'stack':
+        log('HTML5              Структура\nCSS3               Визуальная система\nVanilla JavaScript Логика\nCanvas 2D          Частицы и проекция 3D\nGoogle Fonts       Необязательные веб-шрифты\n\n0 JS-библиотек. 1 HTML-файл. Много любопытства.');
+        break;
+      case 'start':
+        terminal.close();
+        $('#directions').scrollIntoView({ behavior: reducedMotion ? 'instant' : 'smooth' });
+        break;
+      case 'clear':
+        terminalLog.replaceChildren();
+        break;
+      case 'exit':
+        terminal.close();
+        break;
+      case 'sudo':
+        log('Суперспособности уже выданы. Пароль не требуется.');
+        break;
+      case 'hello':
+      case 'привет':
+        log('Привет, создатель. Мир ждёт твоего первого commit.');
+        break;
+      default:
+        log(`Команда «${command}» пока не существует.\nВведи help. Даже исследователям нужна карта.`);
+    }
+  });
+
+  terminalInput.addEventListener('keydown', event => {
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      historyIndex = Math.max(0, historyIndex - 1);
+      terminalInput.value = history[historyIndex] || '';
+    }
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      historyIndex = Math.min(history.length, historyIndex + 1);
+      terminalInput.value = history[historyIndex] || '';
+    }
+  });
+
+  document.addEventListener('keydown', event => {
+    if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+      event.preventDefault();
+      terminal.open ? terminal.close() : openTerminal();
+    }
+  });
+})();
+</script>
+</body>
+</html>

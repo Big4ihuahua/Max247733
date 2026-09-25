@@ -1,0 +1,1766 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#080b11">
+<title>ABYSS — жизнь, написанная кодом</title>
+
+<style>
+:root {
+  --bg: #080b11;
+  --fg: #eeeae1;
+  --muted: #828995;
+  --line: rgba(229,237,255,.13);
+  --accent: #f5a979;
+  --glass: rgba(13,18,27,.72);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: Arial, Helvetica, sans-serif;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+button, input, textarea { font: inherit; }
+button, a, input { -webkit-tap-highlight-color: transparent; }
+button { color: inherit; cursor: pointer; }
+button:disabled { opacity: .45; cursor: wait; }
+button:focus-visible, a:focus-visible, input:focus-visible,
+textarea:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 5px;
+}
+::selection { background: var(--accent); color: var(--bg); }
+.mono {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+button { touch-action: manipulation; }
+button svg { width: 17px; height: 17px; }
+svg { fill: none; stroke: currentColor; stroke-width: 1.5; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+#world {
+  position: fixed; inset: 0;
+  width: 100%; height: 100%;
+  touch-action: none;
+  cursor: crosshair;
+}
+.vignette {
+  position: fixed; inset: 0;
+  background:
+    linear-gradient(90deg, rgba(8,11,17,.74), transparent 47%),
+    linear-gradient(0deg, rgba(8,11,17,.95), transparent 23%, transparent 88%, rgba(8,11,17,.45));
+  pointer-events: none;
+}
+.grain {
+  position: fixed; inset: 0;
+  z-index: 15; opacity: .055; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath d='M0 0h160v160H0z' fill='white' filter='url(%23a)' opacity='.6'/%3E%3C/svg%3E");
+}
+.interface {
+  position: relative;
+  height: 100svh;
+  min-height: 650px;
+  pointer-events: none;
+}
+.interface button, .interface a, .interface input,
+.interface details { pointer-events: auto; }
+
+header {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 105px;
+  margin: 0 46px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+}
+.brand { display: flex; align-items: center; gap: 15px; }
+.brand-mark { width: 36px; height: 36px; color: var(--accent); }
+.brand-name {
+  font-size: 24px;
+  letter-spacing: 7px;
+  font-weight: 600;
+}
+.brand-note {
+  font-size: 8px;
+  line-height: 1.6;
+  color: var(--muted);
+  letter-spacing: 1px;
+  margin-left: 20px;
+}
+.header-right { display: flex; gap: 33px; align-items: center; }
+.live {
+  display: flex; align-items: center; gap: 9px;
+  font-size: 9px; color: #a4aaae; letter-spacing: 1px;
+}
+.live-dot {
+  width: 5px; height: 5px;
+  background: var(--accent); border-radius: 50%;
+  box-shadow: 0 0 12px var(--accent);
+}
+.text-button {
+  background: transparent; border: 0;
+  padding: 10px 0;
+  font-size: 10px; letter-spacing: .4px;
+  color: var(--fg);
+}
+.text-button:hover { color: var(--accent); }
+.header-right .text-button span { margin-left: 18px; color: var(--accent); }
+
+.hero-copy {
+  position: absolute;
+  top: clamp(145px, 22vh, 250px);
+  left: 6.5%;
+  width: 440px;
+}
+.eyebrow {
+  display: flex; align-items: center; gap: 13px;
+  font-size: 9px; letter-spacing: 2px;
+  color: var(--accent);
+}
+.eyebrow::before { content: ''; width: 25px; height: 1px; background: currentColor; }
+h1 {
+  font-weight: 400;
+  font-size: clamp(61px, 6.3vw, 100px);
+  line-height: .96;
+  letter-spacing: -6px;
+  margin: 31px 0 26px;
+}
+h1 em {
+  font-family: Georgia, "Times New Roman", serif;
+  color: var(--accent);
+  font-weight: 400;
+  letter-spacing: -5px;
+}
+.hero-copy p {
+  font-size: 12px; line-height: 1.9;
+  color: #9599a2;
+  max-width: 255px;
+  margin: 0;
+}
+.specimen-number {
+  display: flex; align-items: center; gap: 12px;
+  margin-top: 32px;
+  color: #7c838f;
+  font-size: 9px;
+}
+.specimen-number .line { width: 40px; height: 1px; background: var(--line); }
+.specimen-number b { color: #c6c8cf; font-weight: 400; }
+
+.coordinates {
+  position: absolute;
+  top: 142px; left: 50%;
+  display: flex; gap: 25px;
+  color: #606a7a;
+  font-size: 8px; letter-spacing: 1px;
+}
+.coordinates span { color: #b0b8c3; }
+.organism-label {
+  position: absolute;
+  right: 11%; top: 31%;
+  color: #9099a7;
+  font-size: 8px; line-height: 1.9;
+  letter-spacing: .5px;
+  transition: opacity .4s;
+}
+.organism-label::before {
+  content: '';
+  position: absolute;
+  right: calc(100% + 12px); top: 9px;
+  width: 48px; height: 1px;
+  background: linear-gradient(90deg, transparent, #657083);
+  transform: rotate(-25deg);
+  transform-origin: right;
+}
+.organism-label strong { display: block; color: var(--accent); font-weight: 400; }
+.vertical-caption {
+  position: absolute;
+  right: 31px; top: 46%;
+  writing-mode: vertical-rl;
+  color: #616b7a;
+  font-size: 8px; letter-spacing: 3px;
+}
+.cursor-note {
+  position: absolute; left: 59%; bottom: 185px;
+  display: flex; align-items: center; gap: 9px;
+  color: #7a8494; font-size: 9px;
+  white-space: nowrap;
+}
+.cursor-note svg { width: 15px; height: 15px; color: var(--accent); }
+.cursor-note span { color: #4f5866; margin-inline: 5px; }
+
+.species {
+  position: absolute;
+  left: 6.5%; bottom: 185px;
+  display: flex; gap: 8px;
+}
+.species-button {
+  width: 88px; height: 76px;
+  padding: 10px 6px 9px;
+  display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+  gap: 8px;
+  background: rgba(15,20,29,.3);
+  color: #6d7788;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 8px;
+  transition: .25s;
+  backdrop-filter: blur(10px);
+}
+.species-button svg { width: 34px; height: 31px; stroke-width: 1; }
+.species-button:hover { color: #d6dbe5; border-color: #576175; transform: translateY(-3px); }
+.species-button.active {
+  color: var(--accent);
+  border-color: rgba(245,169,121,.45);
+  background: rgba(245,169,121,.05);
+}
+
+.control-panel {
+  position: absolute;
+  bottom: 53px; left: 46px; right: 46px;
+  min-height: 104px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--glass);
+  backdrop-filter: blur(24px);
+  display: flex; align-items: center;
+  pointer-events: auto;
+}
+.panel-section {
+  padding: 0 26px;
+  border-right: 1px solid var(--line);
+}
+.panel-section:last-child { border-right: none; }
+.transport { display: flex; align-items: center; gap: 17px; flex-shrink: 0; }
+.circle-button {
+  width: 40px; height: 40px;
+  border-radius: 50%; display: grid; place-items: center;
+  background: var(--fg); color: #10141d; border: 0;
+  transition: transform .2s;
+}
+.circle-button:hover { transform: scale(1.08); }
+.transport-data { min-width: 72px; }
+.panel-kicker { color: #747e8e; font-size: 8px; letter-spacing: 1.4px; margin-bottom: 8px; }
+#timecode { color: #cbd0d8; font-size: 14px; letter-spacing: 1px; }
+.sliders { flex: 1; display: flex; gap: 30px; }
+.slider-group { flex: 1; min-width: 70px; }
+.slider-label { display: flex; justify-content: space-between; gap: 10px; font-size: 9px; color: #919aa9; margin-bottom: 14px; }
+.slider-label output { color: var(--fg); }
+input[type="range"] {
+  appearance: none; -webkit-appearance: none;
+  width: 100%; height: 2px; display: block;
+  background: #303848; accent-color: var(--accent);
+  cursor: pointer; border-radius: 2px;
+}
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none; -webkit-appearance: none;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent); box-shadow: 0 0 12px rgba(245,169,121,.25);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 8px; height: 8px; border: 0; border-radius: 50%; background: var(--accent);
+}
+.actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.icon-button {
+  width: 38px; height: 38px;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 8px;
+  color: #9aa4b4;
+  display: grid; place-items: center;
+  transition: .2s;
+}
+.icon-button:hover { background: rgba(255,255,255,.05); color: var(--fg); border-color: var(--line); }
+.icon-button.active { color: var(--accent); }
+.mutate-button {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  padding: 13px 17px; margin-left: 4px;
+  background: transparent; color: var(--accent);
+  border: 1px solid rgba(245,169,121,.3);
+  border-radius: 8px;
+  font-size: 10px;
+  transition: .25s;
+}
+.mutate-button:hover { background: rgba(245,169,121,.10); border-color: var(--accent); }
+.mutate-button svg { width: 15px; height: 15px; }
+footer {
+  position: absolute; left: 48px; right: 48px; bottom: 20px;
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 8px; color: #515c6f; letter-spacing: .6px;
+}
+footer b { font-weight: 400; color: #939cad; }
+.footer-right { display: flex; gap: 25px; }
+#toast {
+  position: fixed;
+  left: 50%; top: 122px;
+  transform: translate(-50%, -10px);
+  opacity: 0; pointer-events: none;
+  padding: 12px 18px;
+  background: rgba(19,25,35,.94);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(245,169,121,.25);
+  border-radius: 8px; color: #e6c3a9;
+  font-size: 11px; z-index: 40;
+  transition: .3s;
+  max-width: calc(100% - 30px);
+  text-align: center;
+}
+#toast.visible { transform: translate(-50%, 0); opacity: 1; }
+
+dialog {
+  color: var(--fg);
+  width: min(680px, calc(100% - 28px));
+  max-height: 88svh;
+  padding: 0;
+  border: 1px solid #343c4b;
+  border-radius: 18px;
+  background: #10151f;
+  box-shadow: 0 40px 180px #000;
+}
+dialog::backdrop { background: rgba(3,6,11,.78); backdrop-filter: blur(13px); }
+.dialog-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 23px 28px;
+  border-bottom: 1px solid var(--line);
+}
+.dialog-head h2 { font-size: 11px; letter-spacing: 2px; font-weight: 400; margin: 0; }
+.close-button { border: 0; background: transparent; font-size: 23px; color: #929dac; padding: 0 5px; }
+.dialog-content { padding: 28px; }
+.dialog-content h3 {
+  font: 38px/1.15 Georgia, serif;
+  font-weight: 400; letter-spacing: -1px; margin: 0 0 20px;
+}
+.dialog-content h3 em { color: var(--accent); }
+.dialog-content p { color: #929dac; font-size: 12px; line-height: 1.9; }
+.about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 25px 0; }
+.about-item { padding: 17px; border: 1px solid var(--line); border-radius: 9px; }
+.about-item b { display: block; font-size: 11px; color: #d2d8e3; margin-bottom: 8px; font-weight: 400; }
+.about-item span { font-size: 10px; line-height: 1.7; color: #828d9f; display: block; }
+.shortcut-row {
+  display: flex; flex-wrap: wrap; gap: 18px;
+  font-size: 9px; color: #8a94a4;
+  padding-top: 20px; border-top: 1px solid var(--line);
+}
+kbd {
+  font: 9px monospace; color: var(--accent);
+  background: #1c2432; border: 1px solid #374052;
+  border-radius: 4px; padding: 3px 6px; margin-right: 5px;
+}
+.editor-caption { display: flex; justify-content: space-between; font-size: 9px; color: #8490a3; margin: 23px 0 10px; }
+#dna-input {
+  width: 100%; min-height: 265px; resize: vertical;
+  background: #080d15; color: #e4b493;
+  border: 1px solid #2c3545; border-radius: 10px;
+  font: 12px/1.8 Consolas, monospace;
+  padding: 20px;
+  tab-size: 2;
+}
+.dna-note { font-size: 10px !important; }
+.dialog-actions { display: flex; align-items: center; gap: 15px; margin-top: 20px; }
+.solid-button {
+  background: var(--accent); color: #17130f;
+  border: 0; padding: 13px 19px; border-radius: 7px;
+  font-size: 11px;
+}
+#dna-error { min-height: 17px; color: #f7a09c; font-size: 10px; margin-top: 9px; }
+.dialog-actions .text-button { color: #8c97a8; font-size: 10px; }
+
+.intro {
+  position: fixed; inset: 0; z-index: 50;
+  background: #080b11;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+  animation: intro-out 1s 1.15s forwards;
+}
+.intro-inner { text-align: center; }
+.intro-title { font-size: 30px; letter-spacing: 12px; margin-left: 12px; }
+.intro-sub { font-size: 8px; letter-spacing: 3px; color: #7a8495; margin-top: 16px; }
+.intro-line { width: 140px; height: 1px; background: #202a38; margin: 25px auto 0; overflow: hidden; }
+.intro-line::after { content: ''; display: block; width: 100%; height: 100%; background: var(--accent); transform-origin: left; animation: load-line 1.2s ease both; }
+@keyframes load-line { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes intro-out { to { opacity: 0; visibility: hidden; } }
+
+body.zen .interface { opacity: 0; pointer-events: none; }
+body.zen .interface * { pointer-events: none; }
+.interface { transition: opacity .5s; }
+.zen-exit {
+  display: none; position: fixed; right: 25px; top: 25px;
+  z-index: 20;
+  border: 1px solid var(--line);
+  border-radius: 8px; padding: 11px 16px;
+  background: rgba(12,17,26,.7);
+  color: #c4ccd8; font-size: 10px;
+}
+body.zen .zen-exit { display: block; }
+body.zen .vignette { opacity: .2; }
+
+@media (min-width: 1600px) {
+  .hero-copy { left: 8%; }
+  .species { left: 8%; }
+  .panel-section { padding-inline: 36px; }
+}
+@media (max-width: 1150px) {
+  header { margin-inline: 28px; }
+  .hero-copy { left: 5%; width: 360px; }
+  h1 { font-size: 76px; }
+  .species { left: 5%; }
+  .control-panel { left: 28px; right: 28px; }
+  .panel-section { padding-inline: 18px; }
+  .sliders { gap: 20px; }
+  .transport { gap: 12px; }
+  .actions { gap: 4px; }
+  .mutate-button { padding: 12px; }
+  .cursor-note { left: 53%; font-size: 8px; }
+  .organism-label { right: 6%; }
+  .brand-note { display: none; }
+}
+@media (max-width: 850px) {
+  body { overflow-y: auto; }
+  .interface { min-height: 850px; }
+  header { height: 80px; margin-inline: 22px; }
+  .brand-name { font-size: 19px; letter-spacing: 5px; }
+  .brand-mark { width: 28px; height: 28px; }
+  .header-right { gap: 20px; }
+  .live { display: none; }
+  .hero-copy { top: 120px; left: 25px; width: 300px; }
+  h1 { font-size: 65px; letter-spacing: -4px; margin-top: 25px; }
+  h1 em { letter-spacing: -3px; }
+  .hero-copy p { font-size: 11px; max-width: 220px; }
+  .eyebrow { font-size: 8px; letter-spacing: 1px; }
+  .specimen-number { margin-top: 22px; font-size: 8px; }
+  .coordinates { top: 107px; left: auto; right: 25px; font-size: 7px; gap: 12px; }
+  .organism-label { top: 43%; font-size: 7px; right: 30px; }
+  .vertical-caption { display: none; }
+  .species { bottom: 210px; left: 25px; gap: 6px; }
+  .species-button { width: 74px; height: 65px; font-size: 7px; }
+  .species-button svg { width: 28px; height: 27px; }
+  .cursor-note { bottom: 224px; left: auto; right: 25px; white-space: normal; max-width: 170px; line-height: 1.8; }
+  .cursor-note span { display: none; }
+  .cursor-note .desktop-hint { display: none; }
+  .control-panel {
+    left: 22px; right: 22px; bottom: 52px;
+    min-height: 137px; padding: 17px 0;
+    flex-wrap: wrap; row-gap: 18px;
+  }
+  .transport { width: 165px; }
+  .sliders { width: calc(100% - 165px); flex: none; border: none; gap: 25px; }
+  .actions {
+    width: 100%; border-top: 1px solid var(--line);
+    padding-top: 13px; justify-content: flex-end; gap: 14px;
+  }
+  .mutate-button { margin-left: auto; padding: 10px 15px; }
+  .actions .icon-button { height: 29px; }
+  footer { left: 25px; right: 25px; bottom: 19px; font-size: 7px; }
+  .footer-right { gap: 14px; }
+  .footer-left span { display: none; }
+}
+@media (max-width: 520px) {
+  .interface { min-height: 920px; }
+  .hero-copy { top: 123px; }
+  h1 { font-size: 62px; }
+  .hero-copy p { max-width: 215px; }
+  .coordinates { top: 94px; right: 22px; }
+  .coordinates div:last-child { display: none; }
+  .organism-label { top: 49%; right: 25px; }
+  .cursor-note { bottom: 221px; max-width: 100px; font-size: 7px; }
+  .cursor-note svg { flex-shrink: 0; }
+  .species-button { width: 68px; }
+  .transport { width: 132px; gap: 10px; }
+  .transport-data { min-width: 50px; }
+  .panel-section { padding-inline: 13px; }
+  .sliders { width: calc(100% - 132px); gap: 15px; }
+  .slider-label { font-size: 8px; gap: 4px; }
+  .slider-group { min-width: 0; }
+  .circle-button { width: 33px; height: 33px; }
+  #timecode { font-size: 12px; }
+  .panel-kicker { font-size: 7px; }
+  .header-right { gap: 17px; }
+  .text-button { font-size: 9px; }
+  .header-right .text-button span { margin-left: 5px; }
+  .brand { gap: 10px; }
+  .dialog-content, .dialog-head { padding: 22px; }
+  .dialog-content h3 { font-size: 31px; }
+  .about-grid { grid-template-columns: 1fr; }
+  #toast { top: 90px; font-size: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .intro { display: none; }
+}
+</style>
+</head>
+
+<body>
+<canvas id="world" aria-label="Процедурный трёхмерный организм из светящихся частиц. Перетаскивай для вращения, нажми для импульса."></canvas>
+<div class="vignette"></div>
+<div class="grain"></div>
+
+<div class="intro" aria-hidden="true">
+  <div class="intro-inner">
+    <div class="intro-title">ABYSS</div>
+    <div class="intro-sub mono">INITIALIZING DIGITAL LIFE</div>
+    <div class="intro-line"></div>
+  </div>
+</div>
+
+<div class="interface">
+  <header>
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true">
+        <path d="M20 3 36 32H4L20 3Z"/>
+        <path d="M20 12 29 28H11l9-16Z"/>
+        <path d="M20 23v14M9 32l-3 5m25-5 3 5"/>
+      </svg>
+      <span class="brand-name">ABYSS</span>
+      <span class="brand-note mono">INDEPENDENT LABORATORY<br>OF DIGITAL LIFE / VOL. 001</span>
+    </div>
+
+    <div class="header-right">
+      <div class="live mono"><span class="live-dot"></span><span id="live-state">ORGANISM ONLINE</span></div>
+      <button class="text-button mono" id="open-about">Об эксперименте <span>↗</span></button>
+      <button class="text-button mono" id="open-dna">ДНК <span>&lt;/&gt;</span></button>
+    </div>
+  </header>
+
+  <main>
+    <div class="hero-copy">
+      <div class="eyebrow mono">ЖИЗНЬ, НАПИСАННАЯ КОДОМ</div>
+      <h1>Оно<br>чувствует<br><em>тебя.</em></h1>
+      <p>Ни одной текстуры. Ни одного видео.<br>Только математика, свет и твоё<br>присутствие по ту сторону экрана.</p>
+      <div class="specimen-number mono">
+        <span class="line"></span>
+        SPECIMEN <b id="specimen-id">#00841</b>
+        <span>/</span>
+        <span id="species-latin">AURELIA DIGITALIS</span>
+      </div>
+    </div>
+
+    <div class="coordinates mono" aria-hidden="true">
+      <div>DEPTH <span>2 400 M</span></div>
+      <div>SECTOR <span>07—A</span></div>
+    </div>
+
+    <div class="organism-label mono">
+      <strong id="anatomy-title">01 / НЕЙРОННЫЙ КУПОЛ</strong>
+      <span id="anatomy-note">процедурная биолюминесценция</span>
+    </div>
+
+    <div class="vertical-caption mono">OBSERVE · INTERACT · EVOLVE</div>
+
+    <div class="species" role="group" aria-label="Анатомия организма">
+      <button class="species-button active mono" data-species="medusa" aria-pressed="true">
+        <svg viewBox="0 0 40 35" aria-hidden="true">
+          <path d="M7 19a13 13 0 0 1 26 0H7Z"/>
+          <path d="M13 20c-5 7 5 7 0 13m7-13c-5 7 5 7 0 14m7-14c-5 7 5 7 0 13M20 6c-5 4-7 8-7 13m7-13c5 4 7 8 7 13"/>
+        </svg>
+        МЕДУЗА
+      </button>
+      <button class="species-button mono" data-species="manta" aria-pressed="false">
+        <svg viewBox="0 0 40 35" aria-hidden="true">
+          <path d="m20 8 17-4-9 17-8-5-8 5L3 4l17 4Zm0 8v17M3 4l17 12L37 4"/>
+        </svg>
+        СКАТ
+      </button>
+      <button class="species-button mono" data-species="orchid" aria-pressed="false">
+        <svg viewBox="0 0 40 35" aria-hidden="true">
+          <path d="M20 20C2 25 1 3 13 8c0-11 14-9 14 1 13-5 13 17-7 11Zm0 0v14m0-8 8-4m-8 8-7-4M13 8l7 12 7-11"/>
+        </svg>
+        ОРХИДЕЯ
+      </button>
+    </div>
+
+    <div class="cursor-note mono">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 2 11 9-6 1-3 6-2-16Z"/></svg>
+      Нажми на существо
+      <span>·</span>
+      <div class="desktop-hint">потяни, чтобы повернуть</div>
+    </div>
+
+    <section class="control-panel" aria-label="Управление симуляцией">
+      <div class="panel-section transport">
+        <button class="circle-button" id="pause-button" aria-label="Приостановить симуляцию" aria-pressed="false">
+          <svg id="pause-icon" viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M7 5v10M13 5v10" stroke-width="2.5"/>
+          </svg>
+        </button>
+        <div class="transport-data mono">
+          <div class="panel-kicker">LIFETIME</div>
+          <div id="timecode">00:00:00</div>
+        </div>
+      </div>
+
+      <div class="panel-section sliders mono">
+        <div class="slider-group">
+          <label class="slider-label" for="energy">
+            Энергия <output id="energy-value" for="energy">65</output>
+          </label>
+          <input type="range" id="energy" min="0" max="100" value="65">
+        </div>
+        <div class="slider-group">
+          <label class="slider-label" for="hue">
+            Спектр <output id="hue-value" for="hue">24°</output>
+          </label>
+          <input type="range" id="hue" min="0" max="360" value="24">
+        </div>
+      </div>
+
+      <div class="panel-section actions">
+        <button class="icon-button" id="sound-button" title="Звук — S" aria-label="Включить звук" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 9h4l5-4v14l-5-4H4V9Zm13 0 5 6m0-6-5 6" id="sound-path"/>
+          </svg>
+        </button>
+        <button class="icon-button" id="zen-button" title="Режим погружения — F" aria-label="Скрыть интерфейс">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 9V4h5m6 0h5v5m0 6v5h-5M9 20H4v-5"/>
+          </svg>
+        </button>
+        <button class="icon-button" id="save-button" title="Сохранить изображение — P" aria-label="Сохранить изображение организма в PNG">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 8h3l2-3h4l2 3h3a2 2 0 0 1 2 2v8H3v-8a2 2 0 0 1 2-2Z"/>
+            <circle cx="12" cy="13" r="3"/>
+          </svg>
+        </button>
+        <button class="mutate-button mono" id="mutate-button">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m10 1 2 6 6 3-6 2-2 7-2-7-7-2 7-3 2-6Z"/></svg>
+          Мутация
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="mono">
+    <div class="footer-left">NO ASSETS. JUST ALGORITHMS.<span> / СОЗДАНО ИЗ НИЧЕГО.</span></div>
+    <div class="footer-right">
+      <div><b id="point-count">1860</b> CELLS</div>
+      <div><b id="fps-value">—</b> FPS</div>
+      <div>CANVAS / <b>2D → 3D</b></div>
+    </div>
+  </footer>
+</div>
+
+<button class="zen-exit mono" id="zen-exit">Вернуть интерфейс ↙</button>
+<div id="toast" class="mono" role="status"></div>
+
+<dialog id="about-dialog" aria-labelledby="about-title">
+  <div class="dialog-head">
+    <h2 class="mono" id="about-title">ABYSS / ПОЛЕВЫЕ ЗАМЕТКИ</h2>
+    <button class="close-button" data-close aria-label="Закрыть">×</button>
+  </div>
+  <div class="dialog-content">
+    <h3>А если код —<br>это тоже <em>форма жизни?</em></h3>
+    <p>ABYSS — маленький эксперимент на границе программирования, биологии и искусства. Организм не записан заранее: каждую секунду браузер заново вычисляет его форму.</p>
+    <div class="about-grid">
+      <div class="about-item">
+        <b class="mono">01 / ПРИКОСНОВЕНИЕ</b>
+        <span>Наведи курсор — клетки расступятся. Нажми — через организм пройдёт световой импульс. Перетаскивай, чтобы рассмотреть его с другой стороны.</span>
+      </div>
+      <div class="about-item">
+        <b class="mono">02 / ЭВОЛЮЦИЯ</b>
+        <span>Три анатомии, бесконечные вариации. «Мутация» изменяет геном. Энергия управляет ритмом, спектр — цветом свечения.</span>
+      </div>
+      <div class="about-item">
+        <b class="mono">03 / ГОЛОС</b>
+        <span>Включи звук: появится тихий синтезированный эмбиент. Прикосновения станут нотами. Никаких аудиофайлов — только Web Audio.</span>
+      </div>
+      <div class="about-item">
+        <b class="mono">04 / ИСХОДНЫЙ МАТЕРИАЛ</b>
+        <span>Открой ДНК и измени параметры напрямую. JSON здесь действительно управляет организмом. Ни библиотек, ни серверов, ни трекинга.</span>
+      </div>
+    </div>
+    <div class="shortcut-row mono">
+      <span><kbd>Space</kbd>Пауза</span>
+      <span><kbd>M</kbd>Мутация</span>
+      <span><kbd>S</kbd>Звук</span>
+      <span><kbd>F</kbd>Погружение</span>
+      <span><kbd>1–3</kbd>Анатомия</span>
+    </div>
+  </div>
+</dialog>
+
+<dialog id="dna-dialog" aria-labelledby="dna-title">
+  <div class="dialog-head">
+    <h2 class="mono" id="dna-title">GENOME EDITOR / ЖИВОЙ JSON</h2>
+    <button class="close-button" data-close aria-label="Закрыть">×</button>
+  </div>
+  <div class="dialog-content">
+    <h3>Перепиши<br>его <em>природу.</em></h3>
+    <p>Это не декорация. Измени значения, примени геном — и увидишь, как математика становится анатомией.</p>
+    <div class="editor-caption mono"><label for="dna-input">specimen.genome.json</label><span>EDITABLE ●</span></div>
+    <textarea id="dna-input" spellcheck="false" aria-describedby="dna-note dna-error"></textarea>
+    <div id="dna-error" class="mono" role="alert"></div>
+    <p class="dna-note mono" id="dna-note">
+      species: medusa / manta / orchid<br>
+      seed: 1–99999 · energy: 0–100 · hue: 0–360<br>
+      complexity: 3–9 · spread: 0.65–1.5 · filament: 0.5–1.5
+    </p>
+    <div class="dialog-actions">
+      <button class="solid-button mono" id="apply-dna">Применить геном ↗</button>
+      <button class="text-button mono" id="reset-dna">Восстановить исходный</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+(() => {
+  'use strict';
+
+  const $ = s => document.querySelector(s);
+  const $$ = s => [...document.querySelectorAll(s)];
+  const TAU = Math.PI * 2;
+  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const defaultDNA = {
+    species: 'medusa',
+    seed: 841,
+    energy: 65,
+    hue: 24,
+    complexity: 5,
+    spread: 1,
+    filament: 1
+  };
+  let dna = { ...defaultDNA };
+
+  const speciesInfo = {
+    medusa: ['AURELIA DIGITALIS', '01 / НЕЙРОННЫЙ КУПОЛ', 'процедурная биолюминесценция'],
+    manta: ['MANTA LUMINOSA', '02 / СВЕТОВОЕ КРЫЛО', 'гармонический полёт в пустоте'],
+    orchid: ['ORCHIS INFINITA', '03 / КВАНТОВЫЙ ВЕНЧИК', 'цветение за пределами материи']
+  };
+
+  let toastTimer;
+  function toast(text) {
+    $('#toast').textContent = text;
+    $('#toast').classList.add('visible');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => $('#toast').classList.remove('visible'), 2800);
+  }
+
+  function randomGenerator(seed) {
+    return function() {
+      seed |= 0;
+      seed = seed + 0x6D2B79F5 | 0;
+      let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  // ============================================================
+  //  ПРОСТРАНСТВО
+  // ============================================================
+
+  const canvas = $('#world');
+  const ctx = canvas.getContext('2d', { alpha: false });
+  let width = 0, height = 0, dpr = 1, compact = false;
+  let centerX = 0, centerY = 0, scale = 1;
+
+  let paused = reduced;
+  let frameId = 0;
+  let lastFrame = 0;
+  let time = 0;
+  let lifetime = 0;
+  let fpsFrames = 0, fpsStart = 0;
+
+  let rotY = -.23, targetRotY = -.23;
+  let rotX = -.05, targetRotX = -.05;
+
+  const pointer = {
+    x: -10000, y: -10000, active: false,
+    down: false, moved: false,
+    startX: 0, startY: 0, lastX: 0, lastY: 0
+  };
+
+  const columns = 48;
+  const rows = 20;
+  const strands = 20;
+  const strandLength = 45;
+
+  const cells = [];
+  const links = [];
+  const motes = [];
+  let pulses = [];
+  let mutationFlash = 0;
+
+  // Купол: сетка широт и долгот.
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < columns; col++) {
+      const index = cells.length;
+      cells.push({
+        kind: 0,
+        u: (row + .5) / rows,
+        v: col / columns,
+        row, col,
+        x: 0, y: 0, z: 0,
+        tx: 0, ty: 0, tz: 0,
+        px: 0, py: 0,
+        ox: 0, oy: 0, depth: 0,
+        random: 0, glow: 0
+      });
+      links.push([index, row * columns + (col + 1) % columns, 0]);
+      if (row > 0 && col % 2 === 0) {
+        links.push([index, index - columns, 1]);
+      }
+    }
+  }
+
+  // Волокна: независимые параметрические нити.
+  for (let strand = 0; strand < strands; strand++) {
+    for (let step = 0; step < strandLength; step++) {
+      const index = cells.length;
+      cells.push({
+        kind: 1,
+        u: step / (strandLength - 1),
+        v: strand / strands,
+        row: step, col: strand,
+        x: 0, y: 0, z: 0,
+        tx: 0, ty: 0, tz: 0,
+        px: 0, py: 0,
+        ox: 0, oy: 0, depth: 0,
+        random: 0, glow: 0
+      });
+      if (step > 0) links.push([index - 1, index, 2]);
+    }
+  }
+
+  $('#point-count').textContent = cells.length.toLocaleString('ru-RU');
+
+  function seedCells() {
+    const random = randomGenerator(dna.seed);
+    cells.forEach(cell => { cell.random = random(); });
+
+    motes.length = 0;
+    for (let i = 0; i < 115; i++) {
+      motes.push({
+        x: random(),
+        y: random(),
+        size: .35 + random() * 1.25,
+        phase: random() * TAU,
+        speed: .3 + random() * .8
+      });
+    }
+  }
+
+  function resize() {
+    width = innerWidth;
+    height = innerHeight;
+    compact = width <= 850;
+    dpr = Math.min(devicePixelRatio || 1, 2);
+
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    updateGeometry();
+    requestFrame();
+  }
+
+  function updateGeometry() {
+    const zen = document.body.classList.contains('zen');
+
+    if (zen) {
+      centerX = width * .5;
+      centerY = height * .48;
+      scale = Math.min(width * .27, height * .29, 340);
+    } else if (compact) {
+      centerX = width < 520 ? width * .62 : width * .65;
+      centerY = width < 520
+        ? Math.min(height * .60, 550)
+        : height * .49;
+      scale = Math.min(width * .31, height * .205, 220);
+    } else {
+      centerX = width * .65;
+      centerY = height * .49;
+      scale = Math.min(width * .205, height * .285, 330);
+    }
+  }
+
+  // Каждая форма — чистая функция координат и времени.
+  // Никаких моделей, изображений или заранее записанной анимации.
+  function calculateTarget(cell) {
+    const u = cell.u;
+    const angle = cell.v * TAU;
+    const seedPhase = dna.seed * .00137;
+    const rhythm = time * (0.45 + dna.energy / 90);
+    const breath = Math.sin(rhythm * 1.5);
+    const spread = dna.spread;
+    const k = dna.complexity;
+
+    let x, y, z;
+
+    if (dna.species === 'medusa') {
+      if (cell.kind === 0) {
+        const phi = u * Math.PI * .515;
+        const ribs = 1 + .052 * Math.cos(angle * k * 2 + seedPhase) * Math.sin(phi);
+        const radius = Math.sin(phi) * (1 + breath * .065) * ribs * spread;
+
+        x = Math.cos(angle) * radius;
+        z = Math.sin(angle) * radius;
+        y = -.33 - Math.cos(phi) * .86
+          + Math.sin(angle * k + rhythm) * .018 * u;
+
+        // Волнистая кромка купола.
+        y += Math.pow(u, 8) * Math.cos(angle * k * 2 + rhythm * .6) * .07;
+      } else {
+        const strandPhase = angle * 3 + seedPhase;
+        const longness = .75 + .25 * Math.sin(cell.col * 2.43 + seedPhase);
+        const radius = (.59 + .13 * Math.sin(cell.col * 3.1)) * spread;
+        const curl = u * (.12 + dna.energy * .001);
+
+        x = Math.cos(angle) * radius * (1 - u * .34)
+          + Math.sin(u * 9 - rhythm * 1.3 + strandPhase) * curl;
+
+        z = Math.sin(angle) * radius * (1 - u * .34)
+          + Math.cos(u * 7 - rhythm + strandPhase) * curl;
+
+        y = -.30 + u * 2.28 * longness * dna.filament
+          + Math.sin(u * 8 + strandPhase - rhythm) * u * .045;
+      }
+    } else if (dna.species === 'manta') {
+      if (cell.kind === 0) {
+        const r = Math.sin(u * Math.PI / 2);
+        const side = Math.cos(angle);
+        const wing = Math.pow(Math.abs(side), .65) * Math.sign(side);
+
+        x = wing * r * 1.65 * spread;
+        z = Math.sin(angle) * r * .70;
+        y = -.2
+          + Math.pow(Math.abs(x), 1.5) * Math.sin(rhythm * 1.2 + Math.abs(x)) * .30
+          - .25 * (1 - r)
+          + Math.cos(angle * 2) * .10;
+
+        z += Math.pow(Math.abs(side), 2) * r * .3;
+      } else {
+        const fan = (cell.v - .5);
+        x = fan * .17 * (1 - u) + Math.sin(u * 7 - rhythm) * u * .17;
+        z = .48 + u * 1.75 * dna.filament;
+        y = -.1 + Math.sin(u * 6 - rhythm * 1.3 + fan) * u * .14;
+      }
+    } else {
+      if (cell.kind === 0) {
+        const petal = .69 + .31 * Math.cos(angle * k + seedPhase);
+        const radius = Math.sin(u * Math.PI * .84) * petal * spread * 1.24;
+
+        x = Math.cos(angle) * radius;
+        z = Math.sin(angle) * radius;
+        y = -.28 - u * .9
+          + Math.pow(u, 3) * .62
+          + Math.sin(angle * k + seedPhase) * u * .14
+          + Math.sin(rhythm + angle * k) * u * .035;
+      } else {
+        const twist = angle + u * 5 + rhythm * .15;
+        const radius = (.08 + Math.pow(u, 3) * .27) * spread;
+        x = Math.cos(twist) * radius + Math.sin(u * 4 + rhythm * .5) * u * .09;
+        z = Math.sin(twist) * radius;
+        y = -.2 + u * 1.85 * dna.filament;
+      }
+    }
+
+    cell.tx = x;
+    cell.ty = y;
+    cell.tz = z;
+  }
+
+  function snapCells() {
+    cells.forEach(cell => {
+      calculateTarget(cell);
+      cell.x = cell.tx;
+      cell.y = cell.ty;
+      cell.z = cell.tz;
+      cell.ox = 0;
+      cell.oy = 0;
+    });
+  }
+
+  function requestFrame() {
+    if (!frameId && !document.hidden) {
+      frameId = requestAnimationFrame(render);
+    }
+  }
+
+  function drawBackdrop() {
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#080b11';
+    ctx.fillRect(0, 0, width, height);
+
+    const atmosphere = ctx.createRadialGradient(
+      centerX, centerY, 0,
+      centerX, centerY, scale * 2.6
+    );
+    atmosphere.addColorStop(0, 'rgba(33,52,76,.16)');
+    atmosphere.addColorStop(.45, 'rgba(22,31,53,.12)');
+    atmosphere.addColorStop(1, 'rgba(8,11,17,0)');
+    ctx.fillStyle = atmosphere;
+    ctx.fillRect(0, 0, width, height);
+
+    // Свет сверху — едва заметные глубоководные лучи.
+    ctx.save();
+    ctx.translate(width * .62, -120);
+    ctx.rotate(-.2);
+    for (let i = 0; i < 5; i++) {
+      const beam = ctx.createLinearGradient(0, 0, 0, height * 1.5);
+      beam.addColorStop(0, `rgba(115,149,190,${.014 - i * .0018})`);
+      beam.addColorStop(1, 'rgba(80,100,150,0)');
+      ctx.fillStyle = beam;
+      ctx.beginPath();
+      ctx.moveTo(i * 100 - 200, 0);
+      ctx.lineTo(i * 140 - 340, height * 1.5);
+      ctx.lineTo(i * 140 - 250, height * 1.5);
+      ctx.lineTo(i * 100 - 175, 0);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // Частицы взвеси.
+    for (const mote of motes) {
+      const x = (mote.x * width + Math.sin(time * .1 + mote.phase) * 18 + width) % width;
+      const y = ((mote.y * height - time * mote.speed * 3) % height + height) % height;
+      const alpha = .10 + (Math.sin(time * .6 + mote.phase) + 1) * .09;
+
+      ctx.fillStyle = `rgba(151,177,202,${alpha})`;
+      ctx.beginPath();
+      ctx.arc(x, y, mote.size, 0, TAU);
+      ctx.fill();
+    }
+
+    // Тихая координатная рамка вокруг образца.
+    if (!document.body.classList.contains('zen') && !compact) {
+      ctx.strokeStyle = 'rgba(133,151,180,.13)';
+      ctx.lineWidth = .6;
+      const r = scale * 1.3;
+      const l = 13;
+
+      for (const [x, y, sx, sy] of [
+        [centerX - r, centerY - r, 1, 1],
+        [centerX + r, centerY - r, -1, 1],
+        [centerX - r, centerY + r, 1, -1],
+        [centerX + r, centerY + r, -1, -1]
+      ]) {
+        ctx.beginPath();
+        ctx.moveTo(x + sx * l, y);
+        ctx.lineTo(x, y);
+        ctx.lineTo(x, y + sy * l);
+        ctx.stroke();
+      }
+    }
+  }
+
+  function render(now) {
+    frameId = 0;
+
+    const dt = lastFrame ? Math.min((now - lastFrame) / 1000, .05) : 1 / 60;
+    lastFrame = now;
+
+    if (!paused) {
+      time += dt;
+      lifetime += dt;
+    }
+
+    const motionDt = paused ? 0 : dt;
+    const smooth = paused ? 1 : 1 - Math.exp(-dt * 4.5);
+
+    rotY = lerp(rotY, targetRotY, paused ? 1 : 1 - Math.exp(-dt * 6));
+    rotX = lerp(rotX, targetRotX, paused ? 1 : 1 - Math.exp(-dt * 6));
+
+    const autoRotation = Math.sin(time * .14) * .20;
+    const ay = rotY + autoRotation;
+    const ax = rotX + (dna.species === 'manta' ? .53 : -.07);
+
+    const cy = Math.cos(ay), sy = Math.sin(ay);
+    const cx = Math.cos(ax), sx = Math.sin(ax);
+
+    const drift = Math.sin(time * .55) * scale * .025;
+    const hue = dna.hue;
+    const secondaryHue = (hue + 185) % 360;
+
+    drawBackdrop();
+
+    for (const cell of cells) {
+      calculateTarget(cell);
+      cell.x = lerp(cell.x, cell.tx, smooth);
+      cell.y = lerp(cell.y, cell.ty, smooth);
+      cell.z = lerp(cell.z, cell.tz, smooth);
+
+      const rx = cell.x * cy - cell.z * sy;
+      const rz = cell.x * sy + cell.z * cy;
+      const ry = cell.y * cx - rz * sx;
+      const depth = cell.y * sx + rz * cx;
+
+      const perspective = 4.5 / (4.5 + depth);
+      const px = centerX + rx * scale * perspective;
+      const py = centerY + ry * scale * perspective + drift;
+
+      let pushX = 0, pushY = 0;
+      if (pointer.active && !pointer.down && !paused) {
+        const dx = px - pointer.x, dy = py - pointer.y;
+        const distance = Math.hypot(dx, dy);
+        if (distance < 115 && distance > .1) {
+          const force = Math.pow(1 - distance / 115, 2) * 30;
+          pushX = dx / distance * force;
+          pushY = dy / distance * force;
+        }
+      }
+
+      cell.ox = lerp(cell.ox, pushX, paused ? 1 : 1 - Math.exp(-dt * 8));
+      cell.oy = lerp(cell.oy, pushY, paused ? 1 : 1 - Math.exp(-dt * 8));
+
+      cell.px = px + cell.ox;
+      cell.py = py + cell.oy;
+      cell.depth = depth;
+      cell.glow = 0;
+
+      for (const pulse of pulses) {
+        const distance = Math.hypot(cell.px - pulse.x, cell.py - pulse.y);
+        const band = Math.abs(distance - pulse.radius);
+        if (band < 65) {
+          cell.glow += (1 - band / 65) * pulse.life;
+        }
+      }
+    }
+
+    ctx.globalCompositeOperation = 'lighter';
+
+    // Световые связи между клетками.
+    for (const [aIndex, bIndex, type] of links) {
+      const a = cells[aIndex], b = cells[bIndex];
+      const depthFade = clamp(.68 - (a.depth + b.depth) * .12, .18, .95);
+      const wave = .5 + .5 * Math.sin(a.u * 14 - time * 2 + a.v * 7);
+      const color = type === 2 ? secondaryHue : hue;
+      const alpha = (type === 2 ? .13 : .065) * depthFade
+        + a.glow * .22
+        + (type === 2 ? wave * .035 : 0);
+
+      ctx.strokeStyle = `hsla(${color},75%,70%,${alpha})`;
+      ctx.lineWidth = type === 2 ? .7 : .5;
+      ctx.beginPath();
+      ctx.moveTo(a.px, a.py);
+      ctx.lineTo(b.px, b.py);
+      ctx.stroke();
+    }
+
+    // Клетки и импульсы, бегущие по нитям.
+    for (const cell of cells) {
+      const depthFade = clamp(.73 - cell.depth * .25, .22, 1);
+      const traveling = Math.pow(
+        .5 + .5 * Math.sin(cell.u * 17 - time * (1.4 + dna.energy / 40) + cell.v * 10),
+        10
+      );
+
+      const onRib = cell.kind === 0 && cell.col % 6 === 0;
+      const edge = cell.kind === 0 && cell.row >= rows - 2;
+      const color = cell.kind === 1 || cell.col % 9 === 0 ? secondaryHue : hue;
+
+      let alpha = depthFade * (.28 + cell.random * .32);
+      alpha += traveling * (cell.kind === 1 ? .48 : .10);
+      alpha += cell.glow * .6 + mutationFlash * .22;
+      if (onRib || edge) alpha += .19;
+      alpha = Math.min(alpha, 1);
+
+      const radius = (cell.kind === 1 ? .75 : .85)
+        + cell.random * .55
+        + traveling * .65
+        + cell.glow * 1.2;
+
+      if (onRib || edge || cell.glow > .1 || (cell.kind === 1 && traveling > .65)) {
+        ctx.fillStyle = `hsla(${color},90%,68%,${alpha * .045})`;
+        ctx.beginPath();
+        ctx.arc(cell.px, cell.py, radius * 5, 0, TAU);
+        ctx.fill();
+
+        ctx.fillStyle = `hsla(${color},88%,72%,${alpha * .09})`;
+        ctx.beginPath();
+        ctx.arc(cell.px, cell.py, radius * 2.6, 0, TAU);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = `hsla(${color},${cell.glow > .4 ? 45 : 79}%,${70 + cell.glow * 20}%,${alpha})`;
+      ctx.beginPath();
+      ctx.arc(cell.px, cell.py, radius * (compact ? .8 : 1), 0, TAU);
+      ctx.fill();
+    }
+
+    // Затухающая ударная волна.
+    for (let i = pulses.length - 1; i >= 0; i--) {
+      const pulse = pulses[i];
+      pulse.radius += motionDt * 260;
+      pulse.life -= motionDt * .45;
+
+      if (pulse.life <= 0) {
+        pulses.splice(i, 1);
+        continue;
+      }
+
+      ctx.strokeStyle = `hsla(${hue},80%,75%,${pulse.life * .14})`;
+      ctx.lineWidth = .7;
+      ctx.beginPath();
+      ctx.arc(pulse.x, pulse.y, pulse.radius, 0, TAU);
+      ctx.stroke();
+    }
+
+    mutationFlash = Math.max(0, mutationFlash - motionDt * 1.2);
+    ctx.globalCompositeOperation = 'source-over';
+
+    updateAudio();
+
+    const seconds = Math.floor(lifetime);
+    $('#timecode').textContent = [
+      Math.floor(seconds / 3600),
+      Math.floor(seconds / 60) % 60,
+      seconds % 60
+    ].map(n => String(n).padStart(2, '0')).join(':');
+
+    fpsFrames++;
+    if (now - fpsStart >= 800) {
+      $('#fps-value').textContent = paused
+        ? '—'
+        : Math.round(fpsFrames * 1000 / (now - fpsStart));
+      fpsStart = now;
+      fpsFrames = 0;
+    }
+
+    if (!paused && !document.hidden) requestFrame();
+  }
+
+  // ============================================================
+  //  ПРИКОСНОВЕНИЯ И ВРАЩЕНИЕ
+  // ============================================================
+
+  canvas.addEventListener('pointerdown', event => {
+    pointer.down = true;
+    pointer.moved = false;
+    pointer.active = true;
+    pointer.startX = pointer.lastX = pointer.x = event.clientX;
+    pointer.startY = pointer.lastY = pointer.y = event.clientY;
+    canvas.setPointerCapture(event.pointerId);
+  });
+
+  canvas.addEventListener('pointermove', event => {
+    pointer.x = event.clientX;
+    pointer.y = event.clientY;
+    pointer.active = true;
+
+    if (pointer.down) {
+      const dx = event.clientX - pointer.lastX;
+      const dy = event.clientY - pointer.lastY;
+
+      if (Math.hypot(event.clientX - pointer.startX, event.clientY - pointer.startY) > 5) {
+        pointer.moved = true;
+      }
+
+      targetRotY += dx * .006;
+      targetRotX = clamp(targetRotX + dy * .004, -1.1, 1.1);
+      pointer.lastX = event.clientX;
+      pointer.lastY = event.clientY;
+    }
+    requestFrame();
+  });
+
+  canvas.addEventListener('pointerup', event => {
+    if (!pointer.moved) {
+      emitPulse(event.clientX, event.clientY);
+    }
+    pointer.down = false;
+    if (event.pointerType !== 'mouse') pointer.active = false;
+  });
+
+  canvas.addEventListener('pointercancel', () => {
+    pointer.down = false;
+    pointer.active = false;
+  });
+
+  canvas.addEventListener('pointerleave', () => {
+    if (!pointer.down) pointer.active = false;
+  });
+
+  function emitPulse(x = centerX, y = centerY) {
+    if (paused) {
+      playNote(x / width);
+      toast('Симуляция на паузе. Нажми ▶, чтобы разбудить организм.');
+      return;
+    }
+    pulses.push({ x, y, radius: 3, life: 1 });
+    if (pulses.length > 6) pulses.shift();
+    playNote(x / width);
+    requestFrame();
+  }
+
+  // ============================================================
+  //  ГЕНОМ И ИНТЕРФЕЙС
+  // ============================================================
+
+  function syncUI() {
+    $('#energy').value = dna.energy;
+    $('#hue').value = dna.hue;
+    $('#energy-value').textContent = dna.energy;
+    $('#hue-value').textContent = `${dna.hue}°`;
+
+    $('#specimen-id').textContent = `#${String(dna.seed).padStart(5, '0')}`;
+
+    const info = speciesInfo[dna.species];
+    $('#species-latin').textContent = info[0];
+    $('#anatomy-title').textContent = info[1];
+    $('#anatomy-note').textContent = info[2];
+
+    $$('.species-button').forEach(button => {
+      const active = button.dataset.species === dna.species;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', active);
+    });
+
+    // Цвет интерфейса следует за организмом.
+    document.documentElement.style.setProperty(
+      '--accent', `hsl(${dna.hue}, 82%, 74%)`
+    );
+  }
+
+  function setSpecies(species) {
+    if (!speciesInfo[species]) return;
+    dna.species = species;
+    syncUI();
+    if (paused) snapCells();
+    playNote(.5);
+    requestFrame();
+  }
+
+  $$('.species-button').forEach(button => {
+    button.addEventListener('click', () => setSpecies(button.dataset.species));
+  });
+
+  $('#energy').addEventListener('input', event => {
+    dna.energy = Number(event.target.value);
+    $('#energy-value').textContent = dna.energy;
+    requestFrame();
+  });
+
+  $('#hue').addEventListener('input', event => {
+    dna.hue = Number(event.target.value);
+    syncUI();
+    requestFrame();
+  });
+
+  function mutate() {
+    dna.seed = 1 + Math.floor(Math.random() * 99999);
+    const random = randomGenerator(dna.seed);
+
+    dna.complexity = 3 + Math.floor(random() * 7);
+    dna.spread = Number((.75 + random() * .6).toFixed(2));
+    dna.filament = Number((.65 + random() * .75).toFixed(2));
+    dna.hue = Math.floor(random() * 360);
+    dna.energy = 30 + Math.floor(random() * 66);
+
+    seedCells();
+    syncUI();
+    if (paused) snapCells();
+    else {
+      mutationFlash = 1;
+      pulses.push({ x: centerX, y: centerY, radius: 0, life: 1 });
+    }
+
+    playNote(.75);
+    toast(`Новая жизнь. Образец #${String(dna.seed).padStart(5, '0')}`);
+    requestFrame();
+  }
+  $('#mutate-button').addEventListener('click', mutate);
+
+  function syncPauseUI() {
+    $('#pause-button').setAttribute('aria-pressed', paused);
+    $('#pause-button').setAttribute(
+      'aria-label', paused ? 'Продолжить симуляцию' : 'Приостановить симуляцию'
+    );
+    $('#pause-icon').innerHTML = paused
+      ? '<path d="m7 4 9 6-9 6V4Z" fill="currentColor" stroke="none"/>'
+      : '<path d="M7 5v10M13 5v10" stroke-width="2.5"/>';
+
+    $('#live-state').textContent = paused ? 'TIME SUSPENDED' : 'ORGANISM ONLINE';
+    if (paused) $('#fps-value').textContent = '—';
+  }
+
+  function togglePause() {
+    paused = !paused;
+    lastFrame = 0;
+    fpsStart = performance.now();
+    fpsFrames = 0;
+    syncPauseUI();
+    requestFrame();
+  }
+  $('#pause-button').addEventListener('click', togglePause);
+
+  function toggleZen(force) {
+    const active = typeof force === 'boolean'
+      ? force
+      : !document.body.classList.contains('zen');
+
+    document.body.classList.toggle('zen', active);
+    updateGeometry();
+    requestFrame();
+
+    if (active) {
+      $('#zen-exit').focus();
+      toast('Только ты и свет. F или Esc — вернуть интерфейс.');
+    } else {
+      $('#zen-button').focus();
+    }
+  }
+  $('#zen-button').addEventListener('click', () => toggleZen());
+  $('#zen-exit').addEventListener('click', () => toggleZen(false));
+
+  // ============================================================
+  //  ЗВУК: СИНТЕЗ, НЕ АУДИОФАЙЛ
+  // ============================================================
+
+  let audio = null;
+  let soundOn = false;
+  let soundBusy = false;
+  let noteCount = 0;
+
+  function createAudio() {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) throw new Error('Audio unavailable');
+
+    const context = new AudioContextClass();
+    const master = context.createGain();
+    master.gain.value = 0;
+    master.connect(context.destination);
+
+    const filter = context.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 550;
+    filter.Q.value = .6;
+    filter.connect(master);
+
+    const droneGain = context.createGain();
+    droneGain.gain.value = .2;
+    droneGain.connect(filter);
+
+    const oscillators = [55, 110.15, 164.81].map((frequency, index) => {
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      oscillator.type = 'sine';
+      oscillator.frequency.value = frequency;
+      gain.gain.value = index === 0 ? .35 : .12;
+      oscillator.connect(gain);
+      gain.connect(droneGain);
+      oscillator.start();
+      return oscillator;
+    });
+
+    return { context, master, filter, droneGain, oscillators };
+  }
+
+  function syncSoundUI() {
+    $('#sound-button').classList.toggle('active', soundOn);
+    $('#sound-button').setAttribute('aria-pressed', soundOn);
+    $('#sound-button').setAttribute(
+      'aria-label', soundOn ? 'Выключить звук' : 'Включить звук'
+    );
+    $('#sound-path').setAttribute('d', soundOn
+      ? 'M4 9h4l5-4v14l-5-4H4V9Zm13-1a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14'
+      : 'M4 9h4l5-4v14l-5-4H4V9Zm13 0 5 6m0-6-5 6'
+    );
+  }
+
+  async function toggleSound() {
+    if (soundBusy) return;
+    soundBusy = true;
+
+    try {
+      if (!audio) audio = createAudio();
+      await audio.context.resume();
+      soundOn = !soundOn;
+
+      audio.master.gain.setTargetAtTime(
+        soundOn ? .65 : 0,
+        audio.context.currentTime,
+        .25
+      );
+
+      syncSoundUI();
+      if (soundOn) {
+        playNote(.35);
+        toast('Голос глубины включён. Прикосновения теперь звучат.');
+      } else toast('Тишина тоже часть музыки.');
+    } catch {
+      soundOn = false;
+      syncSoundUI();
+      toast('Браузер не смог запустить звук.');
+    } finally {
+      soundBusy = false;
+    }
+  }
+  $('#sound-button').addEventListener('click', toggleSound);
+
+  function updateAudio() {
+    if (!audio || !soundOn || audio.context.state !== 'running') return;
+    const now = audio.context.currentTime;
+    const pulse = .5 + .5 * Math.sin(time * 1.5);
+
+    audio.filter.frequency.setTargetAtTime(
+      230 + dna.energy * 7 + pulse * 130, now, .2
+    );
+    audio.droneGain.gain.setTargetAtTime(
+      paused ? .07 : .13 + pulse * .07, now, .3
+    );
+  }
+
+  function playNote(position) {
+    if (!audio || !soundOn || audio.context.state !== 'running' || noteCount >= 10) return;
+
+    const notes = [220, 261.63, 293.66, 329.63, 392, 440, 523.25, 587.33];
+    const frequency = notes[Math.min(notes.length - 1, Math.floor(clamp(position, 0, 1) * notes.length))];
+    const now = audio.context.currentTime;
+    const oscillator = audio.context.createOscillator();
+    const harmonic = audio.context.createOscillator();
+    const gain = audio.context.createGain();
+    const harmonicGain = audio.context.createGain();
+
+    oscillator.type = 'sine';
+    oscillator.frequency.value = frequency;
+    harmonic.type = 'sine';
+    harmonic.frequency.value = frequency * 2.003;
+    harmonicGain.gain.value = .13;
+
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(.055, now + .03);
+    gain.gain.exponentialRampToValueAtTime(.0001, now + 3.8);
+
+    oscillator.connect(gain);
+    harmonic.connect(harmonicGain);
+    harmonicGain.connect(gain);
+    gain.connect(audio.master);
+
+    oscillator.start(now);
+    harmonic.start(now);
+    oscillator.stop(now + 4);
+    harmonic.stop(now + 4);
+    noteCount++;
+
+    oscillator.onended = () => {
+      noteCount--;
+      oscillator.disconnect();
+      harmonic.disconnect();
+      harmonicGain.disconnect();
+      gain.disconnect();
+    };
+  }
+
+  // ============================================================
+  //  ОКНА, РЕДАКТОР, ЭКСПОРТ
+  // ============================================================
+
+  function openDialog(selector) {
+    const dialog = $(selector);
+    if (!dialog.open) dialog.showModal();
+  }
+
+  $('#open-about').addEventListener('click', () => openDialog('#about-dialog'));
+  $('#open-dna').addEventListener('click', () => {
+    $('#dna-input').value = JSON.stringify(dna, null, 2);
+    $('#dna-error').textContent = '';
+    openDialog('#dna-dialog');
+  });
+
+  $$('[data-close]').forEach(button => {
+    button.addEventListener('click', () => button.closest('dialog').close());
+  });
+
+  $$('dialog').forEach(dialog => {
+    dialog.addEventListener('click', event => {
+      if (event.target !== dialog) return;
+      const rect = dialog.getBoundingClientRect();
+      if (
+        event.clientX < rect.left || event.clientX > rect.right ||
+        event.clientY < rect.top || event.clientY > rect.bottom
+      ) dialog.close();
+    });
+  });
+
+  function validateDNA(value) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      throw new Error('Геном должен быть JSON-объектом.');
+    }
+    if (!Object.hasOwn(speciesInfo, value.species)) {
+      throw new Error('species: выбери medusa, manta или orchid.');
+    }
+
+    const ranges = {
+      seed: [1, 99999, true],
+      energy: [0, 100, true],
+      hue: [0, 360, true],
+      complexity: [3, 9, true],
+      spread: [.65, 1.5, false],
+      filament: [.5, 1.5, false]
+    };
+
+    const valid = { species: value.species };
+    for (const [key, [min, max, integer]] of Object.entries(ranges)) {
+      const number = value[key];
+      if (
+        typeof number !== 'number' || !Number.isFinite(number) ||
+        number < min || number > max ||
+        (integer && !Number.isInteger(number))
+      ) {
+        throw new Error(`${key}: ${integer ? 'целое число' : 'число'} от ${min} до ${max}.`);
+      }
+      valid[key] = number;
+    }
+
+    const unknown = Object.keys(value).filter(key => !Object.hasOwn(valid, key));
+    if (unknown.length) throw new Error(`Неизвестные параметры: ${unknown.join(', ')}`);
+    return valid;
+  }
+
+  $('#apply-dna').addEventListener('click', () => {
+    try {
+      let parsed;
+      try {
+        parsed = JSON.parse($('#dna-input').value);
+      } catch {
+        throw new Error('Ошибка JSON. Проверь запятые, кавычки и скобки.');
+      }
+
+      dna = validateDNA(parsed);
+      seedCells();
+      syncUI();
+      if (paused) snapCells();
+      else mutationFlash = .7;
+
+      $('#dna-dialog').close();
+      toast('Геном применён. Ты только что переписал жизнь.');
+      requestFrame();
+    } catch (error) {
+      $('#dna-error').textContent = error.message;
+    }
+  });
+
+  $('#reset-dna').addEventListener('click', () => {
+    $('#dna-input').value = JSON.stringify(defaultDNA, null, 2);
+    $('#dna-error').textContent = '';
+  });
+
+  function saveImage() {
+    const button = $('#save-button');
+    button.disabled = true;
+
+    // Копия текущего кадра; интерфейс намеренно не попадает в PNG.
+    const output = document.createElement('canvas');
+    output.width = canvas.width;
+    output.height = canvas.height;
+
+    const out = output.getContext('2d');
+    out.drawImage(canvas, 0, 0);
+    out.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const shade = out.createLinearGradient(0, height - 100, 0, height);
+    shade.addColorStop(0, 'rgba(8,11,17,0)');
+    shade.addColorStop(1, 'rgba(8,11,17,.9)');
+    out.fillStyle = shade;
+    out.fillRect(0, height - 100, width, 100);
+
+    out.fillStyle = '#ded8ce';
+    out.font = '13px monospace';
+    out.fillText('A B Y S S', 28, height - 39);
+    out.fillStyle = '#7c8798';
+    out.font = '9px monospace';
+    out.fillText(
+      `${speciesInfo[dna.species][0]} / SEED ${dna.seed} / LIFE WRITTEN IN CODE`,
+      28, height - 21
+    );
+
+    output.toBlob(blob => {
+      button.disabled = false;
+      if (!blob) {
+        toast('Не удалось сохранить кадр. Попробуй ещё раз.');
+        return;
+      }
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `abyss-${dna.species}-${dna.seed}.png`;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+
+      toast('Кадр отправлен на сохранение. Маленький кусочек глубины.');
+    }, 'image/png');
+  }
+  $('#save-button').addEventListener('click', saveImage);
+
+  // ============================================================
+  //  ГОРЯЧИЕ КЛАВИШИ И ЖИЗНЕННЫЙ ЦИКЛ
+  // ============================================================
+
+  document.addEventListener('keydown', event => {
+    const target = event.target;
+    if (
+      target instanceof Element &&
+      target.closest('input, textarea, select, [contenteditable="true"]')
+    ) return;
+
+    if ($$('dialog').some(dialog => dialog.open)) return;
+    if (event.ctrlKey || event.metaKey || event.altKey || event.repeat) return;
+
+    // Не перехватываем Space у сфокусированных кнопок.
+    if (event.code === 'Space' && target instanceof Element && target.closest('button, a')) return;
+
+    switch (event.code) {
+      case 'Space':
+        event.preventDefault();
+        togglePause();
+        break;
+      case 'KeyM': mutate(); break;
+      case 'KeyS': toggleSound(); break;
+      case 'KeyF': toggleZen(); break;
+      case 'KeyP': saveImage(); break;
+      case 'Digit1': setSpecies('medusa'); break;
+      case 'Digit2': setSpecies('manta'); break;
+      case 'Digit3': setSpecies('orchid'); break;
+      case 'Escape':
+        if (document.body.classList.contains('zen')) toggleZen(false);
+        break;
+    }
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      if (frameId) cancelAnimationFrame(frameId);
+      frameId = 0;
+      if (audio) audio.context.suspend().catch(() => {});
+    } else {
+      lastFrame = 0;
+      fpsStart = performance.now();
+      fpsFrames = 0;
+      if (audio && soundOn) audio.context.resume().catch(() => {});
+      requestFrame();
+    }
+  });
+
+  addEventListener('resize', resize);
+
+  seedCells();
+  syncUI();
+  syncPauseUI();
+  snapCells();
+  resize();
+
+  if (reduced) {
+    toast('Движение приостановлено по настройкам доступности. Запуск — кнопкой ▶.');
+  }
+
+  // Убираем заставку из DOM после её завершения.
+  setTimeout(() => $('.intro')?.remove(), reduced ? 0 : 2300);
+})();
+</script>
+</body>
+</html>

@@ -31,7 +31,7 @@ export function Stats() {
   return (
     <section id="stats" ref={root} data-section="stats" className="section stats">
       <div className="stats-header">
-        <SectionLabel index="07" label="Цифры" />
+        <SectionLabel id="stats" />
         <h2 className="h3" data-split>
           Цифры, за которые <span className="text-gradient">не стыдно</span>
         </h2>

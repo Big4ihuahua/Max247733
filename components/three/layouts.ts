@@ -7,9 +7,9 @@ export type Layout = {
   rot: [number, number, number];
   scale: number;
   intensity: number;
-  /** DOM element id to follow; the cloud is centred on it and scaled to its height. */
+  /** DOM element id to follow; the cloud is centred on it and scaled to fit inside it. */
   anchor?: string;
-  /** Shape height in world units at scale 1, used to fit the anchor. */
+  /** Largest shape extent in world units at scale 1, fitted to the anchor's shorter side. */
   anchorSize?: number;
 };
 
@@ -26,11 +26,12 @@ const galaxyRot: Layout["rot"] = [-1.05, 0, 0.35];
 
 export const DESKTOP: Record<Key, Layout> = {
   preload: L([0, 0, 0], 1, 1),
-  hero: L([2.95, 0.85, 0], 0.76, 0.9),
+  hero: { ...L([2.95, 0.85, 0], 0.76, 0.9), anchor: "hero-anchor", anchorSize: 5.2 },
   manifesto: L([3.15, -0.1, 0], 0.88, 1),
   services: L([0.6, 0, -2.2], 1.25, 0.5),
-  process: L([0, -0.4, -2], 1, 0.6, [0.2, 0, 0.08]),
+  process: L([0, -0.7, -2.6], 1, 0.4, [0.2, 0, 0.08]),
   cases: L([0, -1, -5], 1.3, 0.38, galaxyRot),
+  works: L([0, -1, -5], 1.3, 0.22, galaxyRot),
   tech: { ...L([2.8, -0.2, -1.5], 1, 0.75, [0.25, 0, 0]), anchor: "tag-sphere", anchorSize: 7.4 },
   stats: L([0, -1, -5], 1.3, 0.38, galaxyRot),
   reviews: L([0, -1, -5], 1.3, 0.34, galaxyRot),
@@ -42,11 +43,12 @@ export const DESKTOP: Record<Key, Layout> = {
 
 export const MOBILE: Record<Key, Layout> = {
   preload: L([0, 0.2, 0], 0.55, 1),
-  hero: L([0, 1.35, -0.5], 0.6, 0.85),
+  hero: { ...L([0, 1.35, -0.5], 0.6, 0.85), anchor: "hero-anchor", anchorSize: 5.2 },
   manifesto: { ...L([0, -1.7, 0], 0.62, 0.9), anchor: "manifesto-core", anchorSize: 4.4 },
   services: L([0, 0.4, -2], 0.7, 0.45),
   process: L([0, 0, -2], 0.55, 0.35, [0.2, 0, 1.45]),
   cases: L([0, 0, -5], 0.9, 0.35, galaxyRot),
+  works: L([0, 0, -5], 0.9, 0.22, galaxyRot),
   tech: { ...L([0, 0, -1.5], 0.55, 0.7, [0.25, 0, 0]), anchor: "tag-sphere", anchorSize: 7.4 },
   stats: L([0, 0, -5], 0.9, 0.35, galaxyRot),
   reviews: L([0, 0, -5], 0.9, 0.3, galaxyRot),
@@ -95,6 +97,7 @@ export const SECTION_BG: Record<SectionId, string> = {
   services: "#070a0b",
   process: "#0b0a10",
   cases: "#07080b",
+  works: "#07080b",
   tech: "#080b10",
   stats: "#0b090b",
   reviews: "#0b090b",
