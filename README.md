@@ -30,11 +30,13 @@ npm run typecheck
 
 ## Деплой на Cloudflare Workers
 
-Репозиторий подключён к Workers Builds (воркер `max247733`). Сборка идёт через адаптер OpenNext:
+Репозиторий подключён к Workers Builds (воркер `max247733`) и собирается адаптером OpenNext.
+`wrangler.jsonc` и `open-next.config.ts` — это конфигурация, которую генерирует автонастройка Cloudflare
+(`wrangler setup`); без них превью-сборки веток (`wrangler versions upload`) падали с «Missing entry-point».
 
-- `wrangler.jsonc` сам запускает `npm run cf:build` перед `wrangler deploy` (ветка `main`) и `wrangler versions upload`
-  (превью для остальных веток). Поэтому команду сборки в панели Cloudflare можно оставить любой или пустой.
-- Конфиг OpenNext лежит в `cloudflare/open-next.config.ts`, а не в корне, — причина описана в самом файле.
+- Команда сборки в панели: `npx opennextjs-cloudflare build`. Деплой: `npx wrangler deploy` или
+  `npx opennextjs-cloudflare deploy`, для веток — `npx wrangler versions upload` или `npx opennextjs-cloudflare upload`.
+- `open-next.config.ts` должен лежать в корне проекта — его ищет `opennextjs-cloudflare build`.
 - Имя `name` в `wrangler.jsonc` должно совпадать с именем воркера в панели Cloudflare.
 
 Локально: `npm run preview` — собрать и запустить воркер в `workerd`, `npm run deploy` — выложить (нужен `wrangler login`).
