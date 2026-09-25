@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Manrope, Unbounded } from "next/font/google";
+import localFont from "next/font/local";
 import { site } from "@/data/site";
 import { services } from "@/data/services";
 import "./globals.css";
@@ -7,6 +8,8 @@ import "./globals.css";
 const unbounded = Unbounded({ subsets: ["latin", "cyrillic"], variable: "--font-unbounded", display: "swap" });
 const manrope = Manrope({ subsets: ["latin", "cyrillic"], variable: "--font-manrope", display: "swap" });
 const jetbrains = JetBrains_Mono({ subsets: ["latin", "cyrillic"], variable: "--font-jetbrains", display: "swap" });
+// Static, overlap-free cut used for stroked text; see scripts/build-outline-font.py.
+const outline = localFont({ src: "./fonts/unbounded-outline-500.woff2", variable: "--font-outline", weight: "500", display: "swap" });
 
 const title = `${site.fullName} — сайты, приложения и программы под ключ`;
 
@@ -56,7 +59,11 @@ const jsonLd = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ru" className={`${unbounded.variable} ${manrope.variable} ${jetbrains.variable}`} suppressHydrationWarning>
+    <html
+      lang="ru"
+      className={`${unbounded.variable} ${manrope.variable} ${jetbrains.variable} ${outline.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: boot }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />

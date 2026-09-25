@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { gsap, Flip, prefersReducedMotion } from "@/lib/gsap";
 import { useIsoLayoutEffect } from "@/hooks/useIsoLayoutEffect";
-import { getLenis } from "@/lib/lenis";
-import { cases, type CaseStudy } from "@/data/cases";
-import { Mockup } from "@/components/ui/Mockup";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { lockScroll, unlockScroll } from "@/lib/lenis";
+import { caseShots, cases, type CaseStudy } from "@/data/cases";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 import { ArrowIcon } from "@/components/ui/Icons";
+import { LIVE_PREVIEW_QUERY, LiveFrame } from "@/components/ui/LiveFrame";
+import { WorkViewer } from "./WorkViewer";
 
 type Props = {
   index: number;
@@ -20,13 +22,13 @@ type Props = {
 export function CaseModal({ index, flip, onClose, onNavigate }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const closing = useRef(false);
+  const [demo, setDemo] = useState(false);
   const c = cases[index];
   const next = (index + 1) % cases.length;
 
   useIsoLayoutEffect(() => {
     const el = ref.current!;
-    getLenis()?.stop();
-    document.documentElement.classList.add("modal-open");
+    lockScroll();
     const reduced = prefersReducedMotion();
     gsap.fromTo(el.querySelector(".modal-backdrop"), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.5, ease: "power2.out" });
     const media = el.querySelector<HTMLElement>(".modal-media");
@@ -37,10 +39,7 @@ export function CaseModal({ index, flip, onClose, onNavigate }: Props) {
     }
     flip.current = null;
     el.querySelector<HTMLButtonElement>(".modal-close")?.focus({ preventScroll: true });
-    return () => {
-      getLenis()?.start();
-      document.documentElement.classList.remove("modal-open");
-    };
+    return unlockScroll;
   }, []);
 
   const close = () => {
@@ -51,7 +50,7 @@ export function CaseModal({ index, flip, onClose, onNavigate }: Props) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
+      if (e.key === "Escape" && !demo) close();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -72,48 +71,74 @@ export function CaseModal({ index, flip, onClose, onNavigate }: Props) {
   };
 
   return createPortal(
-    <div ref={ref} className="case-modal" role="dialog" aria-modal="true" aria-labelledby="case-modal-title">
+    <div ref={ref} className="case-modal" role="dialog" aria-modal="true" aria-labelledby="case-modal-title" style={{ "--accent": c.accent } as React.CSSProperties}>
       <div className="modal-backdrop" onClick={close} />
       <button type="button" className="modal-close" onClick={close} aria-label="Закрыть кейс">
         <span />
         <span />
       </button>
       <div className="modal-scroll" data-lenis-prevent>
-        <ModalContent key={c.slug} c={c} nextTitle={cases[next].title} onNext={goNext} />
+        <ModalContent key={c.slug} c={c} paused={demo} nextTitle={cases[next].title} onNext={goNext} onLaunch={() => setDemo(true)} onClose={close} />
       </div>
+      {demo && (
+        <WorkViewer
+          items={cases}
+          index={index}
+          onNavigate={onNavigate}
+          onClose={() => {
+            setDemo(false);
+            ref.current?.querySelector<HTMLButtonElement>(".modal-play")?.focus({ preventScroll: true });
+          }}
+        />
+      )}
     </div>,
     document.body,
   );
 }
 
-function ModalContent({ c, nextTitle, onNext }: { c: CaseStudy; nextTitle: string; onNext: () => void }) {
+type ContentProps = { c: CaseStudy; paused: boolean; nextTitle: string; onNext: () => void; onLaunch: () => void; onClose: () => void };
+
+function ModalContent({ c, paused, nextTitle, onNext, onLaunch, onClose }: ContentProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const canLive = useMediaQuery(LIVE_PREVIEW_QUERY);
+  const [live, setLive] = useState(false);
+  const shots = caseShots(c.slug);
 
   useIsoLayoutEffect(() => {
     const el = ref.current!;
-    if (prefersReducedMotion()) return;
-    gsap.fromTo(
-      el.querySelectorAll("[data-modal-fade]"),
-      { y: 40, autoAlpha: 0, filter: "blur(8px)" },
-      { y: 0, autoAlpha: 1, filter: "blur(0px)", duration: 1, ease: "expo.out", stagger: 0.06, delay: 0.45, clearProps: "filter" },
-    );
-    gsap.set(el.querySelector(".modal-media"), { autoAlpha: 1, y: 0 });
+    // Start the live preview once the shared-element transition has landed.
+    const id = window.setTimeout(() => setLive(true), 1200);
+    if (!prefersReducedMotion()) {
+      gsap.fromTo(
+        el.querySelectorAll("[data-modal-fade]"),
+        { y: 40, autoAlpha: 0, filter: "blur(8px)" },
+        { y: 0, autoAlpha: 1, filter: "blur(0px)", duration: 1, ease: "expo.out", stagger: 0.06, delay: 0.45, clearProps: "filter" },
+      );
+      gsap.set(el.querySelector(".modal-media"), { autoAlpha: 1, y: 0 });
+    }
+    return () => window.clearTimeout(id);
   }, []);
 
   return (
     <div ref={ref} className="modal-content">
       <div className="modal-media" data-flip-id={`media-${c.slug}`}>
-        <Mockup variant={c.mockup} colors={c.colors} />
+        <img src={shots[0]} alt={`${c.title} — главный экран`} width={1280} height={800} decoding="async" />
+        {canLive && live && !paused && <LiveFrame slug={c.slug} />}
+        <button type="button" className="modal-play" onClick={onLaunch}>
+          <span className="modal-play-icon" aria-hidden="true" />
+          Запустить демо
+        </button>
       </div>
 
       <div className="modal-head">
         <div data-modal-fade>
           <span className="mono-label text-mint">
-            {c.year} · {c.type}
+            {c.year} · {c.category}
           </span>
           <h2 id="case-modal-title" className="modal-title">
             {c.title}
           </h2>
+          <p className="modal-lead">{c.description}</p>
         </div>
         <dl className="modal-meta" data-modal-fade>
           <div>
@@ -121,7 +146,11 @@ function ModalContent({ c, nextTitle, onNext }: { c: CaseStudy; nextTitle: strin
             <dd>{c.stack.join(" · ")}</dd>
           </div>
           <div>
-            <dt className="mono-label text-muted">Итог</dt>
+            <dt className="mono-label text-muted">Формат</dt>
+            <dd>Один HTML-файл, без картинок и видео</dd>
+          </div>
+          <div>
+            <dt className="mono-label text-muted">Фишка</dt>
             <dd>{c.metric}</dd>
           </div>
         </dl>
@@ -129,12 +158,12 @@ function ModalContent({ c, nextTitle, onNext }: { c: CaseStudy; nextTitle: strin
 
       <div className="modal-body">
         <div data-modal-fade>
-          <h3 className="mono-label text-muted">Задача</h3>
-          <p>{c.task}</p>
+          <h3 className="mono-label text-muted">Идея</h3>
+          <p>{c.idea}</p>
         </div>
         <div data-modal-fade>
-          <h3 className="mono-label text-muted">Решение</h3>
-          <p>{c.solution}</p>
+          <h3 className="mono-label text-muted">Как сделано</h3>
+          <p>{c.how}</p>
         </div>
       </div>
 
@@ -148,12 +177,10 @@ function ModalContent({ c, nextTitle, onNext }: { c: CaseStudy; nextTitle: strin
       </div>
 
       <div className="modal-gallery">
-        {["0% 0%", "50% 40%", "100% 100%"].map((origin, i) => (
-          <div key={i} className="modal-shot" data-modal-fade>
-            <div className="modal-shot-inner" style={{ transformOrigin: origin }}>
-              <Mockup variant={c.mockup} colors={c.colors} />
-            </div>
-          </div>
+        {shots.slice(1).map((src, i) => (
+          <button key={src} type="button" className="modal-shot" onClick={onLaunch} data-modal-fade aria-label={`Запустить демо ${c.title}`}>
+            <img src={src} alt={`${c.title} — кадр ${i + 2}`} width={960} height={600} loading="lazy" decoding="async" />
+          </button>
         ))}
       </div>
 
@@ -165,8 +192,8 @@ function ModalContent({ c, nextTitle, onNext }: { c: CaseStudy; nextTitle: strin
       </button>
 
       <div className="modal-cta" data-modal-fade>
-        <p>Хотите такой же результат?</p>
-        <MagneticButton href="#contact" onClick={() => document.querySelector<HTMLButtonElement>(".modal-close")?.click()}>
+        <p>Хотите такой же сайт?</p>
+        <MagneticButton href="#contact" onClick={onClose}>
           Обсудить проект <ArrowIcon />
         </MagneticButton>
       </div>

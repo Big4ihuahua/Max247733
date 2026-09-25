@@ -3,19 +3,21 @@ export const workThumb = (slug: string) => `/works/thumbs/${slug}.webp`;
 /** Demos run in an opaque origin: scripts work, but they can't touch this page, its storage or top navigation. */
 export const DEMO_SANDBOX = "allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-modals";
 
-export type Work = {
+/** Anything the fullscreen demo viewer can open. */
+export type Demo = {
   slug: string;
   title: string;
   subtitle: string;
   category: string;
   description: string;
-  tags: string[];
   /** Short hint shown in the viewer: what to try on the page. */
   hint: string;
   accent: string;
   theme: "dark" | "light";
   sound?: boolean;
 };
+
+export type Work = Demo & { tags: string[] };
 
 /** Standalone demo pages live in /public/works/<slug>.html, previews in /public/works/thumbs/<slug>.webp. */
 export const works: Work[] = [

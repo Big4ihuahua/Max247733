@@ -1,0 +1,1780 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#060609">
+<meta name="description" content="HYPERFORM — интерактивное путешествие через пять состояний цифровой материи.">
+<title>HYPERFORM — Matter has no limits.</title>
+
+<style>
+:root {
+  --bg: #060609;
+  --fg: #f0f1f6;
+  --muted: #858592;
+  --accent: #c4b5ff;
+  --line: #ffffff21;
+  --pad: clamp(22px, 5vw, 88px);
+  --ease: cubic-bezier(.16,1,.3,1);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+::selection { background: #c4b5ff; color: #060609; }
+a { color: inherit; text-decoration: none; }
+button, input { font: inherit; }
+button { color: inherit; cursor: pointer; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { touch-action: manipulation; }
+button:focus-visible, a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 6px;
+}
+h1, h2, h3, p { margin: 0; }
+button { border: 0; }
+.mono {
+  font-family: "Courier New", monospace;
+  font-size: 10px;
+  line-height: 1.6;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+}
+.skip {
+  position: fixed;
+  top: -80px;
+  left: 20px;
+  z-index: 200;
+  padding: 15px;
+  background: var(--fg);
+  color: var(--bg);
+}
+.skip:focus { top: 15px; }
+
+/* ───── GLOBAL UI ───── */
+
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  padding: 26px var(--pad);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+  background: linear-gradient(#060609b8, transparent);
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -.06em;
+}
+.brand-icon {
+  width: 23px;
+  height: 26px;
+  display: inline-block;
+  position: relative;
+}
+.brand-icon::before, .brand-icon::after {
+  content: "";
+  position: absolute;
+  inset: 2px 3px;
+  border: 1px solid currentColor;
+  transform: skewY(-28deg);
+}
+.brand-icon::after { transform: skewY(28deg); }
+.brand sup { font-size: 8px; margin-left: -7px; align-self: flex-start; }
+.header-center {
+  color: #b0aebf;
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  font-size: 9px;
+}
+.live-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 15px var(--accent);
+}
+.header-actions { display: flex; gap: 9px; align-items: center; }
+.soundless {
+  background: #ffffff08;
+  border: 1px solid var(--line);
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  font-size: 11px;
+}
+.header-link {
+  border: 1px solid var(--line);
+  border-radius: 30px;
+  padding: 12px 18px;
+  font-size: 10px;
+  display: flex;
+  gap: 25px;
+  background: #ffffff05;
+  backdrop-filter: blur(12px);
+  transition: background .3s, color .3s;
+}
+.header-link:hover { background: var(--fg); color: var(--bg); }
+
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  z-index: 100;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: .025;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.86' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath d='M0 0h160v160H0z' filter='url(%23n)' opacity='.7'/%3E%3C/svg%3E");
+}
+
+/* ───── SCROLL STAGE ───── */
+
+.journey {
+  position: relative;
+  height: 580svh;
+}
+.stage {
+  height: 100svh;
+  position: sticky;
+  top: 0;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--bg);
+}
+.stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse at 72% 48%, #1a13313b, transparent 60%),
+    var(--bg);
+}
+#world {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+#world canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, #060609c9 0%, #06060950 30%, transparent 58%),
+    linear-gradient(0deg, #060609 0%, transparent 18%, transparent 84%, #06060944);
+}
+.stage-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-image: linear-gradient(90deg, #ffffff04 1px, transparent 1px);
+  background-size: 25% 100%;
+}
+.scanline {
+  position: absolute;
+  height: 1px;
+  width: 100%;
+  top: 50%;
+  background: #ffffff08;
+  pointer-events: none;
+  z-index: 1;
+}
+.scanline::before, .scanline::after {
+  content: "+";
+  position: absolute;
+  top: -9px;
+  font: 14px monospace;
+  color: #ffffff45;
+}
+.scanline::before { left: 28px; }
+.scanline::after { right: 28px; }
+
+.chapter {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 var(--pad);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  will-change: transform, opacity, filter;
+  transform-origin: 25% 50%;
+}
+.chapter:first-of-type { opacity: 1; visibility: visible; }
+.chapter.active a, .chapter.active button { pointer-events: auto; }
+
+.chapter-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: var(--accent);
+  margin-bottom: 27px;
+  font-size: 10px;
+}
+.chapter-eyebrow::before {
+  content: "";
+  width: 30px;
+  height: 1px;
+  background: currentColor;
+}
+
+.chapter h1, .chapter h2 {
+  font-size: clamp(68px, 8.8vw, 145px);
+  letter-spacing: -.075em;
+  font-weight: 500;
+  line-height: .88;
+  max-width: 820px;
+}
+.chapter .outline {
+  color: transparent;
+  -webkit-text-stroke: 1px #f0f1f680;
+}
+.chapter .serif {
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  color: var(--accent);
+}
+.chapter p {
+  max-width: 315px;
+  margin-top: 30px;
+  font-size: 13px;
+  line-height: 1.8;
+  color: #a2a0ae;
+}
+.chapter-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 30px;
+  align-self: flex-start;
+  font-size: 11px;
+  margin-top: 26px;
+  border-bottom: 1px solid #ffffff50;
+  padding-bottom: 10px;
+  transition: color .3s, gap .3s;
+}
+.chapter-link:hover { color: var(--accent); gap: 42px; }
+
+.chapter-meta {
+  position: absolute;
+  right: var(--pad);
+  bottom: 145px;
+  text-align: right;
+  color: #c1b9d5;
+  font-size: 9px;
+}
+.chapter-meta b {
+  font-weight: 400;
+  color: var(--accent);
+  display: block;
+  font-size: 28px;
+  line-height: 1;
+  margin-bottom: 13px;
+}
+
+/* ───── COCKPIT ───── */
+
+.stage-top {
+  position: absolute;
+  top: 112px;
+  left: var(--pad);
+  right: var(--pad);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 4;
+  pointer-events: none;
+  color: #73707f;
+  font-size: 9px;
+}
+.stage-top span:last-child { text-align: right; }
+
+.stage-bottom {
+  position: absolute;
+  bottom: 27px;
+  left: var(--pad);
+  right: var(--pad);
+  z-index: 5;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 30px;
+  align-items: end;
+}
+.scroll-hint {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: #918b9e;
+  font-size: 9px;
+}
+.scroll-track {
+  height: 39px;
+  width: 23px;
+  border: 1px solid #ffffff3b;
+  border-radius: 20px;
+  position: relative;
+}
+.scroll-track::after {
+  content: "";
+  position: absolute;
+  top: 8px;
+  left: 9px;
+  width: 3px;
+  height: 7px;
+  border-radius: 3px;
+  background: var(--accent);
+  animation: scroll-dot 1.8s infinite;
+}
+@keyframes scroll-dot {
+  to { transform: translateY(14px); opacity: 0; }
+}
+
+.scene-nav {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 40px;
+  background: #0d0b1380;
+  backdrop-filter: blur(18px);
+}
+.scene-nav button {
+  position: relative;
+  background: transparent;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  font: 9px "Courier New", monospace;
+  color: #8c869a;
+  transition: background .3s, color .3s;
+}
+.scene-nav button[aria-current="step"] { background: var(--fg); color: var(--bg); }
+
+.explode-button {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 13px 17px;
+  border: 1px solid var(--line);
+  background: #0d0b1370;
+  border-radius: 4px;
+  backdrop-filter: blur(12px);
+  font-size: 9px;
+  transition: background .3s, border-color .3s;
+}
+.explode-button:hover { background: #c4b5ff20; border-color: var(--accent); }
+.explode-button span { color: var(--accent); font-size: 19px; line-height: 1; }
+
+.scene-side {
+  position: absolute;
+  z-index: 3;
+  right: 25px;
+  top: 50%;
+  transform: translateY(-50%);
+  writing-mode: vertical-rl;
+  color: #696471;
+  font-size: 8px;
+}
+
+.big-index {
+  position: absolute;
+  right: calc(var(--pad) - 5px);
+  top: 110px;
+  color: transparent;
+  -webkit-text-stroke: 1px #ffffff13;
+  font-size: clamp(90px, 13vw, 200px);
+  line-height: .8;
+  font-weight: 800;
+  letter-spacing: -.09em;
+  pointer-events: none;
+  z-index: 1;
+}
+.engine-status {
+  position: absolute;
+  bottom: 93px;
+  right: var(--pad);
+  z-index: 4;
+  color: #736d80;
+  font-size: 8px;
+  pointer-events: none;
+}
+
+/* ───── TRANSITION EFFECTS ───── */
+
+.flight-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  opacity: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 67% 50%, #bea7ff50, transparent 65%),
+    linear-gradient(105deg, transparent 35%, #ffffff09 50%, transparent 65%);
+  mix-blend-mode: screen;
+}
+.speed-lines {
+  position: absolute;
+  inset: -25%;
+  z-index: 2;
+  opacity: 0;
+  pointer-events: none;
+  background: repeating-conic-gradient(
+    from 0deg at 65% 50%,
+    transparent 0deg 13.9deg,
+    #c4b5ff17 14deg 14.08deg,
+    transparent 14.2deg 30deg
+  );
+  mask-image: radial-gradient(ellipse at 65% 50%, transparent 20%, black 75%);
+}
+.burst-ring {
+  position: absolute;
+  z-index: 4;
+  left: 68%;
+  top: 50%;
+  width: 80px;
+  aspect-ratio: 1;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+}
+.burst-ring.go { animation: shockwave 1s var(--ease); }
+@keyframes shockwave {
+  0% { opacity: .7; transform: translate(-50%, -50%) scale(.2); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(14); }
+}
+
+/* ───── AFTER THE FLIGHT ───── */
+
+.after {
+  position: relative;
+  z-index: 6;
+  background: var(--bg);
+  padding: 110px var(--pad);
+  border-top: 1px solid var(--line);
+}
+.after-top {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 40px;
+  margin-bottom: 65px;
+}
+.after-kicker { color: var(--accent); }
+.after h2 {
+  font-size: clamp(38px, 5.5vw, 85px);
+  line-height: 1.02;
+  font-weight: 400;
+  letter-spacing: -.06em;
+}
+.after h2 span { color: #67636f; }
+.after-copy {
+  max-width: 370px;
+  margin-top: 25px;
+  color: #96919f;
+  font-size: 14px;
+  line-height: 1.8;
+}
+.capabilities {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.capability {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  padding: 30px;
+  min-height: 290px;
+  border-radius: 5px;
+  background: #0b0a0f;
+  transition: transform .6s var(--ease), border-color .4s;
+  transform-style: preserve-3d;
+}
+.capability:hover { border-color: #c4b5ff70; }
+.capability::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle at var(--mx,50%) var(--my,50%), #c4b5ff1c, transparent 65%);
+  transition: opacity .4s;
+}
+.capability:hover::before { opacity: 1; }
+.capability .mono { color: #7d738f; font-size: 9px; }
+.capability h3 {
+  font-size: 28px;
+  font-weight: 400;
+  letter-spacing: -.04em;
+  margin-top: 55px;
+}
+.capability p {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #8c8697;
+  margin-top: 16px;
+  max-width: 285px;
+}
+.capability-symbol {
+  position: absolute;
+  top: 20px;
+  right: 25px;
+  color: var(--accent);
+  font-size: 42px;
+  font-weight: 300;
+}
+.reveal { opacity: 1; }
+.js .reveal {
+  opacity: 0;
+  transform: translateY(45px);
+  transition: opacity 1s var(--ease), transform 1s var(--ease);
+}
+.js .reveal.visible { opacity: 1; transform: none; }
+
+/* ───── CONTACT ───── */
+
+.contact {
+  position: relative;
+  overflow: hidden;
+  padding: 90px var(--pad) 35px;
+  background: #c4b5ff;
+  color: #100b1b;
+}
+.contact::before {
+  content: "";
+  position: absolute;
+  width: 700px;
+  height: 700px;
+  right: -260px;
+  top: -200px;
+  border: 1px solid #100b1b21;
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 45px #100b1b08,
+    0 0 0 90px #100b1b06,
+    0 0 0 140px #100b1b04;
+}
+.contact .mono { position: relative; }
+.contact-title {
+  position: relative;
+  margin-top: 38px;
+  font-size: clamp(70px, 12.4vw, 190px);
+  line-height: .86;
+  font-weight: 500;
+  letter-spacing: -.08em;
+}
+.contact-title em {
+  font-family: Georgia, serif;
+  font-weight: 400;
+}
+.contact-row {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 30px;
+  margin-top: 60px;
+  padding-top: 28px;
+  border-top: 1px solid #100b1b38;
+}
+.email {
+  font-size: clamp(22px, 3vw, 43px);
+  letter-spacing: -.055em;
+  display: inline-flex;
+  gap: 40px;
+  border-bottom: 1px solid #100b1b70;
+  padding-bottom: 5px;
+}
+.contact-row p {
+  font-size: 12px;
+  line-height: 1.7;
+  max-width: 270px;
+}
+.footer {
+  padding: 26px var(--pad);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+  color: #706a7c;
+  font-size: 9px;
+}
+.footer a { color: var(--fg); }
+
+/* ───── RESPONSIVE ───── */
+
+@media (max-width: 1000px) {
+  .header-center { display: none; }
+  .chapter h1, .chapter h2 { font-size: 10vw; }
+  .chapter p { max-width: 275px; font-size: 12px; }
+  .chapter-meta { bottom: 150px; }
+  .stage-bottom { gap: 18px; }
+  .capability { padding: 24px; }
+}
+@media (max-width: 700px) {
+  :root { --pad: 23px; }
+  .header { padding-block: 21px; gap: 15px; }
+  .brand { font-size: 16px; gap: 8px; }
+  .brand-icon { width: 20px; height: 23px; }
+  .header-link { font-size: 9px; padding: 10px 13px; gap: 16px; }
+  .soundless { width: 31px; height: 31px; }
+  .stage-top { top: 92px; font-size: 8px; }
+  .stage-top span:last-child { display: none; }
+  .chapter { justify-content: flex-start; padding-top: 160px; transform-origin: 30% 35%; }
+  .chapter h1, .chapter h2 {
+    font-size: clamp(60px, 13.6vw, 92px);
+    max-width: 600px;
+  }
+  .chapter-eyebrow { margin-bottom: 22px; font-size: 8px; gap: 12px; }
+  .chapter p {
+    font-size: 11px;
+    line-height: 1.75;
+    max-width: 235px;
+    margin-top: 23px;
+  }
+  .chapter-link { font-size: 10px; margin-top: 18px; padding-bottom: 7px; }
+  .chapter-meta { right: var(--pad); bottom: 142px; font-size: 8px; }
+  .chapter-meta b { font-size: 24px; margin-bottom: 8px; }
+  .big-index { top: 105px; font-size: 96px; right: 23px; }
+  .stage-bottom { grid-template-columns: 1fr auto; gap: 13px; bottom: 22px; }
+  .scroll-hint { display: none; }
+  .scene-nav { justify-self: start; padding: 4px; gap: 1px; }
+  .scene-nav button { width: 31px; height: 31px; font-size: 8px; }
+  .explode-button { padding: 10px 12px; gap: 9px; font-size: 8px; }
+  .engine-status { bottom: 78px; font-size: 7px; }
+  .scene-side { right: 8px; font-size: 7px; top: 60%; }
+  .vignette {
+    background:
+      linear-gradient(180deg, #06060970, transparent 35%, transparent 80%, #060609),
+      linear-gradient(90deg, #06060955, transparent 85%);
+  }
+  .scanline::before { left: 9px; }
+  .scanline::after { right: 9px; }
+  .burst-ring { left: 60%; top: 64%; }
+  .after { padding-block: 65px; }
+  .after-top { grid-template-columns: 1fr; gap: 27px; margin-bottom: 35px; }
+  .after h2 { font-size: 44px; }
+  .after-copy { font-size: 12px; max-width: 330px; }
+  .capabilities { grid-template-columns: 1fr; gap: 12px; }
+  .capability { min-height: 235px; padding: 25px; }
+  .capability h3 { margin-top: 38px; }
+  .capability p { max-width: 340px; }
+  .contact { padding-top: 60px; }
+  .contact-title { font-size: 15.5vw; margin-top: 30px; }
+  .contact-row { flex-direction: column; align-items: flex-start; margin-top: 38px; gap: 23px; }
+  .email { font-size: 27px; gap: 25px; }
+  .contact-row p { font-size: 11px; }
+  .footer { flex-wrap: wrap; font-size: 8px; gap: 14px; }
+}
+@media (max-height: 740px) and (min-width: 701px) {
+  .chapter h1, .chapter h2 { font-size: min(8.4vw, 105px); }
+  .chapter-eyebrow { margin-bottom: 20px; }
+  .chapter p { margin-top: 20px; }
+  .stage-top { top: 91px; }
+  .chapter-meta { bottom: 120px; }
+}
+@media (max-height: 720px) and (max-width: 700px) {
+  .chapter { padding-top: 135px; }
+  .chapter h1, .chapter h2 { font-size: 12vw; }
+  .chapter p { margin-top: 17px; font-size: 10px; }
+  .chapter-meta { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .js .reveal { opacity: 1; transform: none; }
+}
+body.motion-paused .scroll-track::after { animation-play-state: paused; }
+
+noscript .noscript-note { padding: 100px 25px; }
+</style>
+</head>
+
+<body>
+<a class="skip" href="#after">Пропустить 3D-путешествие</a>
+<div class="scroll-progress" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="header">
+  <a href="#home" class="brand" aria-label="Hyperform — на главную">
+    <span class="brand-icon" aria-hidden="true"></span>
+    HYPERFORM<sup>®</sup>
+  </a>
+
+  <div class="header-center mono">
+    <span class="live-dot" aria-hidden="true"></span>
+    Independent creative technology
+  </div>
+
+  <div class="header-actions">
+    <button class="soundless" id="motion-button" type="button"
+      aria-label="Приостановить фоновую анимацию" aria-pressed="false">Ⅱ</button>
+    <a class="header-link" href="#contact">Начать проект <span aria-hidden="true">↗</span></a>
+  </div>
+</header>
+
+<main id="home">
+  <section class="journey" id="journey" aria-label="Пять состояний цифровой материи">
+    <div class="stage" id="stage">
+      <div id="world" aria-hidden="true"></div>
+      <div class="stage-grid" aria-hidden="true"></div>
+      <div class="vignette" aria-hidden="true"></div>
+      <div class="scanline" aria-hidden="true"></div>
+      <div class="flight-flash" id="flight-flash" aria-hidden="true"></div>
+      <div class="speed-lines" id="speed-lines" aria-hidden="true"></div>
+      <div class="burst-ring" id="burst-ring" aria-hidden="true"></div>
+
+      <div class="stage-top mono" aria-hidden="true">
+        <span>Digital matter / An interactive study</span>
+        <span id="coordinates">X 00.000 / Y 00.000 / Z 08.000</span>
+      </div>
+
+      <div class="big-index" id="big-index" aria-hidden="true">01</div>
+
+      <article class="chapter active" data-chapter="0" aria-labelledby="title-0">
+        <div class="chapter-eyebrow mono">01 / Genesis — начало формы</div>
+        <h1 id="title-0">Not just<br><span class="outline">pixels.</span><br><span class="serif">Possibilities.</span></h1>
+        <p>Тысячи частиц. Ни одной случайной идеи. Создаём цифровой опыт, который выходит за границы экрана.</p>
+        <a class="chapter-link" href="#after">Исследовать подход <span aria-hidden="true">↗</span></a>
+        <div class="chapter-meta mono"><b>◌</b>Object 001<br>Living sphere<br>State: becoming</div>
+      </article>
+
+      <article class="chapter" data-chapter="1" aria-labelledby="title-1" aria-hidden="true" inert>
+        <div class="chapter-eyebrow mono">02 / Gravity — сила притяжения</div>
+        <h2 id="title-1">Break<br><span class="outline">the loop.</span><br><span class="serif">Create one.</span></h2>
+        <p>Не следуем по привычной орбите. Создаём собственную — и превращаем внимание в притяжение.</p>
+        <a class="chapter-link" href="#after">Дизайн с собственной гравитацией <span aria-hidden="true">↗</span></a>
+        <div class="chapter-meta mono"><b>∞</b>Object 002<br>Toroidal field<br>State: attraction</div>
+      </article>
+
+      <article class="chapter" data-chapter="2" aria-labelledby="title-2" aria-hidden="true" inert>
+        <div class="chapter-eyebrow mono">03 / Identity — код характера</div>
+        <h2 id="title-2">Different<br><span class="outline">by design.</span><br><span class="serif">By nature.</span></h2>
+        <p>Сильный бренд нельзя собрать из чужих решений. Его характер зашит глубже. Мы находим этот код.</p>
+        <a class="chapter-link" href="#after">От смысла — к системе <span aria-hidden="true">↗</span></a>
+        <div class="chapter-meta mono"><b>⌁</b>Object 003<br>Double helix<br>State: evolution</div>
+      </article>
+
+      <article class="chapter" data-chapter="3" aria-labelledby="title-3" aria-hidden="true" inert>
+        <div class="chapter-eyebrow mono">04 / Structure — сложность без хаоса</div>
+        <h2 id="title-3">Order.<br><span class="outline">Outside</span><br><span class="serif">the box.</span></h2>
+        <p>Смелая форма. Точная инженерия. Системы, в которых выразительность не мешает логике — а усиливает её.</p>
+        <a class="chapter-link" href="#after">Технологии как часть идеи <span aria-hidden="true">↗</span></a>
+        <div class="chapter-meta mono"><b>◇</b>Object 004<br>Crystalline lattice<br>State: precision</div>
+      </article>
+
+      <article class="chapter" data-chapter="4" aria-labelledby="title-4" aria-hidden="true" inert>
+        <div class="chapter-eyebrow mono">05 / Expansion — дальше возможного</div>
+        <h2 id="title-4">Your next<br><span class="outline">big thing.</span><br><span class="serif">Starts here.</span></h2>
+        <p>Не ещё один сайт. Новый масштаб присутствия. Давайте создадим то, чего пока не существует.</p>
+        <a class="chapter-link" href="#contact">Обсудить вашу вселенную <span aria-hidden="true">↗</span></a>
+        <div class="chapter-meta mono"><b>✳</b>Object 005<br>Spiral galaxy<br>State: infinite</div>
+      </article>
+
+      <div class="scene-side mono" aria-hidden="true">Scroll is the engine / Curiosity is the fuel</div>
+      <div class="engine-status mono" id="engine-status" role="status">Инициализация 3D…</div>
+
+      <div class="stage-bottom">
+        <div class="scroll-hint mono">
+          <span class="scroll-track" aria-hidden="true"></span>
+          <span>Прокрути, чтобы<br>изменить реальность</span>
+        </div>
+
+        <nav class="scene-nav" aria-label="Сцены путешествия">
+          <button type="button" data-goto="0" aria-label="Сцена 1: Сфера" aria-current="step">01</button>
+          <button type="button" data-goto="1" aria-label="Сцена 2: Орбита">02</button>
+          <button type="button" data-goto="2" aria-label="Сцена 3: Спираль">03</button>
+          <button type="button" data-goto="3" aria-label="Сцена 4: Кристалл">04</button>
+          <button type="button" data-goto="4" aria-label="Сцена 5: Галактика">05</button>
+        </nav>
+
+        <button class="explode-button mono" id="explode" type="button">
+          Разрушить форму <span aria-hidden="true">✳</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <noscript>
+    <div class="noscript-note">
+      Для интерактивных 3D-сцен включите JavaScript. Информация о студии и контакты доступны ниже.
+    </div>
+  </noscript>
+
+  <section class="after" id="after" aria-labelledby="after-title">
+    <div class="after-top">
+      <div class="after-kicker mono reveal">Beyond the spectacle / По ту сторону эффекта</div>
+      <div class="reveal">
+        <h2 id="after-title">Впечатлять — хорошо.<br><span>Иметь смысл — важнее.</span></h2>
+        <p class="after-copy">Мы соединяем стратегию, визуальный характер и технологию. Чтобы за первым «вау» стоял продукт, к которому хочется вернуться.</p>
+      </div>
+    </div>
+
+    <div class="capabilities">
+      <article class="capability reveal">
+        <span class="mono">01 / Direction</span>
+        <span class="capability-symbol" aria-hidden="true">↗</span>
+        <h3>Идея и характер.</h3>
+        <p>Позиционирование, арт-дирекшн и визуальная система. Начинаем с того, что делает вас непохожими на остальных.</p>
+      </article>
+
+      <article class="capability reveal">
+        <span class="mono">02 / Experience</span>
+        <span class="capability-symbol" aria-hidden="true">◎</span>
+        <h3>Опыт и ощущение.</h3>
+        <p>Интерфейсы, интерактивные истории и выразительные цифровые пространства. Движение, у которого есть причина.</p>
+      </article>
+
+      <article class="capability reveal">
+        <span class="mono">03 / Engineering</span>
+        <span class="capability-symbol" aria-hidden="true">⌘</span>
+        <h3>Код и точность.</h3>
+        <p>Креативная разработка, WebGL и адаптивные системы. Сложная технология — простое и понятное взаимодействие.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="contact" id="contact" aria-labelledby="contact-title">
+    <div class="mono reveal">The next chapter is yours.</div>
+    <h2 class="contact-title reveal" id="contact-title">Make it<br><em>impossible</em><br>to ignore.</h2>
+    <div class="contact-row reveal">
+      <a class="email" id="email" href="mailto:hello@example.com">hello@example.com <span aria-hidden="true">↗</span></a>
+      <p>Расскажите, что вы задумали.<br>Начнём с разговора. Возможно, закончим чем-то совершенно новым.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="footer mono">
+  <span>© <span id="year">2026</span> Hyperform / Concept experience</span>
+  <span>Built with particles, purpose & a little obsession.</span>
+  <a href="#home">Вернуться на орбиту ↑</a>
+</footer>
+
+<script type="module">
+/* =====================================================
+   HYPERFORM
+   Native scroll. GPU morphing. Procedural geometry.
+   No models. No images. No scroll hijacking.
+===================================================== */
+
+const EMAIL = 'hello@example.com';
+
+const $ = (selector, root = document) => root.querySelector(selector);
+const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const smooth = x => {
+  const t = clamp(x);
+  return t * t * (3 - 2 * t);
+};
+const TAU = Math.PI * 2;
+
+document.documentElement.classList.add('js');
+$('#year').textContent = new Date().getFullYear();
+
+const email = $('#email');
+email.href = `mailto:${EMAIL}?subject=${encodeURIComponent('Новая вселенная / HYPERFORM')}`;
+email.replaceChildren(document.createTextNode(EMAIL + ' '));
+const emailArrow = document.createElement('span');
+emailArrow.textContent = '↗';
+emailArrow.setAttribute('aria-hidden', 'true');
+email.append(emailArrow);
+
+const journey = $('#journey');
+const stageElement = $('#stage');
+const chapters = $$('.chapter');
+const navigation = $$('[data-goto]');
+const motionQuery = matchMedia('(prefers-reduced-motion: reduce)');
+
+let reducedMotion = motionQuery.matches;
+let paused = false;
+let rawStage = 0;
+let currentStage = 0;
+let previousStage = 0;
+let activeChapter = -1;
+let scrollStart = 0;
+let scrollLength = 1;
+let stageWidth = innerWidth;
+let stageHeight = innerHeight;
+let inView = true;
+let frame = 0;
+let lastTime = 0;
+let elapsed = 0;
+let burst = 0;
+let dirty = true;
+let graphics = null;
+let pointer = { x: 0, y: 0, targetX: 0, targetY: 0, active: false };
+
+const palettes = [
+  [196, 181, 255],
+  [116, 231, 255],
+  [255, 159, 186],
+  [195, 244, 180],
+  [255, 192, 132]
+];
+
+function accentAt(value) {
+  const index = Math.min(3, Math.floor(value));
+  const amount = value - index;
+  return palettes[index].map((color, i) => Math.round(lerp(color, palettes[index + 1][i], amount)));
+}
+
+/* ---------- Reveal ---------- */
+
+if ('IntersectionObserver' in window) {
+  const revealObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add('visible');
+      revealObserver.unobserve(entry.target);
+    });
+  }, { threshold: .08 });
+
+  $$('.reveal').forEach(element => revealObserver.observe(element));
+} else {
+  $$('.reveal').forEach(element => element.classList.add('visible'));
+}
+
+/* ---------- Native scroll mapping ---------- */
+
+function measure() {
+  stageWidth = stageElement.clientWidth;
+  stageHeight = stageElement.clientHeight;
+  scrollStart = journey.getBoundingClientRect().top + scrollY;
+  scrollLength = Math.max(1, journey.offsetHeight - stageHeight);
+  graphics?.resize(stageWidth, stageHeight);
+  readScroll();
+}
+
+function readScroll() {
+  rawStage = clamp((scrollY - scrollStart) / scrollLength) * 4;
+
+  const pageLength = document.documentElement.scrollHeight - innerHeight;
+  $('.scroll-progress').style.transform = `scaleX(${pageLength > 0 ? clamp(scrollY / pageLength) : 0})`;
+
+  dirty = true;
+  wake();
+}
+
+addEventListener('scroll', readScroll, { passive: true });
+addEventListener('resize', measure, { passive: true });
+
+navigation.forEach(button => {
+  button.addEventListener('click', () => {
+    scrollTo({
+      top: scrollStart + scrollLength * Number(button.dataset.goto) / 4,
+      behavior: reducedMotion ? 'instant' : 'smooth'
+    });
+  });
+});
+
+if ('IntersectionObserver' in window) {
+  const sceneObserver = new IntersectionObserver(entries => {
+    inView = entries[0].isIntersecting;
+    if (inView) {
+      dirty = true;
+      wake();
+    }
+  }, { threshold: 0 });
+  sceneObserver.observe(journey);
+}
+
+/* ---------- Accessible scene switching ---------- */
+
+function updateChapters() {
+  const next = Math.round(currentStage);
+
+  if (next !== activeChapter) {
+    const focusedChapter = document.activeElement?.closest('.chapter');
+    activeChapter = next;
+
+    chapters.forEach((chapter, index) => {
+      const active = index === next;
+      chapter.classList.toggle('active', active);
+      chapter.setAttribute('aria-hidden', String(!active));
+      chapter.inert = !active;
+    });
+
+    navigation.forEach((button, index) => {
+      if (index === next) button.setAttribute('aria-current', 'step');
+      else button.removeAttribute('aria-current');
+    });
+
+    if (focusedChapter && Number(focusedChapter.dataset.chapter) !== next) {
+      navigation[next].focus({ preventScroll: true });
+    }
+
+    $('#big-index').textContent = String(next + 1).padStart(2, '0');
+  }
+
+  chapters.forEach((chapter, index) => {
+    const distance = currentStage - index;
+    const amount = Math.abs(distance);
+    const opacity = reducedMotion
+      ? Number(index === activeChapter)
+      : 1 - smooth((amount - .07) / .58);
+
+    chapter.style.opacity = opacity;
+    chapter.style.visibility = opacity > .005 ? 'visible' : 'hidden';
+
+    if (reducedMotion) {
+      chapter.style.transform = 'none';
+      chapter.style.filter = 'none';
+    } else {
+      const x = -distance * (stageWidth < 700 ? 65 : 160);
+      const y = -distance * 105;
+      const z = -amount * 180;
+      const rotation = distance * -8;
+      const scale = 1 - amount * .13;
+
+      chapter.style.transform =
+        `perspective(1000px) translate3d(${x}px,${y}px,${z}px) rotateY(${rotation}deg) scale(${scale})`;
+
+      chapter.style.filter = `blur(${Math.max(0, amount - .15) * 13}px)`;
+    }
+  });
+
+  const accent = accentAt(currentStage);
+  document.documentElement.style.setProperty('--accent', `rgb(${accent.join(',')})`);
+}
+
+/* ---------- Motion control ---------- */
+
+function syncMotion() {
+  const stopped = paused || reducedMotion;
+  const button = $('#motion-button');
+
+  document.body.classList.toggle('motion-paused', stopped);
+  button.textContent = stopped ? '▶' : 'Ⅱ';
+  button.setAttribute('aria-pressed', String(stopped));
+  button.setAttribute('aria-label', reducedMotion
+    ? 'Движение отключено настройками системы'
+    : paused ? 'Включить фоновую анимацию' : 'Приостановить фоновую анимацию');
+
+  button.disabled = reducedMotion;
+  $('#explode').disabled = stopped;
+  $('#explode').style.opacity = stopped ? '.45' : '1';
+
+  if (stopped) burst = 0;
+  dirty = true;
+  wake();
+}
+
+$('#motion-button').addEventListener('click', () => {
+  paused = !paused;
+  syncMotion();
+});
+
+motionQuery.addEventListener('change', event => {
+  reducedMotion = event.matches;
+  syncMotion();
+});
+
+/* ---------- Pointer interaction ---------- */
+
+stageElement.addEventListener('pointermove', event => {
+  if (event.pointerType === 'touch' || reducedMotion || paused) return;
+
+  const rect = stageElement.getBoundingClientRect();
+  pointer.targetX = (event.clientX - rect.left) / stageWidth * 2 - 1;
+  pointer.targetY = -((event.clientY - rect.top) / stageHeight * 2 - 1);
+  pointer.active = true;
+  wake();
+}, { passive: true });
+
+stageElement.addEventListener('pointerleave', () => {
+  pointer.targetX = 0;
+  pointer.targetY = 0;
+  pointer.active = false;
+});
+
+function explode() {
+  if (paused || reducedMotion) return;
+  burst = 1;
+  const ring = $('#burst-ring');
+  ring.classList.remove('go');
+  void ring.offsetWidth;
+  ring.classList.add('go');
+  wake();
+}
+
+$('#explode').addEventListener('click', explode);
+
+stageElement.addEventListener('pointerdown', event => {
+  if (event.target.closest('a, button')) return;
+  explode();
+}, { passive: true });
+
+/* ---------- Card perspective ---------- */
+
+$$('.capability').forEach(card => {
+  card.addEventListener('pointermove', event => {
+    if (reducedMotion || paused || event.pointerType === 'touch') return;
+
+    const rect = card.getBoundingClientRect();
+    const x = (event.clientX - rect.left) / rect.width;
+    const y = (event.clientY - rect.top) / rect.height;
+
+    card.style.setProperty('--mx', x * 100 + '%');
+    card.style.setProperty('--my', y * 100 + '%');
+    card.style.transform = `perspective(900px) rotateX(${(y - .5) * -7}deg) rotateY(${(x - .5) * 9}deg) translateY(-5px)`;
+  });
+
+  card.addEventListener('pointerleave', () => {
+    card.style.transform = '';
+  });
+});
+
+/* ---------- Procedural point clouds ---------- */
+
+function createShapes(count) {
+  const shapes = Array.from({ length: 5 }, () => new Float32Array(count * 3));
+  const randoms = new Float32Array(count * 3);
+  const golden = Math.PI * (3 - Math.sqrt(5));
+
+  let seed = 83641;
+  function random() {
+    seed = seed * 16807 % 2147483647;
+    return (seed - 1) / 2147483646;
+  }
+
+  function put(shape, index, x, y, z) {
+    shapes[shape][index * 3] = x;
+    shapes[shape][index * 3 + 1] = y;
+    shapes[shape][index * 3 + 2] = z;
+  }
+
+  for (let i = 0; i < count; i++) {
+    const ratio = i / count;
+    const a = random();
+    const b = random();
+    const c = random();
+
+    randoms.set([a, b, c], i * 3);
+
+    // 01 — Fibonacci sphere with a gently corrugated surface.
+    const y = 1 - ratio * 2;
+    const radius = Math.sqrt(Math.max(0, 1 - y * y));
+    const angle = golden * i;
+    const texture = 1.6 + Math.sin(angle * 3 + y * 13) * .045;
+    put(0, i,
+      Math.cos(angle) * radius * texture,
+      y * texture,
+      Math.sin(angle) * radius * texture
+    );
+
+    // 02 — Twisted toroidal field.
+    const u = a * TAU;
+    const v = b * TAU;
+    const minor = .39 + c * .12;
+    const major = 1.19;
+    const tx = (major + minor * Math.cos(v)) * Math.cos(u);
+    const ty = minor * Math.sin(v);
+    const tz = (major + minor * Math.cos(v)) * Math.sin(u);
+    put(1, i, tx, ty * .78 - tz * .63, ty * .63 + tz * .78);
+
+    // 03 — Double helix with connective rungs.
+    const h = ratio * 4 - 2;
+    const turn = h * 3.4;
+    const strand = i % 2 ? Math.PI : 0;
+    let hx = Math.cos(turn + strand) * .86;
+    let hz = Math.sin(turn + strand) * .86;
+
+    if (i % 5 === 0) {
+      const rung = Math.round(h * 7) / 7;
+      hx = Math.cos(rung * 3.4) * (a * 2 - 1) * .86;
+      hz = Math.sin(rung * 3.4) * (a * 2 - 1) * .86;
+      put(2, i, hx, rung, hz);
+    } else {
+      hx += (a - .5) * .14;
+      hz += (b - .5) * .14;
+      put(2, i, hx, h, hz);
+    }
+
+    // 04 — Six gridded crystal faces with a small inner core.
+    const face = i % 6;
+    const gridSize = 46;
+    let q = (Math.floor(a * gridSize) / (gridSize - 1) * 2 - 1) * 1.22;
+    let r = (Math.floor(b * gridSize) / (gridSize - 1) * 2 - 1) * 1.22;
+    let x4, y4, z4;
+
+    if (face === 0) [x4,y4,z4] = [1.22,q,r];
+    if (face === 1) [x4,y4,z4] = [-1.22,q,r];
+    if (face === 2) [x4,y4,z4] = [q,1.22,r];
+    if (face === 3) [x4,y4,z4] = [q,-1.22,r];
+    if (face === 4) [x4,y4,z4] = [q,r,1.22];
+    if (face === 5) [x4,y4,z4] = [q,r,-1.22];
+
+    if (i % 9 === 0) {
+      x4 *= .55;
+      y4 *= .55;
+      z4 *= .55;
+    }
+    put(3, i, x4, y4, z4);
+
+    // 05 — Four-arm galaxy.
+    const galRadius = Math.pow(a, .62) * 2.35;
+    const arm = i % 4 * TAU / 4;
+    const galAngle = arm + galRadius * 2.3 + (b - .5) * (.28 + galRadius * .12);
+    const gx = Math.cos(galAngle) * galRadius;
+    const gz = Math.sin(galAngle) * galRadius;
+    const gy = (c - .5) * .17 * (1 - a) + Math.sin(galRadius * 3) * .025;
+
+    put(4, i, gx, gy * .8 - gz * .46, gy * .46 + gz * .8);
+  }
+
+  return { shapes, randoms };
+}
+
+/* ---------- GPU implementation ---------- */
+
+async function initializeWebGL() {
+  const THREE = await import('https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js');
+
+  const mobile = stageWidth < 701;
+  const lowMemory = navigator.deviceMemory && navigator.deviceMemory <= 4;
+  const count = mobile ? 7200 : lowMemory ? 11000 : 18000;
+  const { shapes, randoms } = createShapes(count);
+
+  const renderer = new THREE.WebGLRenderer({
+    alpha: true,
+    antialias: false,
+    powerPreference: 'high-performance'
+  });
+
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, mobile ? 1.5 : 1.8));
+  renderer.setSize(stageWidth, stageHeight);
+  renderer.setClearColor(0x060609, 0);
+
+  $('#world').replaceChildren(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(48, stageWidth / stageHeight, .1, 80);
+  camera.position.set(0, 0, 8);
+
+  const group = new THREE.Group();
+  scene.add(group);
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute('position', new THREE.BufferAttribute(shapes[0], 3));
+
+  shapes.forEach((shape, index) => {
+    geometry.setAttribute('aShape' + index, new THREE.BufferAttribute(shape, 3));
+  });
+
+  geometry.setAttribute('aRandom', new THREE.BufferAttribute(randoms, 3));
+  geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 12);
+
+  const uniforms = {
+    uStage: { value: 0 },
+    uTime: { value: 0 },
+    uBurst: { value: 0 },
+    uPixelRatio: { value: renderer.getPixelRatio() },
+    uPointScale: { value: mobile ? 1.6 : 1.9 },
+    uPointer: { value: new THREE.Vector2() },
+    uPointerActive: { value: 0 },
+    uColor: { value: new THREE.Color('#c4b5ff') },
+    uTravel: { value: 0 }
+  };
+
+  const material = new THREE.ShaderMaterial({
+    uniforms,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+
+    vertexShader: `
+      precision highp float;
+
+      attribute vec3 aShape0;
+      attribute vec3 aShape1;
+      attribute vec3 aShape2;
+      attribute vec3 aShape3;
+      attribute vec3 aShape4;
+      attribute vec3 aRandom;
+
+      uniform float uStage;
+      uniform float uTime;
+      uniform float uBurst;
+      uniform float uPixelRatio;
+      uniform float uPointScale;
+      uniform vec2 uPointer;
+      uniform float uPointerActive;
+
+      varying float vAlpha;
+      varying float vHot;
+      varying float vDepth;
+
+      vec3 rotateY(vec3 p, float a) {
+        float c = cos(a);
+        float s = sin(a);
+        return vec3(p.x*c + p.z*s, p.y, -p.x*s + p.z*c);
+      }
+
+      void main() {
+        float stage = clamp(uStage, 0.0, 4.0);
+        float index = min(floor(stage), 3.0);
+        float local = stage - index;
+
+        // Hold each object, then disassemble it into the next.
+        float blend = smoothstep(0.17, 0.83, local);
+        float passage = sin(blend * 3.14159265);
+
+        vec3 fromPosition;
+        vec3 toPosition;
+
+        if (index < 0.5) {
+          fromPosition = aShape0;
+          toPosition = aShape1;
+        } else if (index < 1.5) {
+          fromPosition = aShape1;
+          toPosition = aShape2;
+        } else if (index < 2.5) {
+          fromPosition = aShape2;
+          toPosition = aShape3;
+        } else {
+          fromPosition = aShape3;
+          toPosition = aShape4;
+        }
+
+        vec3 p = mix(fromPosition, toPosition, blend);
+
+        vec3 direction = normalize(aRandom - 0.5 + vec3(0.0001));
+        float shell = 0.5 + aRandom.z * 2.3;
+
+        // The flight: radial dispersion + twist + forward streak.
+        p += direction * passage * shell * 1.2;
+        p = rotateY(p, passage * (aRandom.y - 0.5) * 3.0);
+        p.z += passage * (aRandom.x - 0.5) * 4.8;
+
+        // Breathing motion.
+        p += normalize(p + vec3(0.001)) *
+          sin(uTime * 0.8 + aRandom.x * 6.283) * 0.026;
+
+        // User-triggered explosion.
+        p += direction * uBurst * (1.8 + aRandom.y * 3.0);
+        p = rotateY(p, uBurst * (aRandom.x - 0.5));
+
+        vec4 mv = modelViewMatrix * vec4(p, 1.0);
+        vec4 clip = projectionMatrix * mv;
+        vec2 ndc = clip.xy / clip.w;
+
+        // Screen-space repulsion, calculated on the GPU.
+        vec2 delta = ndc - uPointer;
+        float distanceToPointer = length(delta);
+        float influence = pow(max(0.0, 1.0 - distanceToPointer / 0.30), 2.0);
+
+        mv.xy += normalize(delta + vec2(0.0001)) *
+          influence * 0.42 * uPointerActive;
+
+        gl_Position = projectionMatrix * mv;
+
+        float sizeVariation = 0.6 + aRandom.y * 1.4;
+        float perspective = clamp(7.0 / max(1.0, -mv.z), 0.4, 3.5);
+
+        gl_PointSize = clamp(
+          uPointScale * sizeVariation * perspective * uPixelRatio,
+          1.0,
+          12.0
+        );
+
+        vDepth = clamp((10.0 + mv.z) / 7.0, 0.1, 1.0);
+        vAlpha = (0.25 + aRandom.z * 0.65) * (0.55 + vDepth * 0.45);
+        vHot = step(0.93, aRandom.x);
+      }
+    `,
+
+    fragmentShader: `
+      precision highp float;
+
+      uniform vec3 uColor;
+      uniform float uTravel;
+
+      varying float vAlpha;
+      varying float vHot;
+      varying float vDepth;
+
+      void main() {
+        float d = length(gl_PointCoord - 0.5) * 2.0;
+        if (d > 1.0) discard;
+
+        float core = pow(1.0 - d, 2.8);
+        float glow = pow(1.0 - d, 1.2) * 0.25;
+        float alpha = (core + glow) * vAlpha;
+
+        vec3 color = mix(uColor, vec3(1.0), vHot * 0.85 + core * 0.15);
+        color += uTravel * vec3(0.06, 0.035, 0.10);
+
+        gl_FragColor = vec4(color, alpha);
+      }
+    `
+  });
+
+  const points = new THREE.Points(geometry, material);
+  group.add(points);
+
+  // Orbital guides.
+  const guides = new THREE.Group();
+  group.add(guides);
+
+  const guideMaterials = [];
+
+  for (let ring = 0; ring < 3; ring++) {
+    const vertices = [];
+
+    for (let i = 0; i <= 240; i++) {
+      const a = i / 240 * TAU;
+      const radius = 2.12 + ring * .18;
+      vertices.push(new THREE.Vector3(Math.cos(a) * radius, 0, Math.sin(a) * radius));
+    }
+
+    const ringGeometry = new THREE.BufferGeometry().setFromPoints(vertices);
+    const ringMaterial = new THREE.LineDashedMaterial({
+      color: '#c4b5ff',
+      transparent: true,
+      opacity: .15,
+      dashSize: ring === 1 ? .015 : .2,
+      gapSize: ring === 1 ? .07 : .09,
+      depthWrite: false
+    });
+
+    const line = new THREE.Line(ringGeometry, ringMaterial);
+    line.computeLineDistances();
+    line.rotation.x = .35 + ring * .65;
+    line.rotation.z = ring * .55;
+    guides.add(line);
+    guideMaterials.push(ringMaterial);
+  }
+
+  // Ambient particle field.
+  const starCount = mobile ? 420 : 1000;
+  const starPositions = new Float32Array(starCount * 3);
+
+  for (let i = 0; i < starCount; i++) {
+    starPositions[i * 3] = (Math.random() - .5) * 28;
+    starPositions[i * 3 + 1] = (Math.random() - .5) * 18;
+    starPositions[i * 3 + 2] = (Math.random() - .5) * 22 - 5;
+  }
+
+  const starGeometry = new THREE.BufferGeometry();
+  starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+
+  const starMaterial = new THREE.PointsMaterial({
+    color: '#a7a0c4',
+    size: .013,
+    transparent: true,
+    opacity: .48,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending
+  });
+
+  const stars = new THREE.Points(starGeometry, starMaterial);
+  scene.add(stars);
+
+  let width = stageWidth;
+  let height = stageHeight;
+  let lost = false;
+
+  renderer.domElement.addEventListener('webglcontextlost', event => {
+    event.preventDefault();
+    lost = true;
+    $('#engine-status').textContent = '3D приостановлено системой · текст и навигация доступны';
+  });
+
+  renderer.domElement.addEventListener('webglcontextrestored', () => {
+    lost = false;
+    $('#engine-status').textContent = `${count.toLocaleString('en-US')} particles / GPU restored`;
+    dirty = true;
+    wake();
+  });
+
+  $('#engine-status').textContent = `${count.toLocaleString('en-US')} particles / WebGL / Live`;
+
+  return {
+    resize(w, h) {
+      width = w;
+      height = h;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    },
+
+    render(state) {
+      if (lost) return;
+
+      const { stage, time, travel, burst, px, py, pointerActive } = state;
+      const narrow = width < 701;
+      const accent = accentAt(stage);
+
+      uniforms.uStage.value = stage;
+      uniforms.uTime.value = time;
+      uniforms.uBurst.value = burst;
+      uniforms.uPointer.value.set(px, py);
+      uniforms.uPointerActive.value = pointerActive ? 1 : 0;
+      uniforms.uTravel.value = travel;
+      uniforms.uColor.value.setRGB(accent[0] / 255, accent[1] / 255, accent[2] / 255);
+
+      group.position.set(narrow ? .15 : 1.35, narrow ? -.85 : 0, 0);
+      group.scale.setScalar(narrow ? .94 : 1.17);
+
+      group.rotation.y = time * .085 + stage * .52 + px * .10;
+      group.rotation.x = -.10 + Math.sin(stage * 1.3) * .13 + py * .045;
+      group.rotation.z = Math.sin(stage * .9) * .12;
+
+      guides.rotation.y = time * -.045;
+      guides.rotation.z = stage * .2;
+
+      guideMaterials.forEach((material, index) => {
+        material.color.copy(uniforms.uColor.value);
+        material.opacity = (.10 + index * .02) * (1 - travel * .7);
+      });
+
+      stars.rotation.y = stage * -.11 + time * .006;
+      stars.position.z = travel * 2;
+
+      // Camera choreography: orbit, bank and dolly through the morph.
+      camera.position.x = Math.sin(stage * 1.8) * .42 + px * .11;
+      camera.position.y = Math.sin(stage * 1.15) * .28 + py * .08;
+      camera.position.z = (narrow ? 8.8 : 8.1) - travel * 1.9 + Math.cos(stage * 1.3) * .2;
+
+      camera.lookAt(narrow ? 0 : .15, narrow ? .2 : 0, 0);
+      camera.rotateZ(Math.sin(stage * 2.1) * .025 + travel * .032);
+
+      renderer.render(scene, camera);
+
+      return camera.position;
+    }
+  };
+}
+
+/* ---------- Offline / WebGL fallback ---------- */
+
+function initializeFallback() {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  $('#world').replaceChildren(canvas);
+
+  if (!ctx) {
+    $('#engine-status').textContent = 'Графика недоступна · навигация работает';
+    return { resize() {}, render() {} };
+  }
+
+  const count = 1700;
+  const { shapes, randoms } = createShapes(count);
+  let width = 1, height = 1, dpr = 1;
+
+  $('#engine-status').textContent = 'Canvas mode / 1,700 particles';
+
+  return {
+    resize(w, h) {
+      width = w;
+      height = h;
+      dpr = Math.min(devicePixelRatio || 1, 1.5);
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    },
+
+    render(state) {
+      ctx.clearRect(0, 0, width, height);
+
+      const index = Math.min(3, Math.floor(state.stage));
+      const blend = smooth((state.stage - index - .17) / .66);
+      const scatter = Math.sin(blend * Math.PI);
+      const a = shapes[index];
+      const b = shapes[index + 1];
+      const angle = state.time * .12 + state.stage * .4;
+      const cy = Math.cos(angle), sy = Math.sin(angle);
+      const narrow = width < 701;
+      const scale = Math.min(width * (narrow ? .20 : .15), height * .21);
+      const centerX = width * (narrow ? .56 : .70);
+      const centerY = height * (narrow ? .65 : .51);
+      const color = accentAt(state.stage);
+
+      ctx.globalCompositeOperation = 'lighter';
+
+      for (let i = 0; i < count; i++) {
+        const j = i * 3;
+        const spread = scatter * 2 + state.burst * 3;
+
+        let x = lerp(a[j], b[j], blend) + (randoms[j] - .5) * spread;
+        let y = lerp(a[j + 1], b[j + 1], blend) + (randoms[j + 1] - .5) * spread;
+        let z = lerp(a[j + 2], b[j + 2], blend) + (randoms[j + 2] - .5) * spread;
+
+        const rx = x * cy + z * sy;
+        z = -x * sy + z * cy;
+        const perspective = 5 / (5 + z);
+        const size = (.65 + randoms[j] * .8) * perspective;
+        const alpha = clamp(.65 - z * .13, .15, .95);
+
+        ctx.fillStyle = `rgba(${color.join(',')},${alpha})`;
+        ctx.beginPath();
+        ctx.arc(centerX + rx * scale * perspective, centerY - y * scale * perspective, size, 0, TAU);
+        ctx.fill();
+      }
+
+      ctx.globalCompositeOperation = 'source-over';
+    }
+  };
+}
+
+/* ---------- Animation loop ---------- */
+
+function wake() {
+  if (!frame && !document.hidden) {
+    lastTime = 0;
+    frame = requestAnimationFrame(tick);
+  }
+}
+
+function tick(timestamp) {
+  frame = 0;
+
+  if (document.hidden) return;
+
+  const dt = lastTime ? Math.min((timestamp - lastTime) / 1000, .04) : 1 / 60;
+  lastTime = timestamp;
+
+  const animate = !paused && !reducedMotion;
+  const follow = 1 - Math.exp(-dt * 8);
+
+  previousStage = currentStage;
+
+  if (reducedMotion) {
+    currentStage = Math.round(rawStage);
+  } else {
+    currentStage = lerp(currentStage, rawStage, follow);
+    if (Math.abs(currentStage - rawStage) < .00015) currentStage = rawStage;
+  }
+
+  const changed = Math.abs(currentStage - previousStage) > .00001;
+
+  if (animate && inView) elapsed += dt;
+
+  burst *= Math.exp(-dt * 3.5);
+  if (burst < .001) burst = 0;
+
+  pointer.x = lerp(pointer.x, pointer.targetX, 1 - Math.exp(-dt * 4));
+  pointer.y = lerp(pointer.y, pointer.targetY, 1 - Math.exp(-dt * 4));
+
+  const index = Math.min(3, Math.floor(currentStage));
+  const blend = smooth((currentStage - index - .17) / .66);
+  const travel = reducedMotion ? 0 : Math.sin(blend * Math.PI);
+  const velocity = Math.abs(currentStage - previousStage) / dt;
+
+  if (dirty || changed || (animate && inView)) {
+    updateChapters();
+
+    $('#flight-flash').style.opacity = reducedMotion ? 0 : travel * .50 + burst * .2;
+    $('#speed-lines').style.opacity = reducedMotion ? 0 : clamp(velocity * .18) * travel;
+    $('#speed-lines').style.transform = `scale(${1 + travel * .24}) rotate(${currentStage * 7}deg)`;
+
+    if (graphics && inView) {
+      const position = graphics.render({
+        stage: currentStage,
+        time: elapsed,
+        travel,
+        burst,
+        px: pointer.x,
+        py: pointer.y,
+        pointerActive: pointer.active && animate
+      });
+
+      if (position) {
+        $('#coordinates').textContent =
+          `X ${position.x.toFixed(3)} / Y ${position.y.toFixed(3)} / Z ${position.z.toFixed(3)}`;
+      }
+    }
+
+    dirty = false;
+  }
+
+  const settling = Math.abs(currentStage - rawStage) > .00015 && !reducedMotion;
+
+  if ((animate && inView) || settling || burst > .001) {
+    frame = requestAnimationFrame(tick);
+  } else {
+    lastTime = 0;
+  }
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    cancelAnimationFrame(frame);
+    frame = 0;
+    lastTime = 0;
+  } else {
+    dirty = true;
+    wake();
+  }
+});
+
+/* ---------- Boot without blocking the interface ---------- */
+
+measure();
+syncMotion();
+updateChapters();
+
+try {
+  graphics = await initializeWebGL();
+} catch (error) {
+  console.warn('WebGL unavailable. Switching to Canvas.', error);
+  graphics = initializeFallback();
+}
+
+graphics.resize(stageWidth, stageHeight);
+dirty = true;
+wake();
+</script>
+</body>
+</html>

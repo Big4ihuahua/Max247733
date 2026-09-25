@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#03050a">
+<title>DEEPFIELD — A journey beyond</title>
+
+<style>
+:root{
+  --bg:#03050a;
+  --fg:#e9edf3;
+  --dim:#788493;
+  --line:#d8e9ff24;
+  --cyan:#a4deff;
+  --pad:clamp(20px,4vw,70px);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--fg);
+  font-family:Arial,Helvetica,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+button,a{-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
+a{color:inherit;text-decoration:none}
+h1,h2,p{margin:0}
+button:focus-visible,a:focus-visible{outline:2px solid var(--cyan);outline-offset:6px}
+::selection{background:var(--cyan);color:var(--bg)}
+.mono{font-family:"Courier New",monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;line-height:1.6}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+.skip{position:fixed;top:-90px;left:20px;z-index:200;background:var(--fg);color:var(--bg);padding:15px}
+.skip:focus{top:15px}
+
+header{
+  position:fixed;z-index:30;inset:0 0 auto;
+  padding:25px var(--pad);
+  display:flex;justify-content:space-between;align-items:center;gap:20px;
+  background:linear-gradient(#03050aa3,transparent);
+}
+.brand{display:flex;align-items:center;gap:12px;font-size:17px;font-weight:700;letter-spacing:.08em}
+.brand-icon{width:22px;height:22px;border:1px solid #ffffffa0;transform:rotate(45deg);position:relative}
+.brand-icon:after{content:"";position:absolute;inset:5px;background:var(--fg)}
+.header-note{font-size:8px;color:#9cacbe}
+.actions{display:flex;align-items:center;gap:8px}
+.icon-button{
+  width:36px;height:36px;border:1px solid var(--line);border-radius:50%;
+  background:#09101d70;font-size:15px;backdrop-filter:blur(12px);
+}
+.sound-label{font-size:8px;color:#73869c;margin-right:12px}
+.progress{position:fixed;z-index:100;top:0;left:0;width:100%;height:2px;background:var(--cyan);transform:scaleX(0);transform-origin:left}
+
+.journey{height:760svh;position:relative}
+.stage{position:sticky;top:0;height:100svh;overflow:hidden;background:var(--bg);isolation:isolate}
+#space{position:absolute;inset:0}
+#space canvas{display:block;width:100%;height:100%}
+.shade{
+  position:absolute;inset:0;pointer-events:none;
+  background:
+    linear-gradient(0deg,#03050ae0,transparent 23%,transparent 76%,#03050a65),
+    linear-gradient(90deg,#03050a8c,transparent 40%);
+}
+.optics{position:absolute;inset:14px;pointer-events:none;border:1px solid #ffffff06}
+.optics:before,.optics:after{
+  content:"";position:absolute;width:28px;height:28px;border-color:#c3e4ff45;border-style:solid
+}
+.optics:before{left:0;top:0;border-width:1px 0 0 1px}
+.optics:after{right:0;bottom:0;border-width:0 1px 1px 0}
+
+.hud-top{
+  position:absolute;top:104px;left:var(--pad);right:var(--pad);
+  display:flex;justify-content:space-between;color:#8fa1b8;font-size:8px;
+}
+.hud-top .live{display:inline-flex;align-items:center;gap:8px}
+.live i{width:5px;height:5px;border-radius:50%;background:#b4e9ff;box-shadow:0 0 12px #b4e9ff}
+.hud-right{text-align:right;color:#65758b}
+
+.crosshair{
+  position:absolute;left:50%;top:50%;width:52px;height:52px;
+  transform:translate(-50%,-50%);pointer-events:none;opacity:.35;
+}
+.crosshair:before,.crosshair:after{content:"";position:absolute;background:#cdeaff}
+.crosshair:before{width:1px;height:10px;left:25px;top:21px}
+.crosshair:after{height:1px;width:10px;left:21px;top:25px}
+.crosshair i{position:absolute;inset:0;border:1px solid #b3d8ff42;border-radius:50%}
+.crosshair i:after{content:"";position:absolute;inset:8px;border:1px dashed #b3d8ff33;border-radius:50%}
+
+.chapter{
+  position:absolute;top:50%;left:var(--pad);width:min(460px,42vw);
+  opacity:0;visibility:hidden;pointer-events:none;will-change:transform,opacity;
+}
+.chapter.active{visibility:visible}
+.chapter .eyebrow{color:var(--cyan);font-size:9px;margin-bottom:22px;display:flex;align-items:center;gap:13px}
+.chapter .eyebrow:before{content:"";height:1px;width:27px;background:currentColor}
+.chapter h1,.chapter h2{
+  font-weight:400;font-size:clamp(48px,6.7vw,105px);
+  letter-spacing:-.065em;line-height:.93;
+}
+.chapter h1 em,.chapter h2 em{font-family:Georgia,serif;font-weight:400;color:#b1c5df}
+.chapter p{font-size:12px;color:#94a2b5;line-height:1.85;max-width:260px;margin-top:24px}
+.chapter .tag{margin-top:25px;font-size:8px;color:#697d95}
+
+.object-readout{
+  position:absolute;right:var(--pad);top:49%;
+  padding-left:18px;border-left:1px solid #c5e0ff40;
+  color:#aec4db;max-width:160px;
+}
+.object-readout .mono{font-size:8px}
+.object-readout strong{display:block;font-size:25px;letter-spacing:-.04em;font-weight:400;margin:7px 0}
+.object-readout small{color:#607992;font-size:8px;line-height:1.8}
+
+.hud-bottom{
+  position:absolute;bottom:29px;left:var(--pad);right:var(--pad);
+  display:grid;grid-template-columns:1fr auto 1fr;align-items:end;gap:24px;
+}
+.telemetry{display:flex;gap:27px}
+.telemetry label{display:block;font-size:7px;color:#718198;margin-bottom:6px}
+.telemetry b{font-size:19px;letter-spacing:-.04em;font-weight:400}
+.telemetry b small{font-size:8px;color:#8294ac;letter-spacing:0}
+.route-nav{
+  display:flex;align-items:center;gap:4px;padding:5px;border:1px solid var(--line);
+  background:#07101b80;border-radius:40px;backdrop-filter:blur(15px);
+}
+.route-nav button{
+  background:transparent;border:0;color:#8495ad;font:9px "Courier New",monospace;
+  width:33px;height:33px;border-radius:50%;
+}
+.route-nav button[aria-current="step"]{background:#ddecff;color:#06101e}
+.flight-actions{justify-self:end;text-align:right}
+.autopilot{
+  background:#0a16258c;border:1px solid #b4d9ff45;padding:13px 17px;border-radius:4px;
+  font:9px "Courier New",monospace;letter-spacing:.07em;text-transform:uppercase;
+  display:inline-flex;align-items:center;gap:15px;backdrop-filter:blur(12px);
+}
+.autopilot[aria-pressed="true"]{background:#c5e7ff;color:#06101e}
+.flight-hint{font-size:7px;color:#7790aa;margin-top:10px}
+.engine-status{
+  position:absolute;bottom:100px;left:var(--pad);
+  color:#63768e;font-size:7px;max-width:400px;
+}
+.warp-vignette{
+  position:absolute;inset:0;pointer-events:none;opacity:0;
+  background:radial-gradient(ellipse at 50% 50%,transparent 30%,#79baff17 75%,#b6d7ff2b);
+  mix-blend-mode:screen;
+}
+.scroll-note{
+  position:absolute;left:50%;bottom:114px;transform:translateX(-50%);
+  font-size:8px;color:#9eb5cc;white-space:nowrap;
+}
+.scroll-note span{display:block;text-align:center;margin-top:7px;font-size:16px}
+
+.loader{
+  position:absolute;inset:0;z-index:15;display:grid;place-items:center;
+  background:radial-gradient(ellipse at center,#10223a,#03050a 65%);
+  transition:opacity .9s,visibility .9s;
+}
+.loader.done{opacity:0;visibility:hidden;pointer-events:none}
+.loader-inner{text-align:center;max-width:370px;padding:25px}
+.loader-orbit{
+  width:70px;height:70px;border:1px solid #d0eaff2b;border-top-color:#d0eaff;
+  border-radius:50%;margin:0 auto 28px;animation:orbit 2s linear infinite;
+}
+@keyframes orbit{to{transform:rotate(360deg)}}
+.loader p{font-size:10px;color:#adc2da;line-height:1.9}
+.loader button{margin-top:20px;padding:12px 18px;background:#c5e7ff;color:#06101e;border:0;border-radius:3px;font-size:11px}
+
+.arrival{
+  position:relative;background:#080d15;border-top:1px solid var(--line);
+  padding:100px var(--pad) 50px;overflow:hidden;
+}
+.arrival:before{
+  content:"";position:absolute;width:700px;height:700px;border:1px solid #9bcaff13;
+  border-radius:50%;right:-200px;top:-270px;
+  box-shadow:0 0 0 60px #9bcaff05,0 0 0 120px #9bcaff03;
+}
+.arrival .mono{color:#8da8c6;font-size:9px;position:relative}
+.arrival h2{font-size:clamp(55px,9vw,135px);font-weight:400;line-height:.92;letter-spacing:-.07em;margin-top:34px;position:relative}
+.arrival h2 em{font-family:Georgia,serif;font-weight:400;color:#9ab8da}
+.arrival-bottom{position:relative;display:flex;justify-content:space-between;align-items:end;gap:30px;margin-top:55px;padding-top:30px;border-top:1px solid var(--line)}
+.arrival-bottom p{font-size:13px;line-height:1.8;color:#8396ad;max-width:340px}
+.email{font-size:clamp(22px,3vw,40px);letter-spacing:-.04em;border-bottom:1px solid #a6bed64d;padding-bottom:8px}
+footer{padding:25px var(--pad);display:flex;justify-content:space-between;gap:20px;color:#63738a;font-size:8px}
+footer a{color:#bacde3}
+
+body.ui-hidden .chapter,body.ui-hidden .hud-top,body.ui-hidden .object-readout,
+body.ui-hidden .hud-bottom,body.ui-hidden .engine-status,body.ui-hidden .scroll-note,
+body.ui-hidden .crosshair{display:none}
+body.ui-hidden .header-note{visibility:hidden}
+body.ui-hidden .shade{opacity:.35}
+
+@media(max-width:900px){
+  .header-note,.sound-label{display:none}
+  .chapter{width:45vw}
+  .chapter h1,.chapter h2{font-size:8vw}
+  .object-readout{right:24px;max-width:125px}
+  .telemetry{gap:15px}
+}
+@media(max-width:650px){
+  header{padding-top:23px}
+  .brand{font-size:13px;gap:9px}
+  .brand-icon{width:17px;height:17px}
+  .icon-button{width:31px;height:31px;font-size:13px}
+  .hud-top{top:88px;font-size:7px}
+  .hud-right{display:none}
+  .chapter{top:155px;width:80vw}
+  .chapter h1,.chapter h2{font-size:clamp(53px,13vw,78px)}
+  .chapter .eyebrow{font-size:8px;margin-bottom:18px}
+  .chapter p{font-size:11px;max-width:235px;margin-top:18px}
+  .chapter .tag{display:none}
+  .object-readout{top:auto;bottom:170px;right:var(--pad);max-width:140px}
+  .object-readout strong{font-size:22px}
+  .object-readout small{font-size:7px}
+  .crosshair{top:58%;opacity:.25}
+  .hud-bottom{grid-template-columns:1fr auto;gap:14px;bottom:23px}
+  .telemetry{position:absolute;bottom:65px;left:0}
+  .telemetry b{font-size:16px}
+  .telemetry label{font-size:6px}
+  .route-nav{padding:4px;gap:1px}
+  .route-nav button{width:29px;height:29px;font-size:8px}
+  .autopilot{padding:12px;font-size:8px;gap:8px}
+  .flight-hint{display:none}
+  .engine-status{bottom:130px;font-size:6px;max-width:180px}
+  .scroll-note{display:none}
+  .arrival{padding-block:65px 35px}
+  .arrival h2{font-size:15vw}
+  .arrival-bottom{flex-direction:column;align-items:start;gap:30px;margin-top:35px}
+  .arrival-bottom p{font-size:12px}
+  footer{flex-wrap:wrap;font-size:7px}
+}
+@media(max-height:680px){
+  .chapter{top:32%}
+  .chapter h1,.chapter h2{font-size:clamp(45px,7vw,85px)}
+  .chapter p{font-size:10px;margin-top:16px}
+  .chapter .tag{display:none}
+  .object-readout{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+
+<body>
+<a class="skip" href="#arrival">Пропустить полёт</a>
+<div class="progress" aria-hidden="true"></div>
+
+<header>
+  <a href="#home" class="brand" aria-label="Deepfield — начало маршрута">
+    <span class="brand-icon" aria-hidden="true"></span>DEEPFIELD
+  </a>
+  <div class="header-note mono">An independent expedition beyond the ordinary</div>
+  <div class="actions">
+    <span class="sound-label mono">Visual flight / No audio</span>
+    <button class="icon-button" id="ui-button" aria-label="Скрыть интерфейс" aria-pressed="false">◉</button>
+    <button class="icon-button" id="fullscreen" aria-label="На весь экран">⛶</button>
+  </div>
+</header>
+
+<main id="home">
+  <section class="journey" id="journey" aria-label="Космический маршрут из пяти этапов">
+    <div class="stage" id="stage">
+      <div id="space" aria-hidden="true"></div>
+      <div class="shade" aria-hidden="true"></div>
+      <div class="optics" aria-hidden="true"></div>
+      <div class="warp-vignette" id="warp-vignette" aria-hidden="true"></div>
+
+      <div class="hud-top mono">
+        <span class="live"><i aria-hidden="true"></i> Expedition DF—001 / Deep space</span>
+        <span class="hud-right" id="coordinates" aria-hidden="true">NAVIGATION SYSTEM ONLINE</span>
+      </div>
+
+      <div class="crosshair" aria-hidden="true"><i></i></div>
+
+      <article class="chapter active" data-chapter="0">
+        <div class="eyebrow mono">01 / Departure</div>
+        <h1>Leave the<br><em>known.</em></h1>
+        <p>Последняя орбитальная станция позади. Впереди — пространство, которое ещё не знает ваших границ.</p>
+        <div class="tag mono">Прокрутка — тяга · Курсор — направление взгляда</div>
+      </article>
+
+      <article class="chapter" data-chapter="1" aria-hidden="true">
+        <div class="eyebrow mono">02 / The pale giant</div>
+        <h2>A different<br><em>gravity.</em></h2>
+        <p>Некоторые вещи невозможно понять издалека. Иногда нужно пролететь рядом, чтобы почувствовать масштаб.</p>
+        <div class="tag mono">Объект: AURA / Газовый гигант</div>
+      </article>
+
+      <article class="chapter" data-chapter="2" aria-hidden="true">
+        <div class="eyebrow mono">03 / The broken worlds</div>
+        <h2>Through<br><em>the unknown.</em></h2>
+        <p>Обломки старых миров. Тысячи возможных траекторий. Мы выбираем ту, которой ещё не было.</p>
+        <div class="tag mono">Сектор: Пояс Нереиды / Осторожно, красиво</div>
+      </article>
+
+      <article class="chapter" data-chapter="3" aria-hidden="true">
+        <div class="eyebrow mono">04 / Stellar approach</div>
+        <h2>Closer to<br><em>the fire.</em></h2>
+        <p>Идеи тоже рождаются под давлением. Достаточно подойти ближе к тому, что заставляет их светиться.</p>
+        <div class="tag mono">Объект: HELIOS / Звёздная корона</div>
+      </article>
+
+      <article class="chapter" data-chapter="4" aria-hidden="true">
+        <div class="eyebrow mono">05 / Beyond the map</div>
+        <h2>This is not<br><em>the end.</em></h2>
+        <p>Это край известной карты. И, возможно, начало вашего следующего большого проекта.</p>
+        <div class="tag mono">Новая система обнаружена / Продолжайте движение</div>
+      </article>
+
+      <aside class="object-readout" aria-label="Текущий сектор">
+        <div class="mono">Current sector</div>
+        <strong id="sector-name">DEPARTURE</strong>
+        <small class="mono" id="sector-description">Orbital corridor<br>Navigation established</small>
+      </aside>
+
+      <div class="engine-status mono" id="engine-status" role="status">Подготовка экспедиции…</div>
+      <div class="scroll-note mono" id="scroll-note" aria-hidden="true">Scroll to ignite<span>↓</span></div>
+
+      <div class="hud-bottom">
+        <div class="telemetry" aria-hidden="true">
+          <div><label class="mono">Cruise velocity</label><b id="speed">0.00 <small>AU/S</small></b></div>
+          <div><label class="mono">Journey</label><b id="distance">000 <small>/ 100</small></b></div>
+        </div>
+
+        <nav class="route-nav" aria-label="Этапы маршрута">
+          <button data-goto="0" aria-label="Отправление" aria-current="step">01</button>
+          <button data-goto="1" aria-label="Газовый гигант">02</button>
+          <button data-goto="2" aria-label="Астероидный пояс">03</button>
+          <button data-goto="3" aria-label="Звезда">04</button>
+          <button data-goto="4" aria-label="Новая система">05</button>
+        </nav>
+
+        <div class="flight-actions">
+          <button class="autopilot" id="autopilot" aria-pressed="false">Автопилот <span aria-hidden="true">↗</span></button>
+          <div class="flight-hint mono">Колесо / свайп — ручное управление</div>
+        </div>
+      </div>
+
+      <div class="loader" id="loader">
+        <div class="loader-inner">
+          <div class="loader-orbit" aria-hidden="true"></div>
+          <p class="mono" id="loading-text">Building a universe.<br>Подготавливаем маршрут…</p>
+          <button id="retry" hidden>Перезагрузить</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="arrival" id="arrival">
+    <div class="mono">Signal received / The next destination is yours</div>
+    <h2>Some ideas<br>need more<br><em>space.</em></h2>
+    <div class="arrival-bottom">
+      <p>Бренды, сайты и цифровые впечатления для тех, кому тесно в привычных форматах. Расскажите, куда вы хотите отправиться.</p>
+      <a class="email" id="email" href="mailto:hello@example.com">hello@example.com ↗</a>
+    </div>
+  </section>
+</main>
+
+<footer class="mono">
+  <span>© <span id="year">2026</span> DEEPFIELD / Concept expedition</span>
+  <span>Procedural worlds. Real curiosity.</span>
+  <a href="#home">Повторить полёт ↑</a>
+</footer>
+
+<noscript>
+  <style>.loader{display:none}.chapter:first-of-type{opacity:1;visibility:visible;transform:translateY(-50%)}</style>
+  <p style="padding:25px">Для космического полёта нужен JavaScript. Контактная информация доступна выше.</p>
+</noscript>
+
+<script type="module">
+const EMAIL = 'hello@example.com';
+
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const clamp = (x,a=0,b=1) => Math.max(a,Math.min(b,x));
+const lerp = (a,b,t) => a+(b-a)*t;
+const smooth = x => {x=clamp(x);return x*x*(3-2*x)};
+const TAU = Math.PI*2;
+
+$('#year').textContent = new Date().getFullYear();
+$('#email').textContent = EMAIL+' ↗';
+$('#email').href = 'mailto:'+EMAIL+'?subject='+encodeURIComponent('Следующая экспедиция');
+
+const journey = $('#journey');
+const stage = $('#stage');
+const chapters = $$('.chapter');
+const nav = $$('[data-goto]');
+const motionQuery = matchMedia('(prefers-reduced-motion: reduce)');
+
+let reduced = motionQuery.matches;
+let auto = false;
+let startY = 0;
+let routeLength = 1;
+let target = 0;
+let progress = 0;
+let active = -1;
+let frame = 0;
+let lastTime = 0;
+let time = 0;
+let visible = true;
+let dirty = true;
+let engine = null;
+let speed = 0;
+let pointer = {x:0,y:0,tx:0,ty:0};
+
+const stops = [0,.235,.49,.735,1];
+const sectorNames = ['DEPARTURE','AURA','NEREID BELT','HELIOS','NEW HORIZON'];
+const sectorDetails = [
+  ['Orbital corridor','Navigation established'],
+  ['Gas giant / Ring system','Close approach'],
+  ['Debris field','Safe corridor calculated'],
+  ['Stellar corona','Thermal signature rising'],
+  ['Uncharted system','New route available']
+];
+
+function measure(){
+  startY = journey.getBoundingClientRect().top+scrollY;
+  routeLength = Math.max(1,journey.offsetHeight-stage.clientHeight);
+  engine?.resize(stage.clientWidth,stage.clientHeight);
+  readScroll();
+}
+function readScroll(){
+  target = clamp((scrollY-startY)/routeLength);
+  $('.progress').style.transform = `scaleX(${target})`;
+  dirty = true;
+  wake();
+}
+addEventListener('scroll',readScroll,{passive:true});
+addEventListener('resize',measure,{passive:true});
+
+function setAuto(value){
+  auto=value&&!reduced;
+  $('#autopilot').setAttribute('aria-pressed',String(auto));
+  $('#autopilot').innerHTML=auto?'Ручное управление <span aria-hidden="true">Ⅱ</span>':'Автопилот <span aria-hidden="true">↗</span>';
+  wake();
+}
+$('#autopilot').addEventListener('click',()=>{
+  if(!auto && target>.995){
+    scrollTo({top:startY,behavior:'instant'});
+    target=progress=0;
+  }
+  setAuto(!auto);
+});
+addEventListener('wheel',()=>setAuto(false),{passive:true});
+addEventListener('touchstart',()=>setAuto(false),{passive:true});
+addEventListener('keydown',e=>{
+  if(['ArrowDown','ArrowUp','PageDown','PageUp','Home','End',' '].includes(e.key))setAuto(false);
+});
+
+nav.forEach(button=>{
+  button.addEventListener('click',()=>{
+    setAuto(false);
+    scrollTo({
+      top:startY+routeLength*stops[Number(button.dataset.goto)],
+      behavior:reduced?'instant':'smooth'
+    });
+  });
+});
+
+$('#ui-button').addEventListener('click',()=>{
+  const hidden=document.body.classList.toggle('ui-hidden');
+  $('#ui-button').setAttribute('aria-pressed',String(hidden));
+  $('#ui-button').setAttribute('aria-label',hidden?'Показать интерфейс':'Скрыть интерфейс');
+});
+
+if(!document.fullscreenEnabled)$('#fullscreen').hidden=true;
+$('#fullscreen').addEventListener('click',async()=>{
+  try{
+    if(document.fullscreenElement)await document.exitFullscreen();
+    else await document.documentElement.requestFullscreen();
+  }catch{
+    $('#engine-status').textContent='Полноэкранный режим недоступен в этом браузере';
+  }
+});
+document.addEventListener('fullscreenchange',()=>{
+  $('#fullscreen').setAttribute('aria-label',document.fullscreenElement?'Выйти из полноэкранного режима':'На весь экран');
+  measure();
+});
+
+stage.addEventListener('pointermove',e=>{
+  if(e.pointerType==='touch'||reduced)return;
+  const rect=stage.getBoundingClientRect();
+  pointer.tx=(e.clientX-rect.left)/rect.width*2-1;
+  pointer.ty=(e.clientY-rect.top)/rect.height*2-1;
+},{passive:true});
+stage.addEventListener('pointerleave',()=>{pointer.tx=pointer.ty=0});
+
+motionQuery.addEventListener('change',e=>{
+  reduced=e.matches;
+  if(reduced)setAuto(false);
+  $('#autopilot').disabled=reduced;
+  $('#autopilot').title=reduced?'Полёт отключён настройкой уменьшения движения':'';
+  dirty=true;
+  wake();
+});
+$('#autopilot').disabled=reduced;
+
+if('IntersectionObserver'in window){
+  new IntersectionObserver(entries=>{
+    visible=entries[0].isIntersecting;
+    if(!visible)setAuto(false);
+    else{dirty=true;wake()}
+  }).observe(journey);
+}
+
+function nearestStop(p){
+  let n=0;
+  stops.forEach((s,i)=>{if(Math.abs(s-p)<Math.abs(stops[n]-p))n=i});
+  return n;
+}
+
+function updateUI(){
+  const n=nearestStop(progress);
+  if(n!==active){
+    active=n;
+    chapters.forEach((chapter,i)=>{
+      chapter.setAttribute('aria-hidden',String(i!==n));
+      chapter.classList.toggle('active',i===n);
+    });
+    nav.forEach((button,i)=>{
+      if(i===n)button.setAttribute('aria-current','step');
+      else button.removeAttribute('aria-current');
+    });
+    $('#sector-name').textContent=sectorNames[n];
+    $('#sector-description').replaceChildren(
+      document.createTextNode(sectorDetails[n][0]),
+      document.createElement('br'),
+      document.createTextNode(sectorDetails[n][1])
+    );
+  }
+
+  chapters.forEach((chapter,i)=>{
+    const d=(progress-stops[i])*4;
+    const opacity=reduced?Number(i===active):1-smooth((Math.abs(d)-.08)/.49);
+    chapter.style.opacity=opacity;
+    chapter.style.visibility=opacity>.01?'visible':'hidden';
+
+    const mobile=stage.clientWidth<650;
+    chapter.style.transform=reduced
+      ?`translateY(${mobile?0:-50}%)`
+      :`translate3d(${-d*65}px,calc(${mobile?'0%':'-50%'} + ${-d*65}px),0) scale(${1-Math.abs(d)*.06})`;
+    chapter.style.filter=reduced?'none':`blur(${Math.max(0,Math.abs(d)-.2)*7}px)`;
+  });
+
+  $('#distance').innerHTML=String(Math.round(progress*100)).padStart(3,'0')+' <small>/ 100</small>';
+  $('#speed').innerHTML=(speed*85).toFixed(2)+' <small>AU/S</small>';
+  $('#scroll-note').style.opacity=1-smooth(progress/.06);
+  $('#warp-vignette').style.opacity=clamp(speed*15)*.65;
+}
+
+function wake(){
+  if(!frame&&!document.hidden){
+    lastTime=0;
+    frame=requestAnimationFrame(tick);
+  }
+}
+function tick(now){
+  frame=0;
+  if(document.hidden)return;
+
+  const dt=lastTime?Math.min((now-lastTime)/1000,.045):1/60;
+  lastTime=now;
+
+  if(auto&&visible&&engine){
+    const next=clamp(target+dt*.0105);
+    scrollTo({top:startY+routeLength*next,behavior:'instant'});
+    target=next;
+    if(next>=1)setAuto(false);
+  }
+
+  const previous=progress;
+  progress=reduced?target:lerp(progress,target,1-Math.exp(-dt*5.5));
+  if(Math.abs(progress-target)<.000005)progress=target;
+
+  const velocity=Math.abs(progress-previous)/dt;
+  speed=lerp(speed,velocity,1-Math.exp(-dt*5));
+
+  if(!reduced&&visible)time+=dt;
+  pointer.x=lerp(pointer.x,reduced?0:pointer.tx,1-Math.exp(-dt*3));
+  pointer.y=lerp(pointer.y,reduced?0:pointer.ty,1-Math.exp(-dt*3));
+
+  const changed=Math.abs(progress-previous)>.000001;
+
+  if(visible&&(dirty||changed||!reduced)){
+    updateUI();
+    if(engine){
+      const p=reduced?stops[nearestStop(progress)]:progress;
+      engine.render(p,time,speed,pointer,reduced);
+    }
+    dirty=false;
+  }
+
+  if((visible&&!reduced)||auto||Math.abs(progress-target)>.000005){
+    frame=requestAnimationFrame(tick);
+  }else lastTime=0;
+}
+
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){cancelAnimationFrame(frame);frame=0;lastTime=0}
+  else{dirty=true;wake()}
+});
+$('#retry').addEventListener('click',()=>location.reload());
+
+measure();
+updateUI();
+
+/* ========================================================
+   THREE.JS — PROCEDURAL SPACE
+======================================================== */
+
+try{
+  const THREE=await import('https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js');
+
+  const mobile=stage.clientWidth<700;
+  const renderer=new THREE.WebGLRenderer({
+    alpha:false,antialias:!mobile,powerPreference:'high-performance'
+  });
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,mobile?1.4:1.7));
+  renderer.setClearColor(0x03050a);
+  renderer.outputColorSpace=THREE.SRGBColorSpace;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure=1.15;
+  $('#space').append(renderer.domElement);
+
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(62,1,.15,7000);
+  scene.add(camera);
+
+  let seed=58173;
+  function random(){
+    seed=seed*16807%2147483647;
+    return(seed-1)/2147483646;
+  }
+
+  const curve=new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0,0,65),
+    new THREE.Vector3(0,0,-95),
+    new THREE.Vector3(65,14,-260),
+    new THREE.Vector3(105,34,-430),
+    new THREE.Vector3(-5,0,-635),
+    new THREE.Vector3(-95,-25,-835),
+    new THREE.Vector3(-55,25,-1045),
+    new THREE.Vector3(70,42,-1255),
+    new THREE.Vector3(20,2,-1480)
+  ],false,'centripetal');
+
+  curve.arcLengthDivisions=1800;
+  curve.updateArcLengths();
+
+  const worldUp=new THREE.Vector3(0,1,0);
+  const axisZ=new THREE.Vector3(0,0,1);
+
+  function frameAt(t){
+    const point=curve.getPointAt(clamp(t));
+    const tangent=curve.getTangentAt(clamp(t)).normalize();
+    const right=new THREE.Vector3().crossVectors(tangent,worldUp).normalize();
+    const up=new THREE.Vector3().crossVectors(right,tangent).normalize();
+    return{point,tangent,right,up};
+  }
+  function offsetAt(t,x,y,z=0){
+    const f=frameAt(t);
+    return f.point.clone().addScaledVector(f.right,x).addScaledVector(f.up,y).addScaledVector(f.tangent,z);
+  }
+
+  /* ---------- Generated textures ---------- */
+
+  function radialTexture(){
+    const c=document.createElement('canvas');
+    c.width=c.height=128;
+    const ctx=c.getContext('2d');
+    const g=ctx.createRadialGradient(64,64,0,64,64,64);
+    g.addColorStop(0,'rgba(255,255,255,1)');
+    g.addColorStop(.08,'rgba(255,255,255,.95)');
+    g.addColorStop(.22,'rgba(255,255,255,.38)');
+    g.addColorStop(.5,'rgba(255,255,255,.075)');
+    g.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=g;ctx.fillRect(0,0,128,128);
+    const texture=new THREE.CanvasTexture(c);
+    texture.colorSpace=THREE.SRGBColorSpace;
+    return texture;
+  }
+  const glowTexture=radialTexture();
+
+  function gasTexture(){
+    const c=document.createElement('canvas');
+    c.width=1024;c.height=512;
+    const ctx=c.getContext('2d');
+    const image=ctx.createImageData(c.width,c.height);
+
+    for(let y=0;y<c.height;y++){
+      for(let x=0;x<c.width;x++){
+        const u=x/c.width*TAU;
+        const v=y/c.height;
+        const bend=Math.sin(u*3+v*11)*.012+Math.sin(u*7-v*9)*.005;
+        const band=Math.sin((v+bend)*95)+Math.sin((v+bend)*213)*.36;
+        const fine=Math.sin(u*21+v*600)*.06+(random()-.5)*.12;
+        const n=clamp(.5+band*.19+fine);
+        const i=(y*c.width+x)*4;
+        image.data[i]=lerp(43,191,n);
+        image.data[i+1]=lerp(66,206,n);
+        image.data[i+2]=lerp(86,212,n);
+        image.data[i+3]=255;
+      }
+    }
+    ctx.putImageData(image,0,0);
+    const texture=new THREE.CanvasTexture(c);
+    texture.colorSpace=THREE.SRGBColorSpace;
+    texture.wrapS=THREE.RepeatWrapping;
+    return texture;
+  }
+
+  function ringTexture(){
+    const c=document.createElement('canvas');
+    c.width=256;c.height=4;
+    const ctx=c.getContext('2d');
+    for(let x=0;x<256;x++){
+      const r=x/255;
+      let alpha=(.22+random()*.55)*Math.sin(r*Math.PI);
+      if((r>.36&&r<.4)||(r>.69&&r<.72))alpha*=.07;
+      ctx.fillStyle=`rgba(188,174,148,${alpha})`;
+      ctx.fillRect(x,0,1,4);
+    }
+    const texture=new THREE.CanvasTexture(c);
+    texture.colorSpace=THREE.SRGBColorSpace;
+    return texture;
+  }
+
+  function sprite(color,size,opacity=1){
+    const material=new THREE.SpriteMaterial({
+      map:glowTexture,color,transparent:true,opacity,
+      blending:THREE.AdditiveBlending,depthWrite:false
+    });
+    const s=new THREE.Sprite(material);
+    s.scale.set(size,size,1);
+    return s;
+  }
+
+  /* ---------- Deep starfield ---------- */
+
+  const starCount=mobile?5500:12000;
+  const starPositions=new Float32Array(starCount*3);
+  const starColors=new Float32Array(starCount*3);
+
+  for(let i=0;i<starCount;i++){
+    const z=-1700+random()*2300;
+    const theta=random()*TAU;
+    const radius=170+Math.pow(random(),.6)*1700;
+    starPositions.set([Math.cos(theta)*radius,Math.sin(theta)*radius,z],i*3);
+    const warm=random();
+    starColors.set(warm>.86?[1,.69,.43]:warm>.5?[.6,.76,1]:[.8,.86,1],i*3);
+  }
+
+  const starsGeometry=new THREE.BufferGeometry();
+  starsGeometry.setAttribute('position',new THREE.BufferAttribute(starPositions,3));
+  starsGeometry.setAttribute('color',new THREE.BufferAttribute(starColors,3));
+
+  const stars=new THREE.Points(starsGeometry,new THREE.PointsMaterial({
+    map:glowTexture,size:2.3,vertexColors:true,
+    transparent:true,opacity:.85,depthWrite:false,
+    blending:THREE.AdditiveBlending
+  }));
+  scene.add(stars);
+
+  // Distant nebular light, built from transparent generated sprites.
+  const nebula=new THREE.Group();
+  for(let i=0;i<30;i++){
+    const s=sprite(i%3===0?0x4e285f:i%3===1?0x17405b:0x153653,350+random()*550,.09);
+    s.position.set((random()-.5)*1400,(random()-.5)*800,-500-random()*1900);
+    nebula.add(s);
+  }
+  scene.add(nebula);
+
+  /* ---------- Lighting ---------- */
+
+  scene.add(new THREE.AmbientLight(0x708fb6,.7));
+  const key=new THREE.DirectionalLight(0xffd9ac,3.8);
+  key.position.set(-150,180,-500);
+  scene.add(key);
+  const cool=new THREE.DirectionalLight(0x8bbaff,1.4);
+  cool.position.set(180,-40,100);
+  scene.add(cool);
+
+  /* ---------- Orbital departure gates ---------- */
+
+  function createGate(t,radius,index){
+    const frame=frameAt(t);
+    const gate=new THREE.Group();
+    gate.position.copy(frame.point);
+    gate.quaternion.setFromUnitVectors(axisZ,frame.tangent);
+
+    const shell=new THREE.Mesh(
+      new THREE.TorusGeometry(radius,.68,8,96),
+      new THREE.MeshStandardMaterial({color:0x344352,metalness:.82,roughness:.37})
+    );
+    gate.add(shell);
+
+    const light=new THREE.Mesh(
+      new THREE.TorusGeometry(radius-.82,.065,6,120),
+      new THREE.MeshBasicMaterial({color:index%2?0x79bdff:0xb9e9ff})
+    );
+    gate.add(light);
+
+    for(let i=0;i<8;i++){
+      const a=i/8*TAU;
+      const block=new THREE.Mesh(
+        new THREE.BoxGeometry(1.7,3.7,2.4),
+        new THREE.MeshStandardMaterial({color:0x1b2634,metalness:.72,roughness:.45})
+      );
+      block.position.set(Math.cos(a)*radius,Math.sin(a)*radius,0);
+      block.rotation.z=a-Math.PI/2;
+      gate.add(block);
+
+      const beacon=sprite(0x87cfff,2,.8);
+      beacon.position.set(Math.cos(a)*(radius-.3),Math.sin(a)*(radius-.3),1.35);
+      gate.add(beacon);
+    }
+
+    scene.add(gate);
+    return gate;
+  }
+  [.024,.062,.105,.153].forEach((t,i)=>createGate(t,15+i*1.7,i));
+
+  /* ---------- Gas giant & rings ---------- */
+
+  const planetGroup=new THREE.Group();
+  planetGroup.position.copy(offsetAt(.265,87,10));
+  planetGroup.rotation.z=-.24;
+  scene.add(planetGroup);
+
+  const planetRadius=59;
+  const planet=new THREE.Mesh(
+    new THREE.SphereGeometry(planetRadius,mobile?64:96,48),
+    new THREE.MeshStandardMaterial({
+      map:gasTexture(),roughness:1,metalness:0
+    })
+  );
+  planetGroup.add(planet);
+
+  const atmosphereMaterial=new THREE.ShaderMaterial({
+    transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+    side:THREE.FrontSide,
+    uniforms:{color:{value:new THREE.Color(0x71bcff)}},
+    vertexShader:`
+      varying vec3 vNormal;
+      varying vec3 vView;
+      void main(){
+        vec4 p=modelViewMatrix*vec4(position,1.0);
+        vNormal=normalize(normalMatrix*normal);
+        vView=normalize(-p.xyz);
+        gl_Position=projectionMatrix*p;
+      }
+    `,
+    fragmentShader:`
+      uniform vec3 color;
+      varying vec3 vNormal;
+      varying vec3 vView;
+      void main(){
+        float rim=pow(1.0-max(0.0,dot(normalize(vNormal),normalize(vView))),3.6);
+        gl_FragColor=vec4(color,rim*.5);
+      }
+    `
+  });
+
+  const atmosphere=new THREE.Mesh(
+    new THREE.SphereGeometry(planetRadius*1.023,64,40),
+    atmosphereMaterial
+  );
+  planetGroup.add(atmosphere);
+
+  const ringGeometry=new THREE.RingGeometry(73,110,160,1);
+  const ringPosition=ringGeometry.attributes.position;
+  const ringUV=ringGeometry.attributes.uv;
+
+  for(let i=0;i<ringPosition.count;i++){
+    const r=Math.hypot(ringPosition.getX(i),ringPosition.getY(i));
+    ringUV.setXY(i,(r-73)/(110-73),.5);
+  }
+
+  const ring=new THREE.Mesh(ringGeometry,new THREE.MeshBasicMaterial({
+    map:ringTexture(),side:THREE.DoubleSide,transparent:true,
+    opacity:.85,depthWrite:false
+  }));
+  ring.rotation.x=-Math.PI/2+.22;
+  planetGroup.add(ring);
+
+  const moon=new THREE.Mesh(
+    new THREE.IcosahedronGeometry(7,3),
+    new THREE.MeshStandardMaterial({color:0x727681,roughness:1})
+  );
+  moon.position.copy(offsetAt(.335,-45,30));
+  scene.add(moon);
+
+  /* ---------- Asteroid corridor ---------- */
+
+  const rockGeometry=new THREE.IcosahedronGeometry(1,1);
+  const rp=rockGeometry.attributes.position;
+
+  for(let i=0;i<rp.count;i++){
+    const x=rp.getX(i),y=rp.getY(i),z=rp.getZ(i);
+    // Identical coordinates receive identical deformation.
+    const noise=.84+Math.sin(x*17+y*23+z*31)*.13+Math.sin(x*41-z*19)*.06;
+    rp.setXYZ(i,x*noise,y*noise,z*noise);
+  }
+  rockGeometry.computeVertexNormals();
+
+  const rockCount=mobile?420:850;
+  const rocks=new THREE.InstancedMesh(
+    rockGeometry,
+    new THREE.MeshStandardMaterial({color:0x6c6870,roughness:.95,metalness:.05}),
+    rockCount
+  );
+  const dummy=new THREE.Object3D();
+
+  for(let i=0;i<rockCount;i++){
+    const t=.385+random()*.225;
+    const f=frameAt(t);
+    const angle=random()*TAU;
+    const radius=17+Math.pow(random(),1.4)*95;
+
+    dummy.position.copy(f.point)
+      .addScaledVector(f.right,Math.cos(angle)*radius)
+      .addScaledVector(f.up,Math.sin(angle)*radius);
+
+    dummy.rotation.set(random()*TAU,random()*TAU,random()*TAU);
+    const size=.6+Math.pow(random(),2.3)*7;
+    dummy.scale.set(size*(.7+random()*.6),size,size*(.65+random()*.6));
+    dummy.updateMatrix();
+
+    rocks.setMatrixAt(i,dummy.matrix);
+    rocks.setColorAt(i,new THREE.Color().setHSL(.07+random()*.07,.06+random()*.13,.22+random()*.21));
+  }
+  rocks.instanceMatrix.needsUpdate=true;
+  if(rocks.instanceColor)rocks.instanceColor.needsUpdate=true;
+  scene.add(rocks);
+
+  // Sparse navigation beacons through the belt.
+  for(let i=0;i<11;i++){
+    const t=.395+i*.019;
+    [-1,1].forEach(side=>{
+      const beacon=sprite(0x70bbf5,2.2,.8);
+      beacon.position.copy(offsetAt(t,side*13,-3));
+      scene.add(beacon);
+    });
+  }
+
+  /* ---------- Stellar surface & corona ---------- */
+
+  const sunPosition=offsetAt(.735,-100,20);
+  const sunUniforms={uTime:{value:0}};
+
+  const sunMaterial=new THREE.ShaderMaterial({
+    uniforms:sunUniforms,
+    vertexShader:`
+      varying vec3 vPosition;
+      varying vec3 vNormal;
+      varying vec3 vView;
+      void main(){
+        vPosition=position;
+        vec4 p=modelViewMatrix*vec4(position,1.0);
+        vNormal=normalize(normalMatrix*normal);
+        vView=normalize(-p.xyz);
+        gl_Position=projectionMatrix*p;
+      }
+    `,
+    fragmentShader:`
+      precision highp float;
+      uniform float uTime;
+      varying vec3 vPosition;
+      varying vec3 vNormal;
+      varying vec3 vView;
+
+      float pattern(vec3 p){
+        return sin(p.x*1.4+sin(p.y*1.8))*sin(p.y*1.3+sin(p.z*2.1))
+          +sin(p.z*3.0+p.x*.7)*.35;
+      }
+      void main(){
+        vec3 p=vPosition*.21;
+        float n=pattern(p+uTime*.055);
+        n+=pattern(p*2.3-uTime*.025)*.4;
+        n=clamp(n*.33+.55,0.0,1.0);
+
+        vec3 dark=vec3(.72,.075,.009);
+        vec3 bright=vec3(1.65,.88,.22);
+        vec3 color=mix(dark,bright,n);
+
+        float face=max(0.0,dot(normalize(vNormal),normalize(vView)));
+        color*=.48+pow(face,.32)*.65;
+
+        gl_FragColor=vec4(color,1.0);
+      }
+    `
+  });
+
+  const sun=new THREE.Mesh(new THREE.SphereGeometry(55,72,48),sunMaterial);
+  sun.position.copy(sunPosition);
+  scene.add(sun);
+
+  const corona=sprite(0xff902e,290,.87);
+  corona.position.copy(sunPosition);
+  scene.add(corona);
+
+  const farHalo=sprite(0xff5722,470,.23);
+  farHalo.position.copy(sunPosition);
+  scene.add(farHalo);
+
+  const sunLight=new THREE.PointLight(0xff9d50,1500,600,1.5);
+  sunLight.position.copy(sunPosition);
+  scene.add(sunLight);
+
+  /* ---------- Final destination ---------- */
+
+  const finalGate=createGate(.947,25,0);
+  const finalGate2=createGate(.981,30,1);
+
+  const destination=sprite(0xa2d5ff,170,1);
+  destination.position.copy(offsetAt(1,0,3,470));
+  scene.add(destination);
+
+  const destinationCore=sprite(0xffffff,38,1);
+  destinationCore.position.copy(destination.position);
+  scene.add(destinationCore);
+
+  // A distant thin orbital structure behind the destination.
+  const distantRing=new THREE.Mesh(
+    new THREE.TorusGeometry(105,.12,5,160),
+    new THREE.MeshBasicMaterial({color:0x6aa8d2,transparent:true,opacity:.4})
+  );
+  distantRing.position.copy(destination.position);
+  distantRing.lookAt(curve.getPointAt(.94));
+  scene.add(distantRing);
+
+  /* ---------- Camera-local dust & streaks ---------- */
+
+  const streakCount=mobile?180:380;
+  const streakPositions=new Float32Array(streakCount*6);
+  const dustData=[];
+
+  for(let i=0;i<streakCount;i++){
+    const a=random()*TAU;
+    const radius=3+random()*33;
+    dustData.push({
+      x:Math.cos(a)*radius,
+      y:Math.sin(a)*radius,
+      z:4+random()*110,
+      rate:.4+random()
+    });
+  }
+
+  const streakGeometry=new THREE.BufferGeometry();
+  const streakAttribute=new THREE.BufferAttribute(streakPositions,3);
+  streakAttribute.setUsage(THREE.DynamicDrawUsage);
+  streakGeometry.setAttribute('position',streakAttribute);
+
+  const streakMaterial=new THREE.LineBasicMaterial({
+    color:0x9ccfff,transparent:true,opacity:.18,
+    depthWrite:false,blending:THREE.AdditiveBlending
+  });
+  const streaks=new THREE.LineSegments(streakGeometry,streakMaterial);
+  streaks.frustumCulled=false;
+  camera.add(streaks);
+
+  /* ---------- Camera choreography ---------- */
+
+  const cameraPoint=new THREE.Vector3();
+  const lookPoint=new THREE.Vector3();
+  const lookMatrix=new THREE.Matrix4();
+  const baseQuaternion=new THREE.Quaternion();
+  const localQuaternion=new THREE.Quaternion();
+  const euler=new THREE.Euler(0,0,0,'YXZ');
+
+  let width=stage.clientWidth,height=stage.clientHeight;
+  let contextLost=false;
+  let oldP=0;
+
+  renderer.domElement.addEventListener('webglcontextlost',event=>{
+    event.preventDefault();
+    contextLost=true;
+    setAuto(false);
+    $('#engine-status').textContent='Графика приостановлена системой. Попробуйте перезагрузить страницу.';
+  });
+  renderer.domElement.addEventListener('webglcontextrestored',()=>{
+    contextLost=false;
+    dirty=true;
+    $('#engine-status').textContent='Навигация восстановлена';
+    wake();
+  });
+
+  engine={
+    resize(w,h){
+      width=w;height=h;
+      renderer.setSize(w,h);
+      camera.aspect=w/h;
+      camera.updateProjectionMatrix();
+    },
+
+    render(p,t,v,mouse,still){
+      if(contextLost)return;
+
+      const f=frameAt(p);
+      cameraPoint.copy(f.point);
+
+      // Slight breathing of the ship — disabled for reduced motion.
+      if(!still){
+        cameraPoint.addScaledVector(f.up,Math.sin(t*.42)*.12);
+        cameraPoint.addScaledVector(f.right,Math.sin(t*.31)*.09);
+      }
+
+      camera.position.copy(cameraPoint);
+
+      if(p<.988)lookPoint.copy(curve.getPointAt(Math.min(1,p+.013)));
+      else lookPoint.copy(f.point).addScaledVector(f.tangent,40);
+
+      lookMatrix.lookAt(cameraPoint,lookPoint,worldUp);
+      baseQuaternion.setFromRotationMatrix(lookMatrix);
+
+      const currentTangent=f.tangent;
+      const nextTangent=curve.getTangentAt(Math.min(1,p+.018));
+      const bend=currentTangent.x-nextTangent.x;
+      const bank=still?0:clamp(bend*1.5,-.12,.12);
+
+      euler.set(
+        still?0:-mouse.y*.105,
+        still?0:-mouse.x*.15,
+        bank+(still?0:-mouse.x*.012),
+        'YXZ'
+      );
+      localQuaternion.setFromEuler(euler);
+      camera.quaternion.copy(baseQuaternion).multiply(localQuaternion);
+
+      const boost=still?0:clamp(v*24);
+      camera.fov=lerp(width<650?72:62,width<650?82:76,boost);
+      camera.updateProjectionMatrix();
+
+      planet.rotation.y=t*.018;
+      sun.rotation.y=t*.008;
+      sunUniforms.uTime.value=t;
+      finalGate.rotation.z=Math.sin(t*.07)*.08;
+      finalGate2.rotation.z=-Math.sin(t*.07)*.06;
+
+      streaks.visible=!still;
+
+      if(!still){
+        const travel=Math.abs(p-oldP)*1500;
+        for(let i=0;i<streakCount;i++){
+          const d=dustData[i];
+          d.z-=travel*(1+d.rate);
+          if(d.z<2)d.z=110+((2-d.z)%30);
+
+          const length=.025+boost*(2+d.rate*9);
+          const j=i*6;
+          streakPositions[j]=d.x;
+          streakPositions[j+1]=d.y;
+          streakPositions[j+2]=-d.z;
+          streakPositions[j+3]=d.x;
+          streakPositions[j+4]=d.y;
+          streakPositions[j+5]=-d.z-length;
+        }
+        streakAttribute.needsUpdate=true;
+        streakMaterial.opacity=.13+boost*.45;
+      }
+      oldP=p;
+
+      renderer.render(scene,camera);
+
+      $('#coordinates').textContent=
+        `X ${camera.position.x.toFixed(1)} / Y ${camera.position.y.toFixed(1)} / Z ${camera.position.z.toFixed(1)}`;
+    }
+  };
+
+  engine.resize(stage.clientWidth,stage.clientHeight);
+  $('#engine-status').textContent=
+    `${starCount.toLocaleString('en-US')} STARS / ${rockCount} ASTEROIDS / PROCEDURAL UNIVERSE`;
+
+  $('#loader').classList.add('done');
+  dirty=true;
+  wake();
+
+}catch(error){
+  console.error(error);
+  $('.loader-orbit').style.display='none';
+  $('#loading-text').textContent=
+    'Не удалось запустить 3D. Проверьте интернет и поддержку WebGL. Попробуйте открыть файл в актуальном Chrome, Edge, Firefox или Safari.';
+  $('#retry').hidden=false;
+  $('#engine-status').textContent='3D недоступно. Контакты доступны ниже.';
+  setAuto(false);
+  $('#autopilot').disabled=true;
+}
+</script>
+</body>
+</html>

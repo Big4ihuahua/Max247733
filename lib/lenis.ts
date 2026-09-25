@@ -10,6 +10,23 @@ export function setLenis(l: Lenis | null) {
 
 export const getLenis = () => instance;
 
+let locks = 0;
+
+/** Counted, so a viewer opened on top of a case modal doesn't unlock the page when it closes. */
+export function lockScroll() {
+  if (locks++ === 0) {
+    instance?.stop();
+    document.documentElement.classList.add("modal-open");
+  }
+}
+
+export function unlockScroll() {
+  if (locks > 0 && --locks === 0) {
+    instance?.start();
+    document.documentElement.classList.remove("modal-open");
+  }
+}
+
 export function onLenisChange(fn: (l: Lenis | null) => void) {
   listeners.add(fn);
   return () => {

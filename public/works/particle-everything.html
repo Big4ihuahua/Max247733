@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#07080d">
+<meta name="description" content="PARTICLE / EVERYTHING — интерактивный мир, полностью собранный из частиц.">
+<title>PARTICLE / EVERYTHING</title>
+
+<style>
+:root{
+  --bg:#07080d;
+  --accent:#cbff91;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--bg);
+  color:#eff4e9;
+  font-family:Arial,Helvetica,sans-serif;
+}
+button,input,a{-webkit-tap-highlight-color:transparent}
+button,input{font:inherit}
+button{cursor:pointer;touch-action:manipulation}
+::selection{background:#cbff91;color:#07080d}
+
+.journey{height:480svh;position:relative}
+.stage{
+  position:sticky;
+  top:0;
+  width:100%;
+  height:100svh;
+  overflow:hidden;
+  isolation:isolate;
+}
+canvas{
+  position:absolute;
+  inset:0;
+  display:block;
+  width:100%;
+  height:100%;
+}
+
+.hit{
+  position:absolute;
+  z-index:5;
+  padding:0;
+  border:0;
+  background:transparent;
+  color:transparent;
+  border-radius:4px;
+  user-select:none;
+}
+.hit:focus-visible{
+  outline:2px dotted var(--accent);
+  outline-offset:5px;
+}
+.hit:disabled{cursor:default}
+.sr{
+  position:absolute;
+  width:1px;
+  height:1px;
+  padding:0;
+  margin:-1px;
+  overflow:hidden;
+  clip:rect(0,0,0,0);
+  white-space:nowrap;
+  border:0;
+}
+.skip{
+  position:fixed;
+  z-index:100;
+  top:-100px;
+  left:20px;
+  padding:14px 20px;
+  background:var(--accent);
+  color:var(--bg);
+  text-decoration:none;
+}
+.skip:focus{top:15px}
+
+.word-form{
+  position:absolute;
+  z-index:6;
+  display:flex;
+  align-items:center;
+  gap:9px;
+}
+.word-input{
+  min-width:0;
+  width:100%;
+  height:42px;
+  border:0;
+  padding:8px 10px;
+  background:transparent;
+  color:transparent;
+  caret-color:var(--accent);
+  outline:none;
+}
+.word-input::selection{color:transparent;background:#cbff9125}
+.word-input:focus-visible{
+  outline:1px dotted var(--accent);
+  outline-offset:4px;
+}
+.word-form button{
+  width:48px;
+  height:42px;
+  flex-shrink:0;
+  border:0;
+  background:transparent;
+  color:transparent;
+}
+.word-form button:focus-visible{
+  outline:2px dotted var(--accent);
+  outline-offset:4px;
+}
+[hidden]{display:none!important}
+
+.fallback{
+  position:absolute;
+  z-index:20;
+  inset:0;
+  padding:100px 25px;
+  background:var(--bg);
+  font-size:18px;
+  line-height:1.7;
+}
+.fallback a{color:var(--accent)}
+noscript .fallback{display:block}
+
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+
+<body>
+<a class="skip" href="#word-input">Перейти к созданию слова</a>
+
+<main class="journey" id="journey">
+  <div class="stage" id="stage">
+    <canvas id="canvas" aria-hidden="true"></canvas>
+
+    <header class="sr">
+      <h1>PARTICLE / EVERYTHING</h1>
+      <p>Интерактивный сайт, в котором все видимые элементы состоят из частиц.</p>
+    </header>
+
+    <button class="hit" id="home" aria-label="Вернуться к первой сцене"></button>
+    <button class="hit" id="motion" aria-label="Приостановить движение" aria-pressed="false"></button>
+    <button class="hit" id="explode" aria-label="Разбросать частицы"></button>
+
+    <nav aria-label="Сцены">
+      <button class="hit" data-scene="0" aria-label="Первая сцена: сфера" aria-current="step"></button>
+      <button class="hit" data-scene="1" aria-label="Вторая сцена: крылья"></button>
+      <button class="hit" data-scene="2" aria-label="Третья сцена: орбита"></button>
+      <button class="hit" data-scene="3" aria-label="Четвёртая сцена: ваше слово"></button>
+    </nav>
+
+    <a class="hit" id="contact" href="mailto:hello@example.com" aria-label="Обсудить проект по электронной почте" hidden></a>
+
+    <form class="word-form" id="word-form" hidden>
+      <label class="sr" for="word-input">Ваше слово, до восьми символов</label>
+      <input
+        class="word-input"
+        id="word-input"
+        maxlength="8"
+        autocomplete="off"
+        spellcheck="false"
+        placeholder=""
+        aria-describedby="word-help"
+      >
+      <button type="submit" aria-label="Собрать слово из частиц">↗</button>
+    </form>
+
+    <div class="sr" id="word-help">Введите слово и нажмите Enter. Оно соберётся в центре сцены.</div>
+    <p class="sr" id="scene-status" role="status" aria-live="polite"></p>
+    <p class="sr" id="form-status" role="status" aria-live="polite"></p>
+  </div>
+</main>
+
+<noscript>
+  <div class="fallback">
+    <h1>PARTICLE / EVERYTHING</h1>
+    <p>Для интерактивного сайта из частиц включите JavaScript.</p>
+    <a href="mailto:hello@example.com">Написать о проекте ↗</a>
+  </div>
+</noscript>
+
+<script>
+(() => {
+'use strict';
+
+/* ========================================================
+   PARTICLE / EVERYTHING
+   Offline. Canvas 2D. Procedural geometry.
+   Visible typography, controls and objects are all particles.
+======================================================== */
+
+const EMAIL = 'hello@example.com';
+
+const $ = selector => document.querySelector(selector);
+const $$ = selector => [...document.querySelectorAll(selector)];
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const smooth = x => {
+  x = clamp(x);
+  return x * x * (3 - 2 * x);
+};
+const TAU = Math.PI * 2;
+
+const stage = $('#stage');
+const journey = $('#journey');
+const canvas = $('#canvas');
+const ctx = canvas.getContext('2d', { alpha: false });
+
+const mask = document.createElement('canvas');
+const m = mask.getContext('2d', { willReadFrequently: true });
+
+const wordMask = document.createElement('canvas');
+const wm = wordMask.getContext('2d', { willReadFrequently: true });
+
+if (!ctx || !m || !wm) {
+  const fallback = document.createElement('div');
+  fallback.className = 'fallback';
+  fallback.textContent = 'Этот браузер не поддерживает Canvas. Попробуйте открыть страницу в актуальном браузере.';
+  stage.append(fallback);
+  return;
+}
+
+$('#contact').href =
+  `mailto:${EMAIL}?subject=${encodeURIComponent('Новый проект / PARTICLE')}`;
+
+const motionQuery = matchMedia('(prefers-reduced-motion: reduce)');
+let reduced = motionQuery.matches;
+let paused = false;
+let visible = true;
+let dirty = true;
+let frame = 0;
+let lastTime = 0;
+let time = 0;
+
+let W = 0;
+let H = 0;
+let DPR = 1;
+let mobile = false;
+let pad = 30;
+let routeStart = 0;
+let routeLength = 1;
+let targetStage = 0;
+let currentStage = 0;
+let activeScene = -1;
+let burst = 0;
+let uiNeedsBuild = true;
+let inputValue = '';
+let objectWord = 'CREATE';
+
+let pointer = {
+  x: -9999,
+  y: -9999,
+  nx: 0,
+  ny: 0,
+  rx: 0,
+  ry: 0,
+  active: false
+};
+
+const palettes = [
+  [203, 255, 145],
+  [156, 221, 255],
+  [255, 175, 128],
+  [215, 184, 255]
+];
+
+const scenes = [
+  {
+    kicker: '01 / NOTHING HERE IS SOLID',
+    title: ['NOTHING', 'BUT', 'PARTICLES.'],
+    description: [
+      'Ни одной картинки. Ни одного монолита.',
+      'Даже эти буквы — маленькие частицы.',
+      'Наведи курсор. Попробуй нарушить порядок.'
+    ],
+    object: 'SPHERICAL FIELD',
+    state: 'ORDER / POTENTIAL',
+    announcement: 'Сцена 1. Сфера из частиц. Прокрутите страницу, чтобы изменить форму.'
+  },
+  {
+    kicker: '02 / FORM IS A TEMPORARY STATE',
+    title: ['MADE', 'TO', 'BECOME.'],
+    description: [
+      'Форма — не ограничение.',
+      'Это мгновение между двумя',
+      'возможными состояниями.'
+    ],
+    object: 'LIVING WINGS',
+    state: 'MOTION / FREEDOM',
+    announcement: 'Сцена 2. Частицы образуют движущиеся крылья.'
+  },
+  {
+    kicker: '03 / A DIFFERENT KIND OF GRAVITY',
+    title: ['BREAK', 'YOUR', 'ORBIT.'],
+    description: [
+      'Не обязательно двигаться',
+      'по чужой траектории.',
+      'Можно создать собственную.'
+    ],
+    object: 'TOROIDAL CURRENT',
+    state: 'ENERGY / ATTRACTION',
+    announcement: 'Сцена 3. Вращающаяся орбита из частиц.'
+  },
+  {
+    kicker: '04 / NOW IT IS YOUR TURN',
+    title: ['MAKE', 'IT', 'YOURS.'],
+    description: [
+      'Впиши слово — и оно станет материей.',
+      'Потому что следующий большой проект',
+      'всегда начинается с твоей идеи.'
+    ],
+    object: 'YOUR OWN MATTER',
+    state: 'IDEA / POSSIBILITY',
+    announcement: 'Сцена 4. Введите слово в поле, чтобы собрать его из частиц.'
+  }
+];
+
+const uiParticles = [];
+const objectParticles = [];
+const trails = [];
+let uiTargets = [];
+let wordTargets = [];
+let layout = null;
+
+let seed = 89327;
+function random() {
+  seed = seed * 16807 % 2147483647;
+  return (seed - 1) / 2147483646;
+}
+
+const OBJECT_COUNT = matchMedia('(max-width:700px)').matches ? 2600 : 4700;
+
+for (let i = 0; i < OBJECT_COUNT; i++) {
+  const v = i / (OBJECT_COUNT - 1);
+  const a = random();
+  const b = random();
+  const c = random();
+
+  // Sphere.
+  const sy = 1 - v * 2;
+  const sr = Math.sqrt(Math.max(0, 1 - sy * sy));
+  const sa = i * Math.PI * (3 - Math.sqrt(5));
+
+  const sphere = {
+    x: Math.cos(sa) * sr,
+    y: sy,
+    z: Math.sin(sa) * sr
+  };
+
+  // Butterfly-like membrane with upper and lower lobes.
+  const side = i % 2 ? 1 : -1;
+  const theta = a * Math.PI;
+  const radial = Math.sqrt(b);
+  const silhouette =
+    .70 + .34 * Math.sin(theta * 2 - .45) ** 2 +
+    .20 * Math.sin(theta * 3);
+
+  const wings = {
+    x: side * (.10 + Math.sin(theta) * radial * silhouette * 1.35),
+    y: Math.cos(theta) * radial * 1.16,
+    z: Math.sin(theta * 2) * radial * .12,
+    side,
+    radial
+  };
+
+  // Torus.
+  const u = v * TAU * 19;
+  const tv = i * 2.3999632297;
+  const tr = .31 + c * .035;
+  const torus = {
+    x: (.82 + tr * Math.cos(tv)) * Math.cos(u),
+    y: tr * Math.sin(tv),
+    z: (.82 + tr * Math.cos(tv)) * Math.sin(u)
+  };
+
+  objectParticles.push({
+    shapes: [sphere, wings, torus],
+    x: sphere.x,
+    y: sphere.y,
+    z: sphere.z,
+    random: [a,b,c],
+    phase: a * TAU,
+    radius: .65 + b * .95,
+    offsetX: 0,
+    offsetY: 0,
+    vx: 0,
+    vy: 0,
+    screenX: 0,
+    screenY: 0,
+    depth: 0
+  });
+}
+
+/* ───────────── Layout & accessible hit areas ───────────── */
+
+function place(element, box) {
+  element.style.left = box.x + 'px';
+  element.style.top = box.y + 'px';
+  element.style.width = box.w + 'px';
+  element.style.height = box.h + 'px';
+}
+
+function calculateLayout() {
+  mobile = W < 701;
+  pad = mobile ? 22 : clamp(W * .048, 35, 82);
+
+  const top = mobile ? 25 : 29;
+  const footerY = H - (mobile ? 62 : 73);
+  const buttonW = mobile ? 102 : 143;
+
+  layout = {
+    home: { x: pad, y: top - 6, w: mobile ? 174 : 230, h: 39 },
+    motion: { x: W - pad - 35, y: top - 5, w: 35, h: 35 },
+    explode: { x: W - pad - buttonW, y: footerY, w: buttonW, h: 38 },
+    nav: [],
+    form: {
+      x: pad,
+      y: mobile ? H * .48 : H * .76,
+      w: mobile ? Math.min(W - pad * 2, 315) : Math.min(W * .32, 360),
+      h: 42
+    },
+    contact: {
+      x: pad,
+      y: H - (mobile ? 116 : 138),
+      w: mobile ? 220 : 245,
+      h: 30
+    },
+    footerY
+  };
+
+  const navW = mobile ? 31 : 35;
+  const gap = mobile ? 5 : 7;
+  const navStart = mobile ? pad : W * .5 - (navW * 4 + gap * 3) / 2;
+
+  for (let i = 0; i < 4; i++) {
+    layout.nav.push({
+      x: navStart + i * (navW + gap),
+      y: footerY,
+      w: navW,
+      h: 38
+    });
+  }
+
+  place($('#home'), layout.home);
+  place($('#motion'), layout.motion);
+  place($('#explode'), layout.explode);
+  place($('#contact'), layout.contact);
+
+  $$('[data-scene]').forEach((button, i) => place(button, layout.nav[i]));
+
+  const form = $('#word-form');
+  form.style.left = layout.form.x + 'px';
+  form.style.top = layout.form.y + 'px';
+  form.style.width = layout.form.w + 'px';
+}
+
+/* ───────────── Text rasterization ───────────── */
+
+function clearMask() {
+  m.clearRect(0, 0, W, H);
+  m.fillStyle = '#fff';
+  m.strokeStyle = '#fff';
+  m.textBaseline = 'alphabetic';
+  m.textAlign = 'left';
+}
+
+function text(value, x, y, size, weight = 400, family = 'Arial') {
+  m.font = `${weight} ${size}px ${family}`;
+  m.fillText(value, x, y);
+}
+
+function fitText(value, maxWidth, initialSize, weight = 800) {
+  let size = initialSize;
+  m.font = `${weight} ${size}px Arial`;
+  const width = m.measureText(value).width;
+  if (width > maxWidth) size *= maxWidth / width;
+  return size;
+}
+
+function line(x1, y1, x2, y2, width = 1) {
+  m.lineWidth = width;
+  m.beginPath();
+  m.moveTo(x1, y1);
+  m.lineTo(x2, y2);
+  m.stroke();
+}
+
+function roundedBox(box, radius = 4) {
+  m.lineWidth = 1;
+  m.beginPath();
+  if (m.roundRect) {
+    m.roundRect(box.x, box.y, box.w, box.h, radius);
+  } else {
+    m.rect(box.x, box.y, box.w, box.h);
+  }
+  m.stroke();
+}
+
+function sampleMask(step, colorGroup, radius) {
+  const data = m.getImageData(0, 0, Math.ceil(W), Math.ceil(H)).data;
+  const imageWidth = Math.ceil(W);
+  const result = [];
+
+  for (let y = 0; y < H; y += step) {
+    const offset = (Math.floor(y / step) % 2) * step * .35;
+    for (let x = offset; x < W; x += step) {
+      const ix = Math.floor(x);
+      const iy = Math.floor(y);
+      if (data[(iy * imageWidth + ix) * 4 + 3] > 95) {
+        result.push({
+          x, y,
+          color: colorGroup,
+          r: radius,
+          phase: random() * TAU
+        });
+      }
+    }
+  }
+  return result;
+}
+
+function buildInterface() {
+  if (!W || activeScene < 0) return;
+
+  const scene = scenes[activeScene];
+  let targets = [];
+
+  // Large expressive typography: clearly separated points.
+  clearMask();
+
+  const titleX = pad;
+  const titleTop = mobile ? 155 : H * .35;
+  const maxWidth = mobile ? W - pad * 2 : W * .50;
+  let size = mobile ? Math.min(W * .148, 77) : Math.min(W * .089, 142);
+
+  for (const word of scene.title) {
+    size = Math.min(size, fitText(word, maxWidth, size, 800));
+  }
+
+  scene.title.forEach((word, index) => {
+    text(word, titleX, titleTop + index * size * .91, size, 800);
+  });
+
+  targets.push(...sampleMask(mobile ? 2.55 : 3.15, 0, mobile ? .92 : 1.1));
+
+  // Fine supporting text and controls.
+  clearMask();
+
+  const headerY = mobile ? 45 : 53;
+  text('PARTICLE', pad, headerY, mobile ? 17 : 21, 700);
+  text('/ EVERYTHING', pad + (mobile ? 91 : 116), headerY - 1, mobile ? 8 : 9, 400, 'monospace');
+
+  const kickerY = mobile ? 104 : H * .35 - 62;
+  text(scene.kicker, pad, kickerY, mobile ? 8 : 9, 400, 'monospace');
+
+  const descTop = titleTop + size * 2.73 + (mobile ? 12 : 23);
+  const descSize = mobile ? 10 : 12;
+
+  scene.description.forEach((value, i) => {
+    text(value, pad, descTop + i * (mobile ? 17 : 21), descSize);
+  });
+
+  if (!mobile) {
+    text('AN EXPERIMENT IN IMPERMANENCE', W * .47, headerY - 1, 8, 400, 'monospace');
+    text('SCROLL TO REARRANGE REALITY', pad, H - 36, 8, 400, 'monospace');
+    text(scene.object, W - pad - 170, H - 167, 9, 400, 'monospace');
+    text(scene.state, W - pad - 170, H - 149, 8, 400, 'monospace');
+  }
+
+  const pauseBox = layout.motion;
+  text(
+    paused || reduced ? '>' : 'II',
+    pauseBox.x + 12,
+    pauseBox.y + 22,
+    11,
+    400,
+    'monospace'
+  );
+
+  layout.nav.forEach((box, i) => {
+    text(String(i + 1).padStart(2, '0'), box.x + 9, box.y + 24, 9, 400, 'monospace');
+  });
+
+  const ex = layout.explode;
+  text(mobile ? 'DISPERSE' : 'DISPERSE ALL', ex.x + 14, ex.y + 24, 9, 400, 'monospace');
+
+  if (activeScene === 3) {
+    const f = layout.form;
+    const shown = inputValue || 'Твоё слово...';
+    text(shown, f.x + 10, f.y + 27, 13);
+    text('↗', f.x + f.w - 32, f.y + 27, 19);
+
+    const c = layout.contact;
+    text('ОБСУДИТЬ ПРОЕКТ  ↗', c.x, c.y + 20, 10, 400, 'monospace');
+  }
+
+  targets.push(...sampleMask(1.6, 1, .66));
+
+  // Accent geometry, outlines and indicator.
+  clearMask();
+
+  roundedBox(layout.motion, 18);
+  roundedBox(layout.explode, 3);
+
+  layout.nav.forEach((box, i) => {
+    roundedBox(box, 3);
+    if (i === activeScene) {
+      m.fillRect(box.x + 8, box.y + 32, box.w - 16, 1.5);
+    }
+  });
+
+  if (activeScene === 3) {
+    const f = layout.form;
+    line(f.x, f.y + f.h, f.x + f.w - 58, f.y + f.h);
+    roundedBox({ x: f.x + f.w - 48, y: f.y, w: 48, h: 42 }, 3);
+    const c = layout.contact;
+    line(c.x, c.y + 28, c.x + 172, c.y + 28);
+  }
+
+  line(pad, mobile ? 77 : 89, W - pad, mobile ? 77 : 89);
+
+  if (!mobile) {
+    for (const x of [pad, W - pad]) {
+      line(x - 4, H * .53, x + 4, H * .53);
+      line(x, H * .53 - 4, x, H * .53 + 4);
+    }
+  }
+
+  targets.push(...sampleMask(2.7, 2, .72));
+
+  // Deterministic scramble makes text changes look like actual reassembly.
+  for (let i = targets.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [targets[i], targets[j]] = [targets[j], targets[i]];
+  }
+
+  uiTargets = targets;
+
+  while (uiParticles.length < targets.length) {
+    const target = targets[uiParticles.length];
+    const immediately = reduced || paused || uiParticles.length === 0;
+
+    uiParticles.push({
+      x: immediately ? target.x : W * (.25 + random() * .65),
+      y: immediately ? target.y : H * random(),
+      vx: 0,
+      vy: 0,
+      tx: target.x,
+      ty: target.y,
+      color: target.color,
+      radius: target.r,
+      phase: target.phase,
+      alpha: 0,
+      targetAlpha: 1
+    });
+  }
+
+  uiParticles.forEach((particle, i) => {
+    const target = targets[i];
+
+    if (target) {
+      particle.tx = target.x;
+      particle.ty = target.y;
+      particle.color = target.color;
+      particle.radius = target.r;
+      particle.phase = target.phase;
+      particle.targetAlpha = 1;
+    } else {
+      particle.targetAlpha = 0;
+      particle.tx = particle.x + Math.cos(particle.phase) * 70;
+      particle.ty = particle.y + Math.sin(particle.phase) * 70;
+    }
+
+    if (reduced || paused) {
+      particle.x = particle.tx;
+      particle.y = particle.ty;
+      particle.vx = particle.vy = 0;
+      particle.alpha = particle.targetAlpha;
+    }
+  });
+
+  uiNeedsBuild = false;
+}
+
+/* ───────────── Custom word sculpture ───────────── */
+
+function buildWord() {
+  const width = 900;
+  const height = 340;
+
+  wordMask.width = width;
+  wordMask.height = height;
+  wm.clearRect(0, 0, width, height);
+  wm.fillStyle = '#fff';
+  wm.textAlign = 'center';
+  wm.textBaseline = 'alphabetic';
+
+  let size = 220;
+  const value = objectWord.toUpperCase();
+  wm.font = `900 ${size}px Arial`;
+  const measured = wm.measureText(value);
+  size *= Math.min(1, width * .88 / Math.max(1, measured.width));
+
+  wm.font = `900 ${size}px Arial`;
+  const metrics = wm.measureText(value);
+  const ascent = metrics.actualBoundingBoxAscent || size * .75;
+  const descent = metrics.actualBoundingBoxDescent || size * .08;
+
+  wm.fillText(value, width / 2, height / 2 + (ascent - descent) / 2);
+
+  const data = wm.getImageData(0, 0, width, height).data;
+  wordTargets = [];
+
+  for (let y = 0; y < height; y += 4) {
+    for (let x = 0; x < width; x += 4) {
+      if (data[(y * width + x) * 4 + 3] > 120) {
+        wordTargets.push({
+          x: (x - width / 2) / 300,
+          y: -(y - height / 2) / 300,
+          z: 0
+        });
+      }
+    }
+  }
+
+  if (!wordTargets.length) {
+    wordTargets.push({x:0,y:0,z:0});
+  }
+
+  for (let i = wordTargets.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [wordTargets[i], wordTargets[j]] = [wordTargets[j], wordTargets[i]];
+  }
+}
+
+/* ───────────── Input and motion controls ───────────── */
+
+function setScene(index) {
+  const oldScene = activeScene;
+  activeScene = index;
+
+  $$('[data-scene]').forEach((button, i) => {
+    if (i === index) button.setAttribute('aria-current', 'step');
+    else button.removeAttribute('aria-current');
+  });
+
+  const form = $('#word-form');
+  const contact = $('#contact');
+
+  if (index !== 3 && oldScene === 3 &&
+      (form.contains(document.activeElement) || document.activeElement === contact)) {
+    $$('[data-scene]')[index].focus({ preventScroll: true });
+  }
+
+  form.hidden = index !== 3;
+  contact.hidden = index !== 3;
+
+  $('#scene-status').textContent = scenes[index].announcement;
+  uiNeedsBuild = true;
+}
+
+function scrollToScene(index) {
+  scrollTo({
+    top: routeStart + routeLength * index / 3,
+    behavior: reduced ? 'instant' : 'smooth'
+  });
+}
+
+$$('[data-scene]').forEach(button => {
+  button.addEventListener('click', () => scrollToScene(Number(button.dataset.scene)));
+});
+
+$('#home').addEventListener('click', () => scrollToScene(0));
+
+$('.skip').addEventListener('click', event => {
+  event.preventDefault();
+  targetStage = currentStage = 3;
+  setScene(3);
+  scrollTo({ top: routeStart + routeLength, behavior: 'instant' });
+  $('#word-input').focus({ preventScroll: true });
+  dirty = true;
+  wake();
+});
+
+function syncMotion() {
+  const stopped = reduced || paused;
+  $('#motion').setAttribute('aria-pressed', String(stopped));
+  $('#motion').setAttribute('aria-label', reduced
+    ? 'Движение отключено настройками системы'
+    : stopped ? 'Включить движение' : 'Приостановить движение');
+  $('#motion').disabled = reduced;
+  $('#explode').disabled = stopped;
+
+  if (stopped) {
+    burst = 0;
+    trails.length = 0;
+    pointer.active = false;
+    objectParticles.forEach(p => {
+      p.offsetX = p.offsetY = p.vx = p.vy = 0;
+    });
+  }
+
+  uiNeedsBuild = true;
+  dirty = true;
+  wake();
+}
+
+$('#motion').addEventListener('click', () => {
+  paused = !paused;
+  syncMotion();
+});
+
+motionQuery.addEventListener('change', event => {
+  reduced = event.matches;
+  syncMotion();
+});
+
+function explode() {
+  if (paused || reduced) return;
+
+  burst = 1;
+
+  for (const p of uiParticles) {
+    const dx = p.x - W * .57;
+    const dy = p.y - H * .5;
+    const d = Math.max(Math.hypot(dx, dy), 1);
+    const strength = 7 + random() * 20;
+    p.vx += dx / d * strength;
+    p.vy += dy / d * strength;
+  }
+
+  for (const p of objectParticles) {
+    p.vx += (random() - .5) * 45;
+    p.vy += (random() - .5) * 45;
+  }
+
+  dirty = true;
+  wake();
+}
+
+$('#explode').addEventListener('click', explode);
+
+stage.addEventListener('pointerdown', event => {
+  if (event.target.closest('button, input, a, form')) return;
+  explode();
+}, { passive: true });
+
+stage.addEventListener('pointermove', event => {
+  if (event.pointerType === 'touch' || paused || reduced) return;
+
+  const bounds = stage.getBoundingClientRect();
+  pointer.x = event.clientX - bounds.left;
+  pointer.y = event.clientY - bounds.top;
+  pointer.nx = pointer.x / W * 2 - 1;
+  pointer.ny = pointer.y / H * 2 - 1;
+  pointer.active = true;
+
+  for (let i = 0; i < 2; i++) {
+    trails.push({
+      x: pointer.x,
+      y: pointer.y,
+      vx: (random() - .5) * 1.8,
+      vy: (random() - .5) * 1.8,
+      life: 1,
+      r: .6 + random()
+    });
+  }
+  if (trails.length > 90) trails.splice(0, trails.length - 90);
+}, { passive: true });
+
+stage.addEventListener('pointerleave', () => {
+  pointer.active = false;
+  pointer.nx = pointer.ny = 0;
+});
+
+$('#word-input').addEventListener('input', event => {
+  inputValue = event.currentTarget.value;
+  uiNeedsBuild = true;
+  dirty = true;
+  wake();
+});
+
+$('#word-form').addEventListener('submit', event => {
+  event.preventDefault();
+  objectWord = inputValue.trim() || 'CREATE';
+  buildWord();
+  $('#form-status').textContent = `Слово «${objectWord}» собрано из частиц.`;
+  if (!paused && !reduced) burst = .65;
+  dirty = true;
+  wake();
+});
+
+/* ───────────── Geometry and rendering ───────────── */
+
+function getTarget(particle, index, shape) {
+  if (shape === 3) {
+    const p = wordTargets[index % wordTargets.length];
+    return {
+      x: p.x,
+      y: p.y,
+      z: (particle.random[2] - .5) * .095
+    };
+  }
+
+  const p = particle.shapes[shape];
+
+  if (shape === 1) {
+    const flap = Math.sin(time * .85) * .42;
+    return {
+      x: p.x * (1 - Math.abs(flap) * .12),
+      y: p.y,
+      z: p.z + Math.abs(p.x) * flap
+    };
+  }
+
+  return p;
+}
+
+function colorAt(value) {
+  const index = Math.min(2, Math.floor(value));
+  const t = value - index;
+  return palettes[index].map((c, i) => Math.round(lerp(c, palettes[index + 1][i], t)));
+}
+
+function simulateAndDraw(dt) {
+  const moving = !paused && !reduced;
+  const step = moving ? Math.min(dt * 60, 2) : 0;
+  const settle = reduced || paused;
+  const accent = colorAt(currentStage);
+  const accentString = accent.join(',');
+
+  ctx.fillStyle = '#07080d';
+  ctx.fillRect(0, 0, W, H);
+
+  const centerX = W * (mobile ? .54 : .735);
+  const centerY = H * (mobile ? .715 : .52);
+  const scale = mobile
+    ? Math.min(W * .33, H * .175)
+    : Math.min(W * .205, H * .31);
+
+  const index = Math.min(2, Math.floor(currentStage));
+  const local = currentStage - index;
+  const blend = smooth((local - .10) / .80);
+  const travel = reduced ? 0 : Math.sin(blend * Math.PI);
+
+  pointer.rx = lerp(pointer.rx, moving ? pointer.nx : 0, .045);
+  pointer.ry = lerp(pointer.ry, moving ? pointer.ny : 0, .045);
+
+  const wordAmount = smooth(clamp(currentStage - 2));
+  const baseRotation = time * .065 + currentStage * .25;
+  const yaw = (baseRotation + pointer.rx * .18) * (1 - wordAmount);
+  const pitch = lerp(.12 + Math.sin(currentStage * 1.1) * .32, 0, wordAmount)
+    + pointer.ry * .045 * (1 - wordAmount);
+
+  const cy = Math.cos(yaw), sy = Math.sin(yaw);
+  const cx = Math.cos(pitch), sx = Math.sin(pitch);
+
+  const ease = settle ? 1 : 1 - Math.exp(-dt * 5);
+
+  // Atmospheric dots: even the "background texture" is particulate.
+  ctx.fillStyle = `rgba(${accentString},.16)`;
+  ctx.beginPath();
+  for (let i = 0; i < 110; i++) {
+    const x = ((i * 149.37 + Math.sin(i) * 47) % W + W) % W;
+    const y = ((i * 83.71 - time * (1 + i % 3)) % H + H) % H;
+    ctx.moveTo(x + .6, y);
+    ctx.arc(x, y, i % 11 === 0 ? 1 : .45, 0, TAU);
+  }
+  ctx.fill();
+
+  // Particle orbital guides.
+  ctx.fillStyle = `rgba(${accentString},${.13 * (1 - wordAmount)})`;
+  ctx.beginPath();
+  for (let i = 0; i < 230; i++) {
+    const a = i / 230 * TAU;
+    const x = Math.cos(a) * scale * 1.48;
+    const y = Math.sin(a) * scale * .44;
+    const angle = -.25;
+    const px = centerX + x * Math.cos(angle) - y * Math.sin(angle);
+    const py = centerY + x * Math.sin(angle) + y * Math.cos(angle);
+    ctx.moveTo(px + .6, py);
+    ctx.arc(px, py, .6, 0, TAU);
+  }
+  ctx.fill();
+
+  // Transform and simulate the main object.
+  for (let i = 0; i < objectParticles.length; i++) {
+    const p = objectParticles[i];
+    const from = getTarget(p, i, index);
+    const to = getTarget(p, i, index + 1);
+
+    let tx = lerp(from.x, to.x, blend);
+    let ty = lerp(from.y, to.y, blend);
+    let tz = lerp(from.z, to.z, blend);
+
+    const spread = travel * 1.55 + burst * 1.5;
+    tx += (p.random[0] - .5) * spread;
+    ty += (p.random[1] - .5) * spread;
+    tz += (p.random[2] - .5) * spread * 1.5;
+
+    p.x += (tx - p.x) * ease;
+    p.y += (ty - p.y) * ease;
+    p.z += (tz - p.z) * ease;
+
+    const rx = p.x * cy - p.z * sy;
+    const z1 = p.x * sy + p.z * cy;
+    const ry = p.y * cx - z1 * sx;
+    const rz = p.y * sx + z1 * cx;
+    const perspective = 4 / (4 + rz);
+
+    let px = centerX + rx * scale * perspective;
+    let py = centerY - ry * scale * perspective;
+
+    if (moving) {
+      let fx = -p.offsetX * .036;
+      let fy = -p.offsetY * .036;
+
+      if (pointer.active) {
+        const dx = px + p.offsetX - pointer.x;
+        const dy = py + p.offsetY - pointer.y;
+        const d = Math.max(Math.hypot(dx, dy), .1);
+        const influence = Math.pow(Math.max(0, 1 - d / 115), 2);
+        fx += dx / d * influence * 3.4;
+        fy += dy / d * influence * 3.4;
+      }
+
+      const damping = Math.pow(.84, step);
+      p.vx = (p.vx + fx * step) * damping;
+      p.vy = (p.vy + fy * step) * damping;
+      p.offsetX += p.vx * step;
+      p.offsetY += p.vy * step;
+    }
+
+    p.screenX = px + p.offsetX;
+    p.screenY = py + p.offsetY;
+    p.depth = rz;
+    p.drawRadius = p.radius * perspective * (mobile ? .8 : 1);
+  }
+
+  // Batched drawing: three depth layers instead of thousands of state changes.
+  for (let layer = 0; layer < 3; layer++) {
+    ctx.fillStyle = layer === 2
+      ? 'rgba(240,247,237,.9)'
+      : `rgba(${accentString},${layer === 0 ? .28 : .74})`;
+
+    ctx.beginPath();
+
+    for (const p of objectParticles) {
+      const assigned = p.random[0] > .965 ? 2 : p.depth > .15 ? 0 : 1;
+      if (assigned !== layer) continue;
+      ctx.moveTo(p.screenX + p.drawRadius, p.screenY);
+      ctx.arc(p.screenX, p.screenY, p.drawRadius, 0, TAU);
+    }
+    ctx.fill();
+  }
+
+  // Sparse halos only around a few bright particles.
+  ctx.fillStyle = `rgba(${accentString},.045)`;
+  ctx.beginPath();
+  for (const p of objectParticles) {
+    if (p.random[0] < .985 || p.depth > 0) continue;
+    const r = p.drawRadius * 4;
+    ctx.moveTo(p.screenX + r, p.screenY);
+    ctx.arc(p.screenX, p.screenY, r, 0, TAU);
+  }
+  ctx.fill();
+
+  // Typography particles.
+  for (const p of uiParticles) {
+    if (moving) {
+      let fx = (p.tx - p.x) * .04;
+      let fy = (p.ty - p.y) * .04;
+
+      if (pointer.active) {
+        const dx = p.x - pointer.x;
+        const dy = p.y - pointer.y;
+        const d = Math.max(Math.hypot(dx, dy), .1);
+        const influence = Math.pow(Math.max(0, 1 - d / 76), 2);
+        fx += dx / d * influence * 2.5;
+        fy += dy / d * influence * 2.5;
+      }
+
+      const damping = Math.pow(.79, step);
+      p.vx = (p.vx + fx * step) * damping;
+      p.vy = (p.vy + fy * step) * damping;
+      p.x += p.vx * step;
+      p.y += p.vy * step;
+      p.alpha += (p.targetAlpha - p.alpha) * .12;
+    } else {
+      p.x = p.tx;
+      p.y = p.ty;
+      p.alpha = p.targetAlpha;
+    }
+  }
+
+  const uiColors = [
+    'rgba(235,243,228,.96)',
+    'rgba(168,185,162,.93)',
+    `rgba(${accentString},.72)`
+  ];
+
+  for (let color = 0; color < 3; color++) {
+    ctx.fillStyle = uiColors[color];
+    ctx.beginPath();
+    for (const p of uiParticles) {
+      if (p.color !== color || p.alpha < .08) continue;
+      const r = p.radius * Math.min(1, p.alpha * 1.3);
+      ctx.moveTo(p.x + r, p.y);
+      ctx.arc(p.x, p.y, r, 0, TAU);
+    }
+    ctx.fill();
+  }
+
+  // Particle-only page progress.
+  ctx.fillStyle = `rgba(${accentString},.75)`;
+  ctx.beginPath();
+  const progressWidth = W * currentStage / 3;
+  for (let x = 0; x < progressWidth; x += 4) {
+    ctx.moveTo(x + .8, 2);
+    ctx.arc(x, 2, .8, 0, TAU);
+  }
+  ctx.fill();
+
+  // Cursor wake made of particles.
+  if (moving) {
+    for (let i = trails.length - 1; i >= 0; i--) {
+      const trail = trails[i];
+      trail.x += trail.vx * step;
+      trail.y += trail.vy * step;
+      trail.life -= dt * 1.8;
+      if (trail.life <= 0) {
+        trails.splice(i, 1);
+        continue;
+      }
+      ctx.fillStyle = `rgba(${accentString},${trail.life * .65})`;
+      ctx.beginPath();
+      ctx.arc(trail.x, trail.y, trail.r * trail.life, 0, TAU);
+      ctx.fill();
+    }
+  }
+
+  // Keep array bounded after large-to-small text transitions.
+  if (uiParticles.length > uiTargets.length) {
+    const tail = uiParticles[uiParticles.length - 1];
+    if (tail && tail.alpha < .01) uiParticles.length = uiTargets.length;
+  }
+}
+
+/* ───────────── Scroll / resize / lifecycle ───────────── */
+
+function measure() {
+  const nextW = stage.clientWidth;
+  const nextH = stage.clientHeight;
+
+  if (!nextW || !nextH) return;
+
+  const changed = nextW !== W || nextH !== H;
+  W = nextW;
+  H = nextH;
+
+  routeStart = journey.getBoundingClientRect().top + scrollY;
+  routeLength = Math.max(1, journey.offsetHeight - H);
+
+  if (changed) {
+    DPR = Math.min(devicePixelRatio || 1, 1.7);
+    canvas.width = Math.round(W * DPR);
+    canvas.height = Math.round(H * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+
+    mask.width = Math.ceil(W);
+    mask.height = Math.ceil(H);
+    calculateLayout();
+    uiNeedsBuild = true;
+  }
+
+  readScroll();
+}
+
+function readScroll() {
+  targetStage = clamp((scrollY - routeStart) / routeLength) * 3;
+  dirty = true;
+  wake();
+}
+
+addEventListener('scroll', readScroll, { passive: true });
+addEventListener('resize', measure, { passive: true });
+
+if ('ResizeObserver' in window) {
+  new ResizeObserver(measure).observe(stage);
+}
+
+if ('IntersectionObserver' in window) {
+  new IntersectionObserver(entries => {
+    visible = entries[0].isIntersecting;
+    if (visible) {
+      dirty = true;
+      wake();
+    }
+  }).observe(journey);
+}
+
+function wake() {
+  if (!frame && !document.hidden) {
+    lastTime = 0;
+    frame = requestAnimationFrame(tick);
+  }
+}
+
+function tick(timestamp) {
+  frame = 0;
+  if (document.hidden) return;
+
+  const dt = lastTime ? Math.min((timestamp - lastTime) / 1000, .04) : 1 / 60;
+  lastTime = timestamp;
+
+  const moving = !paused && !reduced;
+  const before = currentStage;
+
+  if (reduced) {
+    currentStage = Math.round(targetStage);
+  } else {
+    currentStage = lerp(currentStage, targetStage, 1 - Math.exp(-dt * 6));
+    if (Math.abs(currentStage - targetStage) < .0001) currentStage = targetStage;
+  }
+
+  const nextScene = Math.round(currentStage);
+  if (nextScene !== activeScene) setScene(nextScene);
+
+  if (moving && visible) {
+    time += dt;
+    burst *= Math.exp(-dt * 3.2);
+    if (burst < .001) burst = 0;
+  }
+
+  if (uiNeedsBuild && visible) buildInterface();
+
+  if (visible && (dirty || moving || before !== currentStage)) {
+    simulateAndDraw(dt);
+    dirty = false;
+  }
+
+  const settling = !reduced && Math.abs(currentStage - targetStage) > .0001;
+
+  if ((visible && moving) || settling) {
+    frame = requestAnimationFrame(tick);
+  } else {
+    lastTime = 0;
+  }
+}
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    cancelAnimationFrame(frame);
+    frame = 0;
+    lastTime = 0;
+  } else {
+    dirty = true;
+    wake();
+  }
+});
+
+buildWord();
+measure();
+setScene(Math.round(targetStage));
+syncMotion();
+wake();
+
+})();
+</script>
+</body>
+</html>
