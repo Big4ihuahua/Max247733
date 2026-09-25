@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ParticleCode — обучение веб-разработке</title>
+<meta name="description" content="Курсы по фронтенду: HTML, CSS, JavaScript. Учимся собирать сайты из атомов кода.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Manrope:wght@300;400;600;800&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚛️</text></svg>">
+<style>
+/* ============ 1. ПЕРЕМЕННЫЕ И БАЗА ============ */
+:root{
+  --bg:#05060d;
+  --bg-soft:#0a0c18;
+  --txt:#e8ecf8;
+  --muted:#8c93b0;
+  --violet:#7c5cff;
+  --cyan:#22d3ee;
+  --pink:#f472b6;
+  --line:rgba(255,255,255,.09);
+  --glass:rgba(255,255,255,.035);
+  --r:20px;
+  --shadow:0 20px 60px -20px rgba(0,0,0,.8);
+  --grad:linear-gradient(115deg,var(--violet),var(--cyan) 55%,var(--pink));
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:90px}
+body{
+  font-family:'Manrope',system-ui,-apple-system,'Segoe UI',sans-serif;
+  background:var(--bg);color:var(--txt);line-height:1.65;
+  overflow-x:hidden;-webkit-font-smoothing:antialiased;
+}
+body::before{ /* мягкие световые пятна */
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(60vw 60vw at 80% -10%, rgba(124,92,255,.20), transparent 60%),
+    radial-gradient(50vw 50vw at 0% 30%, rgba(34,211,238,.13), transparent 60%),
+    radial-gradient(45vw 45vw at 60% 110%, rgba(244,114,182,.12), transparent 60%);
+}
+img,svg{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+button,input,textarea{font:inherit;color:inherit}
+::selection{background:var(--violet);color:#fff}
+::-webkit-scrollbar{width:10px}
+::-webkit-scrollbar-track{background:#08090f}
+::-webkit-scrollbar-thumb{background:linear-gradient(var(--violet),var(--cyan));border-radius:9px;border:3px solid #08090f}
+
+/* ============ 2. КАНВАС С ЧАСТИЦАМИ ============ */
+#field{position:fixed;inset:0;z-index:0;pointer-events:none}
+.vignette{position:fixed;inset:0;z-index:1;pointer-events:none;
+  background:radial-gradient(circle at 50% 45%, transparent 35%, rgba(5,6,13,.55) 78%, rgba(5,6,13,.9) 100%);}
+
+/* ============ 3. ОБЩИЕ КЛАССЫ ============ */
+.wrap{width:min(1180px,92vw);margin-inline:auto;position:relative;z-index:2}
+section{padding:110px 0;position:relative;z-index:2}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;font-size:.78rem;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--cyan);font-weight:600;
+  padding:7px 14px;border:1px solid var(--line);border-radius:100px;background:var(--glass);
+  backdrop-filter:blur(8px);margin-bottom:18px;
+}
+.eyebrow i{width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 12px var(--cyan);animation:pulse 2s infinite}
+@keyframes pulse{50%{opacity:.25;transform:scale(.6)}}
+h1,h2,h3{line-height:1.12;font-weight:800;letter-spacing:-.02em}
+h1{font-size:clamp(2.4rem,6.2vw,4.5rem)}
+h2{font-size:clamp(1.9rem,4.2vw,3rem);margin-bottom:16px}
+h3{font-size:1.18rem}
+.grad{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{color:var(--muted);font-size:1.06rem;max-width:62ch}
+.center{text-align:center}
+.center .lead{margin-inline:auto}
+.glass{
+  background:var(--glass);border:1px solid var(--line);border-radius:var(--r);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+}
+/* кнопки */
+.btn{
+  display:inline-flex;align-items:center;gap:10px;padding:14px 26px;border-radius:100px;
+  font-weight:600;border:1px solid transparent;cursor:pointer;position:relative;
+  transition:.35s cubic-bezier(.2,.8,.2,1);white-space:nowrap;
+}
+.btn-main{background:var(--grad);color:#08080f;box-shadow:0 10px 30px -10px rgba(124,92,255,.8)}
+.btn-main:hover{transform:translateY(-3px);box-shadow:0 18px 40px -12px rgba(124,92,255,.95)}
+.btn-ghost{border-color:var(--line);background:var(--glass);backdrop-filter:blur(10px)}
+.btn-ghost:hover{border-color:var(--violet);transform:translateY(-3px);background:rgba(124,92,255,.12)}
+
+/* ============ 4. ШАПКА ============ */
+.progress{position:fixed;top:0;left:0;height:3px;z-index:60;width:100%;background:transparent}
+.progress span{display:block;height:100%;width:0;background:var(--grad);box-shadow:0 0 14px var(--violet)}
+header{
+  position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:50;
+  width:min(1180px,94vw);display:flex;align-items:center;justify-content:space-between;
+  padding:10px 12px 10px 20px;border-radius:100px;border:1px solid transparent;transition:.4s;
+}
+header.stuck{
+  background:rgba(8,10,20,.72);border-color:var(--line);
+  backdrop-filter:blur(18px) saturate(1.4);-webkit-backdrop-filter:blur(18px);
+  box-shadow:0 12px 40px -18px #000;
+}
+.logo{display:flex;align-items:center;gap:11px;font-weight:800;letter-spacing:-.02em;font-size:1.05rem}
+.logo .dot{width:26px;height:26px;border-radius:9px;background:var(--grad);position:relative;animation:spin 8s linear infinite}
+.logo .dot::after{content:'';position:absolute;inset:6px;background:#05060d;border-radius:4px}
+@keyframes spin{to{transform:rotate(360deg)}}
+nav{display:flex;align-items:center;gap:6px}
+nav a{padding:9px 15px;border-radius:100px;font-size:.93rem;color:var(--muted);transition:.25s}
+nav a:hover,nav a.active{color:#fff;background:rgba(255,255,255,.07)}
+.burger{display:none;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--glass);cursor:pointer;position:relative}
+.burger i{position:absolute;left:12px;width:20px;height:2px;background:#fff;border-radius:2px;transition:.3s}
+.burger i:nth-child(1){top:16px}.burger i:nth-child(2){top:22px}.burger i:nth-child(3){top:28px}
+.burger.on i:nth-child(1){transform:translateY(6px) rotate(45deg)}
+.burger.on i:nth-child(2){opacity:0}
+.burger.on i:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
+
+/* ============ 5. ГЕРОЙ ============ */
+.hero{min-height:100svh;display:flex;align-items:center;padding-top:120px}
+.hero h1{margin:6px 0 22px}
+.type-line{font-family:'JetBrains Mono',monospace;font-size:clamp(.95rem,2.4vw,1.25rem);color:var(--muted);margin-bottom:32px}
+.type-line b{color:var(--cyan);font-weight:600}
+.caret{display:inline-block;width:9px;height:1.05em;background:var(--pink);vertical-align:-3px;animation:blink .9s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+.hero-cta{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:56px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;max-width:760px}
+.stat{padding:18px 20px;border-radius:16px}
+.stat b{display:block;font-size:clamp(1.5rem,3.2vw,2.1rem);font-weight:800;letter-spacing:-.03em}
+.stat span{font-size:.82rem;color:var(--muted)}
+.scroll-hint{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);color:var(--muted);font-size:.78rem;letter-spacing:.2em;text-transform:uppercase;display:flex;flex-direction:column;align-items:center;gap:10px}
+.mouse{width:24px;height:38px;border:1.5px solid var(--line);border-radius:14px;position:relative}
+.mouse::after{content:'';position:absolute;top:7px;left:50%;width:4px;height:7px;margin-left:-2px;border-radius:3px;background:var(--cyan);animation:sc 1.8s infinite}
+@keyframes sc{0%{opacity:0;transform:translateY(0)}30%{opacity:1}100%{opacity:0;transform:translateY(13px)}}
+
+/* ============ 6. МАРКИ (стек) ============ */
+.marquee{overflow:hidden;mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);padding:10px 0}
+.track{display:flex;gap:14px;width:max-content;animation:slide 32s linear infinite}
+.marquee:hover .track{animation-play-state:paused}
+@keyframes slide{to{transform:translateX(-50%)}}
+.chip{display:flex;align-items:center;gap:10px;padding:11px 20px;border-radius:100px;border:1px solid var(--line);background:var(--glass);font-family:'JetBrains Mono',monospace;font-size:.88rem;white-space:nowrap}
+.chip em{width:8px;height:8px;border-radius:50%;background:var(--violet)}
+
+/* ============ 7. КАРТОЧКИ ============ */
+.grid{display:grid;gap:18px}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g2{grid-template-columns:repeat(2,1fr)}
+.card{padding:30px;border-radius:var(--r);transition:.4s cubic-bezier(.2,.8,.2,1);position:relative;overflow:hidden}
+.card::before{
+  content:'';position:absolute;inset:0;opacity:0;transition:.4s;
+  background:radial-gradient(400px 200px at var(--mx,50%) var(--my,0%),rgba(124,92,255,.16),transparent 70%);
+}
+.card:hover{transform:translateY(-6px);border-color:rgba(124,92,255,.45)}
+.card:hover::before{opacity:1}
+.ico{width:50px;height:50px;border-radius:15px;display:grid;place-items:center;margin-bottom:18px;
+  background:linear-gradient(145deg,rgba(124,92,255,.22),rgba(34,211,238,.14));border:1px solid var(--line)}
+.ico svg{width:24px;height:24px;stroke:var(--cyan);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.card p{color:var(--muted);font-size:.95rem;margin-top:8px}
+.card .tag{position:absolute;top:22px;right:24px;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:#3d4463}
+
+/* ============ 8. ОКНО КОДА ============ */
+.code-wrap{border-radius:var(--r);overflow:hidden;border:1px solid var(--line);background:rgba(8,10,18,.82);backdrop-filter:blur(16px);box-shadow:var(--shadow)}
+.code-top{display:flex;align-items:center;gap:14px;padding:12px 16px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.02)}
+.dots{display:flex;gap:7px}
+.dots i{width:11px;height:11px;border-radius:50%;background:#2b3049}
+.dots i:nth-child(1){background:#ff5f57}.dots i:nth-child(2){background:#febc2e}.dots i:nth-child(3){background:#28c840}
+.tabs{display:flex;gap:4px;margin-left:8px;flex-wrap:wrap}
+.tab{padding:6px 14px;border-radius:9px;font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--muted);cursor:pointer;border:1px solid transparent;background:none;transition:.25s}
+.tab:hover{color:#fff}
+.tab.on{background:rgba(124,92,255,.16);color:#fff;border-color:rgba(124,92,255,.4)}
+.copy{margin-left:auto;font-size:.78rem;padding:7px 13px;border-radius:9px;border:1px solid var(--line);background:none;cursor:pointer;color:var(--muted);transition:.25s}
+.copy:hover{color:#fff;border-color:var(--cyan)}
+pre{margin:0;padding:24px;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:.86rem;line-height:1.85;counter-reset:l}
+pre code{display:block}
+pre .ln{display:block;position:relative;padding-left:34px}
+pre .ln::before{counter-increment:l;content:counter(l);position:absolute;left:0;width:22px;text-align:right;color:#2f3450}
+.k{color:#c084fc}.t{color:#f472b6}.a{color:#7dd3fc}.s{color:#86efac}.c{color:#4b5170;font-style:italic}.n{color:#fbbf24}.f{color:#22d3ee}
+
+/* ============ 9. ТАЙМЛАЙН ============ */
+.timeline{position:relative;margin-top:50px;padding-left:34px}
+.timeline::before{content:'';position:absolute;left:8px;top:6px;bottom:6px;width:2px;background:linear-gradient(var(--violet),var(--cyan),var(--pink));opacity:.45;border-radius:2px}
+.step{position:relative;padding:0 0 38px 14px}
+.step::before{content:'';position:absolute;left:-33px;top:6px;width:18px;height:18px;border-radius:50%;background:#05060d;border:2px solid var(--violet);box-shadow:0 0 0 5px rgba(124,92,255,.1);transition:.4s}
+.step:hover::before{background:var(--violet);box-shadow:0 0 18px var(--violet)}
+.step h3{display:flex;align-items:center;gap:12px}
+.step .num{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--cyan);border:1px solid var(--line);padding:2px 9px;border-radius:7px}
+.step p{color:var(--muted);font-size:.95rem;margin-top:6px;max-width:62ch}
+
+/* ============ 10. ЛАБОРАТОРИЯ ============ */
+.lab-panel{padding:30px;border-radius:var(--r);text-align:center}
+.shapes{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:24px}
+.sbtn{padding:11px 20px;border-radius:100px;border:1px solid var(--line);background:rgba(255,255,255,.03);cursor:pointer;font-size:.9rem;color:var(--muted);transition:.3s}
+.sbtn:hover{color:#fff;transform:translateY(-2px);border-color:var(--cyan)}
+.sbtn.on{background:var(--grad);color:#08080f;border-color:transparent;font-weight:600}
+
+/* ============ 11. ТАРИФЫ ============ */
+.price{padding:34px 30px;border-radius:var(--r);display:flex;flex-direction:column;transition:.4s}
+.price:hover{transform:translateY(-8px)}
+.price.hot{border-color:rgba(124,92,255,.5);background:linear-gradient(180deg,rgba(124,92,255,.14),rgba(255,255,255,.03))}
+.badge{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--grad);color:#08080f;font-size:.72rem;font-weight:700;padding:5px 15px;border-radius:100px;letter-spacing:.06em}
+.price .sum{font-size:2.6rem;font-weight:800;letter-spacing:-.03em;margin:14px 0 4px}
+.price .sum small{font-size:.95rem;color:var(--muted);font-weight:400}
+.price ul{list-style:none;margin:22px 0 28px;display:grid;gap:11px}
+.price li{display:flex;gap:11px;font-size:.93rem;color:var(--muted)}
+.price li svg{width:19px;height:19px;flex:none;stroke:var(--cyan);fill:none;stroke-width:2.2;margin-top:3px}
+.price .btn{width:100%;justify-content:center;margin-top:auto}
+
+/* ============ 12. FAQ ============ */
+.faq-item{border-bottom:1px solid var(--line)}
+.faq-q{width:100%;background:none;border:0;padding:22px 46px 22px 0;text-align:left;font-size:1.05rem;font-weight:600;cursor:pointer;position:relative;transition:.25s}
+.faq-q:hover{color:var(--cyan)}
+.faq-q::after{content:'+';position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:1.6rem;font-weight:300;color:var(--violet);transition:.35s}
+.faq-item.open .faq-q::after{transform:translateY(-50%) rotate(135deg)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height .45s cubic-bezier(.2,.8,.2,1)}
+.faq-a p{color:var(--muted);padding-bottom:22px;font-size:.96rem;max-width:75ch}
+
+/* ============ 13. ФОРМА ============ */
+.form{display:grid;gap:14px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field{position:relative}
+.field input,.field textarea{
+  width:100%;padding:16px 18px;border-radius:14px;border:1px solid var(--line);
+  background:rgba(255,255,255,.03);outline:none;transition:.3s;resize:vertical;
+}
+.field textarea{min-height:130px}
+.field input:focus,.field textarea:focus{border-color:var(--violet);background:rgba(124,92,255,.07);box-shadow:0 0 0 4px rgba(124,92,255,.12)}
+.field input::placeholder,.field textarea::placeholder{color:#5c6280}
+.err{color:#fb7185;font-size:.8rem;margin-top:5px;display:none}
+.field.bad input,.field.bad textarea{border-color:#fb7185}
+.field.bad .err{display:block}
+
+/* ============ 14. ПОДВАЛ + ПРОЧЕЕ ============ */
+footer{border-top:1px solid var(--line);padding:56px 0 34px;position:relative;z-index:2;background:rgba(5,6,13,.6);backdrop-filter:blur(10px)}
+.f-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:34px}
+footer h4{font-size:.8rem;letter-spacing:.16em;text-transform:uppercase;color:#6a7190;margin-bottom:16px}
+footer ul{list-style:none;display:grid;gap:10px}
+footer li a{color:var(--muted);font-size:.93rem;transition:.25s}
+footer li a:hover{color:var(--cyan);padding-left:5px}
+.f-bot{margin-top:44px;padding-top:24px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;color:#5f6684;font-size:.86rem}
+#top{position:fixed;right:22px;bottom:22px;width:48px;height:48px;border-radius:50%;border:1px solid var(--line);
+  background:rgba(10,12,24,.8);backdrop-filter:blur(10px);cursor:pointer;display:grid;place-items:center;
+  opacity:0;pointer-events:none;transition:.35s;z-index:40}
+#top.show{opacity:1;pointer-events:auto}
+#top:hover{background:var(--violet);transform:translateY(-4px)}
+#top svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2}
+#toast{position:fixed;left:50%;bottom:30px;transform:translate(-50%,140%);z-index:70;
+  padding:15px 26px;border-radius:100px;background:rgba(10,12,24,.92);border:1px solid rgba(34,211,238,.45);
+  backdrop-filter:blur(12px);box-shadow:0 20px 50px -20px #000;transition:.5s cubic-bezier(.2,.8,.2,1);font-size:.93rem}
+#toast.show{transform:translate(-50%,0)}
+
+/* ============ 15. АНИМАЦИИ ПОЯВЛЕНИЯ ============ */
+.rv{opacity:0;transform:translateY(34px);transition:opacity .8s cubic-bezier(.2,.8,.2,1),transform .8s cubic-bezier(.2,.8,.2,1)}
+.rv.in{opacity:1;transform:none}
+
+/* ============ 16. АДАПТИВ ============ */
+@media(max-width:940px){
+  .g3,.g2,.row,.f-grid{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .f-grid{gap:26px}
+  nav{position:fixed;top:78px;right:3vw;width:min(300px,86vw);flex-direction:column;align-items:stretch;
+    background:rgba(8,10,20,.95);backdrop-filter:blur(20px);border:1px solid var(--line);border-radius:22px;
+    padding:12px;gap:2px;opacity:0;transform:translateY(-14px) scale(.97);pointer-events:none;transition:.3s}
+  nav.open{opacity:1;transform:none;pointer-events:auto}
+  nav a{padding:13px 16px}
+  .burger{display:block}
+  .hero{min-height:auto;padding:150px 0 90px}
+  section{padding:80px 0}
+}
+@media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<div class="progress"><span id="bar"></span></div>
+<canvas id="field"></canvas>
+<div class="vignette"></div>
+
+<!-- ШАПКА -->
+<header id="hdr">
+  <a href="#home" class="logo"><span class="dot"></span>Particle<span class="grad">Code</span></a>
+  <nav id="nav">
+    <a href="#features">Направления</a>
+    <a href="#code">Код</a>
+    <a href="#path">Маршрут</a>
+    <a href="#lab">Лаборатория</a>
+    <a href="#pricing">Тарифы</a>
+    <a href="#contact" class="btn btn-main" style="padding:10px 20px">Начать</a>
+  </nav>
+  <button class="burger" id="burger" aria-label="Меню"><i></i><i></i><i></i></button>
+</header>
+
+<main>
+
+<!-- ГЕРОЙ -->
+<section id="home" class="hero" data-shape="glyph">
+  <div class="wrap">
+    <span class="eyebrow rv"><i></i>набор открыт · поток #24</span>
+    <h1 class="rv">Сайты собираются<br>из <span class="grad">атомов кода</span>.</h1>
+    <p class="type-line rv">&gt; учимся писать <b><span id="type"></span></b><span class="caret"></span></p>
+    <p class="lead rv" style="margin-bottom:34px">Практический курс фронтенда: от первого тега до продакшн-приложения.
+      Никакой воды — только код, ревью и живые проекты в портфолио.</p>
+    <div class="hero-cta rv">
+      <a href="#pricing" class="btn btn-main">Выбрать тариф →</a>
+      <a href="#code" class="btn btn-ghost">Посмотреть код</a>
+    </div>
+    <div class="stats rv">
+      <div class="stat glass"><b><span class="cnt" data-to="12400">0</span>+</b><span>учеников</span></div>
+      <div class="stat glass"><b><span class="cnt" data-to="340">0</span></b><span>проектов в год</span></div>
+      <div class="stat glass"><b><span class="cnt" data-to="96">0</span>%</b><span>доходят до конца</span></div>
+      <div class="stat glass"><b><span class="cnt" data-to="24">0</span>/7</b><span>поддержка ментора</span></div>
+    </div>
+  </div>
+  <div class="scroll-hint"><span class="mouse"></span>скролл</div>
+</section>
+
+<!-- СТЕК -->
+<section id="stack" data-shape="ring" style="padding:40px 0">
+  <div class="wrap">
+    <div class="marquee">
+      <div class="track" id="track"></div>
+    </div>
+  </div>
+</section>
+
+<!-- НАПРАВЛЕНИЯ -->
+<section id="features" data-shape="sphere">
+  <div class="wrap">
+    <div class="center" style="margin-bottom:46px">
+      <span class="eyebrow rv"><i></i>программа</span>
+      <h2 class="rv">Шесть <span class="grad">модулей</span>, одна орбита</h2>
+      <p class="lead rv">Каждый модуль — законченный навык и проект, который не стыдно показать заказчику.</p>
+    </div>
+    <div class="grid g3" id="cards"></div>
+  </div>
+</section>
+
+<!-- КОД -->
+<section id="code" data-shape="cube">
+  <div class="wrap">
+    <div class="grid g2" style="align-items:center;gap:44px">
+      <div>
+        <span class="eyebrow rv"><i></i>живой пример</span>
+        <h2 class="rv">Разбираем <span class="grad">каждую строку</span></h2>
+        <p class="lead rv">Мы не заучиваем конструкции — мы понимаем, почему браузер рисует именно так.
+          Ниже — реальный фрагмент из первого учебного проекта: разметка, стили и немного магии на JS.</p>
+        <ul class="lead rv" style="list-style:none;display:grid;gap:12px;margin-top:24px">
+          <li>◆ семантическая вёрстка и доступность</li>
+          <li>◆ современный CSS: grid, clamp, переменные</li>
+          <li>◆ чистый JS без фреймворков — база, которая не устареет</li>
+        </ul>
+      </div>
+      <div class="code-wrap rv">
+        <div class="code-top">
+          <div class="dots"><i></i><i></i><i></i></div>
+          <div class="tabs">
+            <button class="tab on" data-code="html">index.html</button>
+            <button class="tab" data-code="css">style.css</button>
+            <button class="tab" data-code="js">app.js</button>
+          </div>
+          <button class="copy" id="copy">копировать</button>
+        </div>
+        <pre id="codebox"></pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- МАРШРУТ -->
+<section id="path" data-shape="helix">
+  <div class="wrap">
+    <div class="center">
+      <span class="eyebrow rv"><i></i>траектория</span>
+      <h2 class="rv">Путь от нуля до <span class="grad">оффера</span></h2>
+      <p class="lead rv">Шесть месяцев по 8 часов в неделю. Реально совмещать с работой.</p>
+    </div>
+    <div class="timeline" id="timeline"></div>
+  </div>
+</section>
+
+<!-- ЛАБОРАТОРИЯ -->
+<section id="lab" data-shape="wave">
+  <div class="wrap">
+    <div class="lab-panel glass rv">
+      <span class="eyebrow"><i></i>интерактив</span>
+      <h2>Лаборатория <span class="grad">частиц</span></h2>
+      <p class="lead center" style="margin-bottom:6px">Фон этого сайта — 100% чистый Canvas API без библиотек.
+        Нажми на структуру, чтобы пересобрать её прямо сейчас. Курсор отталкивает частицы.</p>
+      <div class="shapes" id="shapes"></div>
+      <p style="margin-top:22px;font-family:'JetBrains Mono',monospace;font-size:.82rem;color:#4e5473" id="labinfo">// частиц на экране: —</p>
+    </div>
+  </div>
+</section>
+
+<!-- ТАРИФЫ -->
+<section id="pricing" data-shape="torus">
+  <div class="wrap">
+    <div class="center" style="margin-bottom:46px">
+      <span class="eyebrow rv"><i></i>тарифы</span>
+      <h2 class="rv">Выбери свою <span class="grad">плотность</span></h2>
+      <p class="lead rv">Первые 7 дней — бесплатно на любом тарифе. Возврат без вопросов.</p>
+    </div>
+    <div class="grid g3" style="align-items:stretch" id="prices"></div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" data-shape="galaxy">
+  <div class="wrap" style="max-width:860px">
+    <div class="center" style="margin-bottom:34px">
+      <span class="eyebrow rv"><i></i>вопросы</span>
+      <h2 class="rv">Часто <span class="grad">спрашивают</span></h2>
+    </div>
+    <div id="faqlist" class="rv"></div>
+  </div>
+</section>
+
+<!-- КОНТАКТ -->
+<section id="contact" data-shape="scatter">
+  <div class="wrap">
+    <div class="glass rv" style="padding:clamp(28px,5vw,58px);border-radius:28px">
+      <div class="grid g2" style="gap:44px;align-items:center">
+        <div>
+          <span class="eyebrow"><i></i>первый шаг</span>
+          <h2>Запишись на <span class="grad">бесплатный интенсив</span></h2>
+          <p class="lead">Три вечера, один проект, живая обратная связь. Мы напишем в течение дня и подберём поток под твой график.</p>
+          <p style="margin-top:26px;font-family:'JetBrains Mono',monospace;font-size:.88rem;color:var(--muted)">
+            hello@particlecode.dev<br>@particlecode
+          </p>
+        </div>
+        <form class="form" id="form" novalidate>
+          <div class="row">
+            <div class="field"><input id="nm" placeholder="Как тебя зовут?"><span class="err">Введите имя</span></div>
+            <div class="field"><input id="em" placeholder="E-mail"><span class="err">Проверьте e-mail</span></div>
+          </div>
+          <div class="field"><textarea id="ms" placeholder="Расскажи о своём опыте (по желанию)"></textarea></div>
+          <button class="btn btn-main" style="justify-content:center" type="submit">Отправить заявку</button>
+          <p style="font-size:.79rem;color:#5c6280;text-align:center">Нажимая кнопку, вы соглашаетесь с политикой конфиденциальности.</p>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="f-grid">
+      <div>
+        <a href="#home" class="logo" style="margin-bottom:14px">
+          <span class="dot"></span>Particle<span class="grad">Code</span></a>
+        <p class="lead" style="font-size:.93rem">Школа веб-разработки, где сложное объясняют просто,
+          а код пишут с первого занятия.</p>
+      </div>
+      <div><h4>Обучение</h4><ul>
+        <li><a href="#features">Направления</a></li><li><a href="#path">Маршрут</a></li>
+        <li><a href="#pricing">Тарифы</a></li><li><a href="#faq">Вопросы</a></li></ul></div>
+      <div><h4>Ресурсы</h4><ul>
+        <li><a href="#code">Сниппеты</a></li><li><a href="#lab">Лаборатория</a></li>
+        <li><a href="#">Блог</a></li><li><a href="#">Telegram-канал</a></li></ul></div>
+      <div><h4>Контакты</h4><ul>
+        <li><a href="#contact">Написать нам</a></li><li><a href="#">Стать ментором</a></li>
+        <li><a href="#">Для компаний</a></li></ul></div>
+    </div>
+    <div class="f-bot">
+      <span>© <span id="yr"></span> ParticleCode. Сделано на чистых HTML, CSS и JS.</span>
+      <span>0 зависимостей · 1 файл</span>
+    </div>
+  </div>
+</footer>
+
+<button id="top" aria-label="Наверх"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+<div id="toast"></div>
+
+<script>
+/* ==================================================================
+   1. СИСТЕМА ЧАСТИЦ — структуры собираются из точек
+   ================================================================== */
+(function(){
+  const cv = document.getElementById('field');
+  const ctx = cv.getContext('2d', {alpha:true});
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let W=0,H=0,DPR=1,N=0;
+  let particles=[], t=0, mouse={x:-9999,y:-9999,px:0,py:0};
+  const PAL=['#7c5cff','#22d3ee','#f472b6','#a78bfa'];
+  const sprites={};
+
+  /* --- спрайт свечения (кэш вместо shadowBlur = быстро) --- */
+  function makeSprite(color){
+    const s=document.createElement('canvas'); s.width=s.height=32;
+    const c=s.getContext('2d');
+    const g=c.createRadialGradient(16,16,0,16,16,16);
+    g.addColorStop(0,color); g.addColorStop(.35,color+'99'); g.addColorStop(1,'transparent');
+    c.fillStyle=g; c.beginPath(); c.arc(16,16,16,0,6.2832); c.fill();
+    return s;
+  }
+  PAL.forEach(c=>sprites[c]=makeSprite(c));
+
+  /* --- утилиты --- */
+  const rnd=(a,b)=>a+Math.random()*(b-a);
+  function resample(pts,n){
+    if(!pts.length) return [];
+    const out=[];
+    for(let i=0;i<n;i++) out.push(pts[(i*7919)%pts.length]);
+    return out;
+  }
+
+  /* --- ГЕНЕРАТОРЫ СТРУКТУР (нормализованные 3D-облака) --- */
+  function sphere(n){const p=[],g=Math.PI*(3-Math.sqrt(5));
+    for(let i=0;i<n;i++){const y=1-(i/(n-1))*2,r=Math.sqrt(1-y*y),a=g*i;
+      p.push([Math.cos(a)*r,y,Math.sin(a)*r]);}return p;}
+
+  function cube(n){const p=[],e=[[0,0],[0,1],[1,0],[1,1]];
+    for(let i=0;i<n;i++){const ax=i%3,k=e[(i>>2)%4],u=rnd(-1,1);
+      const v=[0,0,0]; v[ax]=u; v[(ax+1)%3]=k[0]?1:-1; v[(ax+2)%3]=k[1]?1:-1;
+      p.push([v[0]*.8+rnd(-.02,.02),v[1]*.8+rnd(-.02,.02),v[2]*.8+rnd(-.02,.02)]);}return p;}
+
+  function helix(n){const p=[];
+    for(let i=0;i<n;i++){const u=i/n, a=u*Math.PI*6, y=(u-.5)*2.1;
+      if(i%7===0){const m=rnd(-1,1); p.push([Math.cos(a)*.62*m,y,Math.sin(a)*.62*m]);}
+      else p.push([Math.cos(a+(i%2?Math.PI:0))*.62,y,Math.sin(a+(i%2?Math.PI:0))*.62]);}
+    return p;}
+
+  function wave(n,time){const p=[],c=Math.ceil(Math.sqrt(n));
+    for(let i=0;i<n;i++){const x=((i%c)/(c-1)-.5)*2.2, z=((i/c|0)/(c-1)-.5)*2.2;
+      p.push([x, Math.sin(x*2.6+time*1.4)*.22+Math.cos(z*2.6+time*1.1)*.22, z]);}return p;}
+
+  function torus(n){const p=[];
+    for(let i=0;i<n;i++){const u=i*2.399, v=i*0.618*6.283, R=.72,r=.3;
+      p.push([(R+r*Math.cos(v))*Math.cos(u), r*Math.sin(v), (R+r*Math.cos(v))*Math.sin(u)]);}return p;}
+
+  function galaxy(n){const p=[];
+    for(let i=0;i<n;i++){const u=i/n,arm=(i%3)*2.094,r=Math.pow(u,.62)*1.1,a=r*4+arm;
+      p.push([Math.cos(a)*r+rnd(-.05,.05), rnd(-.05,.05)*(1-u*.7), Math.sin(a)*r+rnd(-.05,.05)]);}return p;}
+
+  function ring(n){const p=[];
+    for(let i=0;i<n;i++){const a=i/n*6.283,r=.95+rnd(-.05,.05);
+      p.push([Math.cos(a)*r,rnd(-.06,.06),Math.sin(a)*r]);}return p;}
+
+  function scatter(n){const p=[];
+    for(let i=0;i<n;i++){const v=[rnd(-1,1),rnd(-1,1),rnd(-1,1)];
+      p.push(v.map(x=>x*1.15));}return p;}
+
+  /* глиф "</>" из пикселей текста */
+  function glyph(n){
+    const c=document.createElement('canvas'); c.width=640;c.height=300;
+    const x=c.getContext('2d');
+    x.fillStyle='#fff';x.textAlign='center';x.textBaseline='middle';
+    x.font='900 190px "JetBrains Mono", monospace';
+    x.fillText('</>',320,155);
+    const d=x.getImageData(0,0,640,300).data,pts=[];
+    for(let y=0;y<300;y+=3) for(let i=0;i<640;i+=3)
+      if(d[(y*640+i)*4+3]>128) pts.push([(i-320)/300,(y-150)/300,rnd(-.06,.06)]);
+    
+    // Защита от пустого массива при медленной загрузке веб-шрифта
+    if(!pts.length){
+      for(let i=0;i<n;i++) pts.push([rnd(-.8,.8), rnd(-.5,.5), rnd(-.06,.06)]);
+    }
+    return resample(pts,n);
+  }
+
+  /* конфигурация структур: скорость вращения, наклон, масштаб */
+  const SHAPES={
+    glyph :{gen:glyph ,spin:.10,rx:0   ,sc:1.05,cache:1},
+    sphere:{gen:sphere,spin:.22,rx:.25 ,sc:.95 ,cache:1},
+    cube  :{gen:cube  ,spin:.30,rx:.45 ,sc:.95 ,cache:1},
+    helix :{gen:helix ,spin:.40,rx:.12 ,sc:1.0 ,cache:1},
+    wave  :{gen:wave  ,spin:.14,rx:.95 ,sc:1.1 ,dyn:1},
+    torus :{gen:torus ,spin:.28,rx:.58 ,sc:1.05,cache:1},
+    galaxy:{gen:galaxy,spin:.16,rx:1.05,sc:1.0 ,cache:1},
+    ring  :{gen:ring  ,spin:.35,rx:.9  ,sc:1.0 ,cache:1},
+    scatter:{gen:scatter,spin:.10,rx:.2,sc:1.0 ,cache:1}
+  };
+  let cur='glyph', pts=[];
+
+  function build(name){
+    cur=name; const s=SHAPES[name];
+    if(s.dyn) return;
+    if(!s._c || s._n!==N){ s._c=s.gen(N); s._n=N; }
+    pts=s._c;
+  }
+  window.setShape=n=>{ if(SHAPES[n]&&n!==cur) build(n); };
+  window.currentShape=()=>cur;
+
+  /* --- инициализация --- */
+  function resize(){
+    DPR=Math.min(devicePixelRatio||1,2);
+    W=innerWidth; H=innerHeight;
+    cv.width=W*DPR; cv.height=H*DPR; cv.style.width=W+'px'; cv.style.height=H+'px';
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    const target=Math.round(Math.min(1100,Math.max(320,(W*H)/1700)));
+    if(target!==N){
+      N=reduce?Math.min(N||400,400):target;
+      particles=[];
+      for(let i=0;i<N;i++) particles.push({
+        x:rnd(0,W),y:rnd(0,H),vx:0,vy:0,
+        col:PAL[i%PAL.length],size:rnd(.8,2.2),
+        ph:rnd(0,6.283)
+      });
+      for(const k in SHAPES) SHAPES[k]._c=null;
+      build(cur);
+      const info=document.getElementById('labinfo');
+      if(info) info.textContent='// частиц на экране: '+N;
+    }
+  }
+  addEventListener('resize',resize);
+
+  addEventListener('pointermove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;},{passive:true});
+  addEventListener('pointerleave',()=>{mouse.x=mouse.y=-9999;});
+
+  /* --- главный цикл --- */
+  let last=performance.now();
+  function loop(now){
+    const dt=Math.min((now-last)/1000,.05); last=now; t+=dt;
+    const S=SHAPES[cur];
+    if(S.dyn) pts=S.gen(N,t);
+
+    const scale=Math.min(W,H)*0.33*S.sc;
+    const ry=t*S.spin + (mouse.x>0?(mouse.x/W-.5)*.6:0);
+    const rx=S.rx + (mouse.y>0?(mouse.y/H-.5)*.35:0);
+    const cy=Math.cos(ry),sy=Math.sin(ry),cx=Math.cos(rx),sx=Math.sin(rx);
+    const cX=W/2, cY=H*0.5;
+
+    ctx.clearRect(0,0,W,H);
+
+    /* позиции + физика */
+    for(let i=0;i<N;i++){
+      const p=particles[i], q=pts[i%pts.length];
+      if(!q) continue;
+      const x1=q[0]*cy-q[2]*sy, z1=q[0]*sy+q[2]*cy;
+      const y2=q[1]*cx-z1*sx,   z2=q[1]*sx+z1*cx;
+      const persp=1/(1-z2*0.34);
+      const tx=cX+x1*scale*persp, ty=cY+y2*scale*persp;
+
+      p.vx+=(tx-p.x)*4.2*dt; p.vy+=(ty-p.y)*4.2*dt;
+
+      const dx=p.x-mouse.x, dy=p.y-mouse.y, d2=dx*dx+dy*dy;
+      if(d2<19000){ const d=Math.sqrt(d2)||1, f=(1-d/138)*820;
+        p.vx+=dx/d*f*dt; p.vy+=dy/d*f*dt; }
+
+      p.vx+=Math.sin(t*.7+p.ph)*5*dt; p.vy+=Math.cos(t*.6+p.ph)*5*dt;
+
+      p.vx*=0.90; p.vy*=0.90;
+      p.x+=p.vx*dt*60*0.06+p.vx*dt; p.y+=p.vy*dt*60*0.06+p.vy*dt;
+      p.sx=p.x; p.sy=p.y; p.dp=persp;
+    }
+
+    /* линии-связи */
+    if(N<=1100){
+      const CD=92, cell=CD, grid=new Map();
+      for(let i=0;i<N;i++){
+        const p=particles[i];
+        const gx=(p.sx/cell)|0, gy=(p.sy/cell)|0, key=gx*10007+gy;
+        let a=grid.get(key); if(!a){a=[];grid.set(key,a);} a.push(i);
+      }
+      const buckets=[[],[],[]];
+      const neigh=[[0,0],[1,0],[-1,1],[0,1],[1,1]];
+      grid.forEach((arr,key)=>{
+        for(const[nx,ny] of neigh){
+          const other = nx===0&&ny===0 ? arr : grid.get(key+nx*10007+ny);
+          if(!other) continue;
+          for(let a=0;a<arr.length;a++){
+            const p=particles[arr[a]];
+            for(let b=(other===arr?a+1:0);b<other.length;b++){
+              const q=particles[other[b]];
+              const dx=p.sx-q.sx, dy=p.sy-q.sy, d2=dx*dx+dy*dy;
+              if(d2<CD*CD){
+                const k=d2<2100?0:(d2<5200?1:2);
+                buckets[k].push(p.sx,p.sy,q.sx,q.sy);
+              }
+            }
+          }
+        }
+      });
+      const al=[.20,.11,.05];
+      for(let k=0;k<3;k++){
+        const b=buckets[k]; if(!b.length) continue;
+        ctx.strokeStyle='rgba(124,140,255,'+al[k]+')'; ctx.lineWidth=k===0?.9:.6;
+        ctx.beginPath();
+        for(let i=0;i<b.length;i+=4){ctx.moveTo(b[i],b[i+1]);ctx.lineTo(b[i+2],b[i+3]);}
+        ctx.stroke();
+      }
+    }
+
+    /* сами частицы */
+    ctx.globalCompositeOperation='lighter';
+    for(let i=0;i<N;i++){
+      const p=particles[i], s=p.size*p.dp*5.2;
+      ctx.globalAlpha=Math.max(.15,Math.min(1,p.dp*.72));
+      ctx.drawImage(sprites[p.col],p.sx-s/2,p.sy-s/2,s,s);
+    }
+    ctx.globalAlpha=1; ctx.globalCompositeOperation='source-over';
+    requestAnimationFrame(loop);
+  }
+  resize(); requestAnimationFrame(loop);
+})();
+
+
+/* ==================================================================
+   2. КОНТЕНТ (рендерим из данных)
+   ================================================================== */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+
+/* --- бегущая строка со стеком --- */
+const stack=['HTML5','CSS3','JavaScript ES2024','TypeScript','React','Vue','Node.js','Git & GitHub','Figma','Vite','Tailwind','Canvas API','REST & GraphQL','Accessibility'];
+$('#track').innerHTML=[...stack,...stack].map(s=>`<span class="chip"><em></em>${s}</span>`).join('');
+
+/* --- карточки направлений --- */
+const ic={
+  layout:'<path d="M3 5h18v14H3z"/><path d="M3 9h18M9 9v10"/>',
+  css:'<path d="M4 3h16l-1.5 16L12 21l-6.5-2L4 3z"/><path d="M8 8h8l-.5 5-3.5 1-3.5-1"/>',
+  js:'<path d="M8 8v6a2 2 0 1 1-4 0"/><path d="M20 9.5A2.5 2.5 0 0 0 17.5 7h-1A2.5 2.5 0 0 0 14 9.5c0 3 6 2 6 5a2.5 2.5 0 0 1-2.5 2.5h-1A2.5 2.5 0 0 1 14 14.5"/>',
+  react:'<circle cx="12" cy="12" r="2.2"/><ellipse cx="12" cy="12" rx="10" ry="4.2"/><ellipse cx="12" cy="12" rx="10" ry="4.2" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4.2" transform="rotate(120 12 12)"/>',
+  api:'<path d="M4 7h16M4 12h16M4 17h10"/><circle cx="18" cy="17" r="2.5"/>',
+  rocket:'<path d="M12 2s5 2 5 9c0 4-2 7-5 11-3-4-5-7-5-11 0-7 5-9 5-9z"/><circle cx="12" cy="10" r="2"/><path d="M8 16l-3 5 5-2M16 16l3 5-5-2"/>'
+};
+const feats=[
+  ['Вёрстка и семантика','layout','Пиксель-перфект по макету, адаптив от 320px, БЭМ и правильные теги для SEO и скринридеров.'],
+  ['Современный CSS','css','Flexbox, Grid, кастомные свойства, анимации, `clamp()` и тёмная тема без единой строки JS.'],
+  ['JavaScript глубоко','js','Типы, замыкания, прототипы, async/await, события и DOM — фундамент, а не рецепты со Stack Overflow.'],
+  ['Фреймворки','react','React и Vue: компоненты, состояние, роутинг, хуки. Пишем SPA и разбираем, что под капотом.'],
+  ['Данные и API','api','Fetch, REST, GraphQL, авторизация, кэш и обработка ошибок так, чтобы интерфейс не падал.'],
+  ['Деплой и карьера','rocket','Git-флоу, сборка на Vite, CI, хостинг, резюме, портфолио и тренировочные собеседования.']
+];
+$('#cards').innerHTML=feats.map((f,i)=>`
+  <article class="card glass rv" style="transition-delay:${i*70}ms">
+    <span class="tag">0${i+1}</span>
+    <div class="ico"><svg viewBox="0 0 24 24">${ic[f[1]]}</svg></div>
+    <h3>${f[0]}</h3><p>${f[2]}</p>
+  </article>`).join('');
+
+/* --- таймлайн --- */
+const steps=[
+  ['Фундамент','Неделя 1–3','HTML, CSS, консоль, DevTools. Первая страница в интернете уже на третьем занятии.'],
+  ['Адаптив и анимации','Неделя 4–7','Grid, Flexbox, медиазапросы, transition и keyframes. Лендинг с «вау»-эффектом.'],
+  ['JavaScript','Неделя 8–14','Логика, DOM, события, модули. Интерактивные компоненты своими руками.'],
+  ['Асинхронность и API','Неделя 15–18','Работа с сервером, загрузка данных, состояние приложения, обработка ошибок.'],
+  ['Фреймворк','Неделя 19–22','React: компоненты, hooks, роутинг. Командный проект в Git.'],
+  ['Портфолио и оффер','Неделя 23–26','Три проекта, резюме, LinkedIn, мок-интервью и сопровождение до трудоустройства.']
+];
+$('#timeline').innerHTML=steps.map((s,i)=>`
+  <div class="step rv" style="transition-delay:${i*60}ms">
+    <h3><span class="num">${String(i+1).padStart(2,'0')}</span>${s[0]}
+      <span style="font-weight:400;font-size:.85rem;color:#5f6684">· ${s[1]}</span></h3>
+    <p>${s[2]}</p>
+  </div>`).join('');
+
+/* --- кнопки лаборатории --- */
+const shapeNames=[['glyph','&lt;/&gt; Код'],['sphere','Сфера'],['cube','Куб'],['helix','ДНК'],
+  ['wave','Волна'],['torus','Тор'],['galaxy','Галактика'],['ring','Кольцо'],['scatter','Хаос']];
+$('#shapes').innerHTML=shapeNames.map(([k,l])=>`<button class="sbtn" data-s="${k}">${l}</button>`).join('');
+$$('.sbtn').forEach(b=>b.onclick=()=>{
+  setShape(b.dataset.s);
+  $$('.sbtn').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');
+});
+
+/* --- тарифы --- */
+const check='<svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg>';
+const plans=[
+  ['Старт','0','₽ / навсегда',['Видеоуроки первых 2 модулей','Чат с потоком','Домашние задания','Доступ к библиотеке кода'],'Начать бесплатно',0],
+  ['Профи','4 900','₽ / месяц',['Все 6 модулей курса','Код-ревью от ментора','Живые воркшопы 2×/неделю','3 проекта в портфолио','Сертификат и карьерный трек'],'Выбрать Профи',1],
+  ['Ментор 1:1','12 900','₽ / месяц',['Всё из тарифа Профи','Личный наставник','Еженедельные созвоны','Разбор резюме и мок-интервью','Гарантия возврата 30 дней'],'Обсудить формат',0]
+];
+$('#prices').innerHTML=plans.map((p,i)=>`
+  <div class="price glass rv ${p[5]?'hot':''}" style="position:relative;transition-delay:${i*80}ms">
+    ${p[5]?'<span class="badge">популярный</span>':''}
+    <h3>${p[0]}</h3>
+    <div class="sum">${p[1]}<small> ${p[2]}</small></div>
+    <ul>${p[3].map(f=>`<li>${check}<span>${f}</span></li>`).join('')}</ul>
+    <a href="#contact" class="btn ${p[5]?'btn-main':'btn-ghost'}">${p[4]}</a>
+  </div>`).join('');
+
+/* --- FAQ --- */
+const faq=[
+  ['Нужен ли опыт в программировании?','Нет. Курс начинается с полного нуля: мы объясняем, как устроен браузер, что такое тег и зачем нужен отступ. Если вы умеете пользоваться компьютером — этого достаточно.'],
+  ['Сколько времени занимает обучение?','Примерно 8–10 часов в неделю на протяжении 6 месяцев. Записи занятий доступны бессрочно, поэтому темп можно снижать без потери доступа.'],
+  ['Какой компьютер нужен?','Подойдёт любой ноутбук с 8 ГБ ОЗУ и любой ОС — Windows, macOS или Linux. Всё, что нужно из софта, бесплатно: браузер, VS Code и Git.'],
+  ['Помогаете ли с трудоустройством?','Да: разбираем резюме и GitHub, проводим тренировочные собеседования и отправляем ваш профиль в компании-партнёры. Гарантий «оффер за месяц» не даём — даём подготовку и сопровождение.'],
+  ['Можно ли вернуть деньги?','Первые 7 дней — бесплатный пробный период. На тарифе «Ментор 1:1» возврат возможен в течение 30 дней без объяснения причин.']
+];
+$('#faqlist').innerHTML=faq.map(f=>`
+  <div class="faq-item"><button class="faq-q">${f[0]}</button>
+  <div class="faq-a"><p>${f[1]}</p></div></div>`).join('');
+$$('.faq-q').forEach(q=>q.onclick=()=>{
+  const it=q.parentElement, a=it.querySelector('.faq-a'), open=it.classList.contains('open');
+  $$('.faq-item').forEach(x=>{x.classList.remove('open');x.querySelector('.faq-a').style.maxHeight=0;});
+  if(!open){it.classList.add('open'); a.style.maxHeight=a.scrollHeight+'px';}
+});
+
+/* ==================================================================
+   3. ОКНО С КОДОМ
+   ================================================================== */
+const L=s=>'<span class="ln">'+s+'</span>';
+const snippets={
+html:[
+'<span class="c">&lt;!-- Семантика = понятный код + SEO --&gt;</span>',
+'<span class="t">&lt;section</span> <span class="a">class</span>=<span class="s">"hero"</span><span class="t">&gt;</span>',
+'  <span class="t">&lt;h1</span> <span class="a">class</span>=<span class="s">"hero__title"</span><span class="t">&gt;</span>',
+'    Сайты собираются из <span class="t">&lt;em&gt;</span>атомов<span class="t">&lt;/em&gt;</span>',
+'  <span class="t">&lt;/h1&gt;</span>',
+'  <span class="t">&lt;button</span> <span class="a">id</span>=<span class="s">"cta"</span> <span class="a">type</span>=<span class="s">"button"</span><span class="t">&gt;</span>',
+'    Начать бесплатно',
+'  <span class="t">&lt;/button&gt;</span>',
+'<span class="t">&lt;/section&gt;</span>'].map(L).join(''),
+css:[
+'<span class="c">/* Переменные + адаптивная типографика */</span>',
+'<span class="t">:root</span> {',
+'  <span class="a">--violet</span>: <span class="n">#7c5cff</span>;',
+'  <span class="a">--grad</span>: <span class="f">linear-gradient</span>(115<span class="n">deg</span>, <span class="f">var</span>(--violet), <span class="n">#22d3ee</span>);',
+'}',
+'<span class="t">.hero__title</span> {',
+'  <span class="a">font-size</span>: <span class="f">clamp</span>(<span class="n">2.4rem</span>, <span class="n">6vw</span>, <span class="n">4.5rem</span>);',
+'  <span class="a">background</span>: <span class="f">var</span>(--grad);',
+'  <span class="a">-webkit-background-clip</span>: text;',
+'  <span class="a">color</span>: <span class="n">transparent</span>;',
+'}'].map(L).join(''),
+js:[
+'<span class="c">// Частица знает только свою цель — остальное делает физика</span>',
+'<span class="k">class</span> <span class="f">Particle</span> {',
+'  <span class="f">constructor</span>(x, y) {',
+'    <span class="k">this</span>.x = x; <span class="k">this</span>.y = y;',
+'    <span class="k">this</span>.vx = <span class="n">0</span>; <span class="k">this</span>.vy = <span class="n">0</span>;',
+'  }',
+'  <span class="f">seek</span>(tx, ty, dt) {',
+'    <span class="k">this</span>.vx += (tx - <span class="k">this</span>.x) * <span class="n">4.2</span> * dt;',
+'    <span class="k">this</span>.vy += (ty - <span class="k">this</span>.y) * <span class="n">4.2</span> * dt;',
+'    <span class="k">this</span>.vx *= <span class="n">0.9</span>; <span class="k">this</span>.vy *= <span class="n">0.9</span>;',
+'    <span class="k">this</span>.x += <span class="k">this</span>.vx; <span class="k">this</span>.y += <span class="k">this</span>.vy;',
+'  }',
+'}'].map(L).join('')
+};
+const box=$('#codebox');
+function showCode(k){box.innerHTML='<code>'+snippets[k]+'</code>';box.dataset.k=k;}
+showCode('html');
+$$('.tab').forEach(b=>b.onclick=()=>{
+  $$('.tab').forEach(x=>x.classList.remove('on')); b.classList.add('on'); showCode(b.dataset.code);
+});
+$('#copy').onclick=()=>{
+  navigator.clipboard?.writeText(box.innerText).then(()=>toast('Код скопирован в буфер ✓'));
+};
+
+/* ==================================================================
+   4. UI-ЛОГИКА
+   ================================================================== */
+/* печатающийся текст */
+const words=['семантичный HTML','выразительный CSS','чистый JavaScript','быстрые интерфейсы'];
+(function typing(){
+  const el=$('#type'); let w=0,c=0,del=false;
+  (function tick(){
+    const word=words[w];
+    el.textContent=word.slice(0,c);
+    if(!del && c<word.length) c++;
+    else if(!del && c===word.length){del=true;return setTimeout(tick,1500);}
+    else if(del && c>0) c--;
+    else {del=false; w=(w+1)%words.length;}
+    setTimeout(tick, del?38:75);
+  })();
+})();
+
+/* появление блоков + смена структуры по секциям */
+const io=new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}
+}),{threshold:.12});
+$$('.rv').forEach(e=>io.observe(e));
+
+const sio=new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting && e.intersectionRatio>.35){
+    const s=e.target.dataset.shape; if(s) setShape(s);
+    $$('nav a').forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+e.target.id));
+    if(s) $$('.sbtn').forEach(b=>b.classList.toggle('on',b.dataset.s===s));
+  }
+}),{threshold:[.35,.6]});
+$$('section[data-shape]').forEach(s=>sio.observe(s));
+
+/* счётчики */
+const cio=new IntersectionObserver(es=>es.forEach(e=>{
+  if(!e.isIntersecting) return; cio.unobserve(e.target);
+  const to=+e.target.dataset.to; let st=null;
+  (function an(ts){ st??=ts; const p=Math.min((ts-st)/1600,1);
+    e.target.textContent=Math.floor(to*(1-Math.pow(1-p,3))).toLocaleString('ru');
+    if(p<1) requestAnimationFrame(an);})(performance.now());
+}),{threshold:.6});
+$$('.cnt').forEach(c=>cio.observe(c));
+
+/* шапка, прогресс, кнопка наверх (исправлено: top -> topBtn) */
+const hdr=$('#hdr'), bar=$('#bar'), topBtn=$('#top');
+addEventListener('scroll',()=>{
+  const y=scrollY, h=document.body.scrollHeight-innerHeight;
+  hdr.classList.toggle('stuck',y>30);
+  bar.style.width=(y/h*100)+'%';
+  topBtn.classList.toggle('show',y>700);
+},{passive:true});
+topBtn.onclick=()=>scrollTo({top:0,behavior:'smooth'});
+
+/* бургер */
+const nav=$('#nav'), burger=$('#burger');
+burger.onclick=()=>{nav.classList.toggle('open');burger.classList.toggle('on');};
+$$('nav a').forEach(a=>a.onclick=()=>{nav.classList.remove('open');burger.classList.remove('on');});
+
+/* блик внутри карточек за курсором */
+$$('.card').forEach(c=>c.addEventListener('pointermove',e=>{
+  const r=c.getBoundingClientRect();
+  c.style.setProperty('--mx',(e.clientX-r.left)+'px');
+  c.style.setProperty('--my',(e.clientY-r.top)+'px');
+}));
+
+/* тост */
+let tt;
+function toast(msg){
+  const el=$('#toast'); el.textContent=msg; el.classList.add('show');
+  clearTimeout(tt); tt=setTimeout(()=>el.classList.remove('show'),3200);
+}
+
+/* форма */
+$('#form').addEventListener('submit',e=>{
+  e.preventDefault();
+  const nm=$('#nm'), em=$('#em');
+  let ok=true;
+  const bad=(inp,cond)=>{inp.parentElement.classList.toggle('bad',!cond); if(!cond) ok=false;};
+  bad(nm, nm.value.trim().length>1);
+  bad(em, /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i.test(em.value.trim()));
+  if(!ok) return toast('Проверьте выделенные поля');
+  e.target.reset();
+  toast('Заявка отправлена! Ответим в течение дня ✦');
+  setShape('sphere');
+});
+$$('.field input,.field textarea').forEach(i=>i.oninput=()=>i.parentElement.classList.remove('bad'));
+
+$('#yr').textContent=new Date().getFullYear();
+</script>
+</body>
+</html>

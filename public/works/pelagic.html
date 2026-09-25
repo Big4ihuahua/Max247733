@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#041619">
+<title>PELAGIC — Below the familiar</title>
+
+<style>
+:root{
+  --bg:#031214;
+  --text:#e4eee7;
+  --muted:#7eaaa6;
+  --accent:#baffd8;
+  --line:#d3fff12a;
+  --pad:clamp(22px,4.8vw,82px);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:Arial,Helvetica,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+button,a{-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
+a{color:inherit;text-decoration:none}
+h1,h2,p{margin:0}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:6px}
+::selection{background:var(--accent);color:var(--bg)}
+.mono{font-family:"Courier New",monospace;text-transform:uppercase;font-size:10px;line-height:1.65;letter-spacing:.1em}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+.skip{position:fixed;top:-90px;left:20px;z-index:200;background:var(--accent);color:var(--bg);padding:15px}
+.skip:focus{top:15px}
+
+.header{
+  position:fixed;inset:0 0 auto;z-index:40;
+  padding:25px var(--pad);display:flex;align-items:center;justify-content:space-between;gap:20px;
+  background:linear-gradient(#0312149c,transparent);
+}
+.brand{font-size:21px;font-weight:500;letter-spacing:.15em;display:flex;gap:14px;align-items:center}
+.brand-icon{width:24px;height:29px;position:relative}
+.brand-icon:before,.brand-icon:after{
+  content:"";position:absolute;inset:2px 4px;border:1px solid #dffff0;
+  border-radius:50% 50% 45% 45%;transform:rotate(35deg)
+}
+.brand-icon:after{transform:rotate(-35deg)}
+.header-note{color:#9fc6bc;font-size:8px}
+.actions{display:flex;gap:8px}
+.icon-button{
+  width:36px;height:36px;border:1px solid var(--line);border-radius:50%;
+  background:#09242775;backdrop-filter:blur(14px);font-size:15px;
+}
+.progress{position:fixed;top:0;left:0;height:2px;width:100%;background:var(--accent);z-index:100;transform:scaleX(0);transform-origin:left}
+
+.journey{position:relative;height:670svh}
+.stage{position:sticky;top:0;height:100svh;overflow:hidden;isolation:isolate;background:#041719}
+#ocean{position:absolute;inset:0}
+#ocean canvas{width:100%;height:100%;display:block}
+.vignette{
+  position:absolute;inset:0;pointer-events:none;
+  background:
+    linear-gradient(90deg,#03121480,transparent 50%),
+    linear-gradient(0deg,#031214d9,transparent 25%,transparent 80%,#03121450);
+}
+.grain{
+  position:absolute;inset:0;opacity:.035;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath filter='url(%23n)' d='M0 0h160v160H0z' opacity='.8'/%3E%3C/svg%3E");
+}
+.hud-top{
+  position:absolute;top:110px;left:var(--pad);right:var(--pad);
+  display:flex;justify-content:space-between;gap:20px;color:#7aafa7;font-size:8px;
+}
+.live{display:flex;gap:8px;align-items:center}
+.live i{width:5px;height:5px;background:var(--accent);border-radius:50%;box-shadow:0 0 12px var(--accent)}
+
+.chapter{
+  position:absolute;left:var(--pad);top:46%;width:min(610px,55vw);
+  opacity:0;visibility:hidden;pointer-events:none;will-change:transform,opacity;
+}
+.chapter .eyebrow{color:#a4d7c2;font-size:9px;margin-bottom:24px;display:flex;align-items:center;gap:15px}
+.chapter .eyebrow:before{content:"";height:1px;width:28px;background:currentColor}
+.chapter h1,.chapter h2{
+  font-size:clamp(58px,7.6vw,122px);font-weight:400;line-height:.92;letter-spacing:-.06em;
+}
+.chapter em{font-family:Georgia,serif;font-weight:400;color:#c9e3bf}
+.chapter p{font-size:13px;line-height:1.9;color:#9abdb1;max-width:290px;margin-top:28px}
+.chapter small{display:block;font-size:8px;color:#659a91;margin-top:28px}
+
+.specimen{
+  position:absolute;right:var(--pad);bottom:170px;text-align:right;
+  max-width:210px;
+}
+.specimen-label{color:#76a8a0;font-size:8px}
+.specimen h3{font-family:Georgia,serif;font-style:italic;font-size:30px;font-weight:400;margin:8px 0}
+.specimen .mono{font-size:8px;color:#6c9e98}
+
+.depth-ruler{
+  position:absolute;right:22px;top:26%;height:39%;width:15px;
+  background:repeating-linear-gradient(to bottom,#baffd848 0 1px,transparent 1px 16px);
+  opacity:.6;pointer-events:none;
+}
+.depth-ruler:before{
+  content:"";position:absolute;right:-3px;top:var(--depth,0%);width:23px;height:2px;background:var(--accent);
+}
+.reticle{position:absolute;left:50%;top:50%;width:26px;height:26px;transform:translate(-50%,-50%);opacity:.3;pointer-events:none}
+.reticle:before,.reticle:after{content:"";position:absolute;background:#baffd8}
+.reticle:before{left:12px;top:8px;width:1px;height:9px}
+.reticle:after{left:8px;top:12px;width:9px;height:1px}
+
+.bottom{
+  position:absolute;bottom:29px;left:var(--pad);right:var(--pad);
+  display:grid;grid-template-columns:1fr auto 1fr;gap:25px;align-items:end;
+}
+.depth{display:flex;align-items:baseline;gap:12px}
+.depth b{font-size:43px;font-weight:300;letter-spacing:-.065em}
+.depth span{color:#7db2a5;font-size:8px}
+.depth-caption{font-size:7px;color:#5c9187;margin-top:3px}
+.scene-nav{display:flex;align-items:center;gap:7px}
+.scene-nav button{
+  width:35px;height:35px;background:#0a282570;border:1px solid var(--line);
+  border-radius:50%;font:9px "Courier New",monospace;color:#91b8a7;
+}
+.scene-nav button[aria-current="step"]{background:#cee7bd;color:#07211d;border-color:#cee7bd}
+.flight-controls{justify-self:end;display:flex;align-items:center;gap:8px}
+.control{
+  padding:13px 15px;background:#08231d80;border:1px solid var(--line);
+  border-radius:30px;font:9px "Courier New",monospace;text-transform:uppercase;
+  backdrop-filter:blur(12px);display:flex;gap:13px;align-items:center;
+}
+.control[aria-pressed="true"]{background:#cee7bd;color:#06231c}
+.control:disabled{opacity:.45;cursor:default}
+.engine-status{position:absolute;bottom:104px;left:var(--pad);color:#568d82;font-size:7px;max-width:400px}
+.scroll-hint{position:absolute;left:50%;bottom:108px;transform:translateX(-50%);color:#8cbaaa;font-size:8px;text-align:center;white-space:nowrap}
+.scroll-hint span{display:block;margin-top:9px;font-size:16px}
+
+.sonar-flash{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 35%,#a8ffda35);opacity:0;pointer-events:none;mix-blend-mode:screen}
+.sonar-flash.pulse{animation:flash 1.5s ease-out}
+@keyframes flash{0%{opacity:0}15%{opacity:.7}100%{opacity:0}}
+
+.loader{
+  position:absolute;inset:0;z-index:20;background:radial-gradient(ellipse at center,#153e3e,#031214 70%);
+  display:grid;place-items:center;transition:opacity 1s,visibility 1s;
+}
+.loader.done{opacity:0;visibility:hidden;pointer-events:none}
+.loader-inner{text-align:center;max-width:350px;padding:25px}
+.loader-orbit{width:75px;height:75px;border:1px solid #baffd833;border-radius:50%;margin:0 auto 30px;position:relative}
+.loader-orbit:before{content:"";position:absolute;inset:10px;border:1px solid #baffd866;border-top-color:transparent;border-radius:50%;animation:spin 3s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader p{color:#b3d8c5;font-size:9px}
+.loader a{display:inline-block;font-size:12px;margin-top:22px;border-bottom:1px solid #baffd855;padding-bottom:5px}
+
+.arrival{position:relative;padding:100px var(--pad) 55px;background:#cdd9c1;color:#10291f;overflow:hidden}
+.arrival:before{
+  content:"";position:absolute;width:700px;height:700px;right:-230px;top:-200px;
+  border:1px solid #193d2624;border-radius:50%;box-shadow:0 0 0 60px #193d2608,0 0 0 120px #193d2605;
+}
+.arrival .mono{position:relative;font-size:9px}
+.arrival h2{position:relative;font-size:clamp(58px,10vw,150px);line-height:.92;letter-spacing:-.065em;font-weight:400;margin-top:35px}
+.arrival h2 em{font-family:Georgia,serif;font-weight:400}
+.arrival-bottom{position:relative;display:flex;align-items:end;justify-content:space-between;gap:30px;margin-top:50px;padding-top:30px;border-top:1px solid #17362435}
+.arrival-bottom p{font-size:13px;line-height:1.8;max-width:320px;color:#50624d}
+.email{font-size:clamp(23px,3vw,40px);letter-spacing:-.05em;border-bottom:1px solid #17362460;padding-bottom:7px}
+footer{padding:25px var(--pad);display:flex;justify-content:space-between;gap:25px;font-size:8px;color:#659389}
+footer a{color:#b9d0bd}
+
+body.cinema .chapter,body.cinema .hud-top,body.cinema .specimen,body.cinema .bottom,
+body.cinema .depth-ruler,body.cinema .reticle,body.cinema .engine-status,
+body.cinema .scroll-hint{display:none}
+body.cinema .header-note{visibility:hidden}
+body.cinema .vignette{opacity:.3}
+
+@media(max-width:1050px){
+  .header-note{display:none}
+  .chapter h1,.chapter h2{font-size:8.6vw}
+  .bottom{gap:15px}
+  .control{padding:12px;font-size:8px;gap:8px}
+}
+@media(max-width:700px){
+  .header{padding-top:23px}
+  .brand{font-size:16px;gap:9px}
+  .brand-icon{width:20px;height:24px}
+  .icon-button{width:31px;height:31px;font-size:13px}
+  .hud-top{top:90px;font-size:7px}
+  .hud-top>span:last-child{display:none}
+  .chapter{top:155px;width:87vw}
+  .chapter h1,.chapter h2{font-size:clamp(55px,13.5vw,84px)}
+  .chapter .eyebrow{font-size:8px;margin-bottom:18px}
+  .chapter p{font-size:11px;max-width:240px;margin-top:20px}
+  .chapter small{display:none}
+  .specimen{bottom:155px;max-width:160px}
+  .specimen h3{font-size:25px}
+  .specimen .mono,.specimen-label{font-size:7px}
+  .depth-ruler{right:9px;width:8px;top:35%;height:28%}
+  .bottom{grid-template-columns:1fr auto;gap:15px;bottom:24px}
+  .depth-box{position:absolute;left:0;bottom:62px}
+  .depth b{font-size:32px}
+  .depth-caption{display:none}
+  .scene-nav{gap:5px}
+  .scene-nav button{width:29px;height:29px;font-size:8px}
+  .control{padding:11px 12px;font-size:8px}
+  .control .control-icon{display:none}
+  .engine-status{bottom:130px;font-size:6px;max-width:165px}
+  .scroll-hint{display:none}
+  .reticle{top:60%}
+  .arrival{padding-block:60px 35px}
+  .arrival h2{font-size:14vw}
+  .arrival-bottom{flex-direction:column;align-items:start;margin-top:35px;gap:28px}
+  .arrival-bottom p{font-size:12px}
+  footer{font-size:7px;flex-wrap:wrap;gap:15px}
+}
+@media(max-height:690px){
+  .chapter{top:29%}
+  .chapter h1,.chapter h2{font-size:clamp(45px,7.5vw,80px)}
+  .chapter p{font-size:10px;margin-top:16px}
+  .chapter small,.specimen{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+
+<body>
+<a class="skip" href="#arrival">Пропустить погружение</a>
+<div class="progress" aria-hidden="true"></div>
+
+<header class="header">
+  <a href="#home" class="brand" aria-label="Pelagic — начало">
+    <span class="brand-icon" aria-hidden="true"></span>PELAGIC
+  </a>
+  <div class="header-note mono">An expedition beneath the familiar</div>
+  <div class="actions">
+    <button class="icon-button" id="cinema" aria-label="Скрыть интерфейс" aria-pressed="false">◉</button>
+    <button class="icon-button" id="pause" aria-label="Приостановить движение" aria-pressed="false">Ⅱ</button>
+    <button class="icon-button" id="fullscreen" aria-label="На весь экран">⛶</button>
+  </div>
+</header>
+
+<main id="home">
+  <section class="journey" id="journey" aria-label="Четыре уровня погружения">
+    <div class="stage" id="stage">
+      <div id="ocean" aria-hidden="true"></div>
+      <div class="vignette" aria-hidden="true"></div>
+      <div class="grain" aria-hidden="true"></div>
+      <div class="sonar-flash" id="sonar-flash" aria-hidden="true"></div>
+
+      <div class="hud-top mono">
+        <span class="live"><i aria-hidden="true"></i> Expedition PL—008 / Below the surface</span>
+        <span>Fictional biosphere / Real-time simulation</span>
+      </div>
+
+      <article class="chapter">
+        <div class="eyebrow mono">01 / The sunlit zone</div>
+        <h1>The world<br>gets <em>quieter.</em></h1>
+        <p>Оставьте поверхность позади. Здесь свет движется иначе. А привычное постепенно перестаёт иметь значение.</p>
+        <small class="mono">Scroll to descend / Move to look around</small>
+      </article>
+
+      <article class="chapter" aria-hidden="true">
+        <div class="eyebrow mono">02 / Living light</div>
+        <h2>Some things<br><em>glow within.</em></h2>
+        <p>Не всё, что светится, отражает чужой свет. Иногда сияние — это собственный способ существовать.</p>
+        <small class="mono">Specimen 01 / Aurelia imaginata</small>
+      </article>
+
+      <article class="chapter" aria-hidden="true">
+        <div class="eyebrow mono">03 / The silent giants</div>
+        <h2>Less force.<br><em>More flow.</em></h2>
+        <p>Настоящий масштаб не требует шума. Только пространства — и одного точного движения.</p>
+        <small class="mono">Specimen 02 / Manta noctis</small>
+      </article>
+
+      <article class="chapter" aria-hidden="true">
+        <div class="eyebrow mono">04 / The unknown</div>
+        <h2>Life finds<br><em>another way.</em></h2>
+        <p>Там, где заканчиваются знакомые формы, начинается возможность создать что-то своё.</p>
+        <small class="mono">Specimen 03 / Origin unknown</small>
+      </article>
+
+      <aside class="specimen" aria-label="Текущая зона">
+        <div class="specimen-label mono">Field observation</div>
+        <h3 id="specimen-name">Open water</h3>
+        <div class="mono" id="specimen-note">Light remains / Visibility stable</div>
+      </aside>
+
+      <div class="depth-ruler" id="depth-ruler" aria-hidden="true"></div>
+      <div class="reticle" aria-hidden="true"></div>
+
+      <div class="engine-status mono" id="engine-status" role="status">Подготовка погружения…</div>
+      <div class="scroll-hint mono" id="scroll-hint" aria-hidden="true">Follow the light<span>↓</span></div>
+
+      <div class="bottom">
+        <div class="depth-box" aria-hidden="true">
+          <div class="depth"><b id="depth-value">0000</b><span class="mono">M / Depth</span></div>
+          <div class="depth-caption mono">Simulated expedition / Fictional scale</div>
+        </div>
+
+        <nav class="scene-nav" aria-label="Уровни погружения">
+          <button data-goto="0" aria-label="Освещённая зона" aria-current="step">01</button>
+          <button data-goto="1" aria-label="Медуза">02</button>
+          <button data-goto="2" aria-label="Манта">03</button>
+          <button data-goto="3" aria-label="Неизвестный организм">04</button>
+        </nav>
+
+        <div class="flight-controls">
+          <button class="control" id="sonar">Сонар <span class="control-icon" aria-hidden="true">◎</span></button>
+          <button class="control" id="autopilot" aria-pressed="false">Авто <span class="control-icon" aria-hidden="true">↓</span></button>
+        </div>
+      </div>
+
+      <div class="loader" id="loader">
+        <div class="loader-inner">
+          <div class="loader-orbit" aria-hidden="true"></div>
+          <p class="mono" id="loading-text">Preparing a living ocean.<br>Собираем мир под поверхностью…</p>
+          <a href="#arrival" id="loader-skip" hidden>Перейти к контактам ↗</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="arrival" id="arrival">
+    <div class="mono">Back to the surface / Bring something new with you</div>
+    <h2>Go deeper.<br>Make something<br><em>worth finding.</em></h2>
+    <div class="arrival-bottom">
+      <p>Выразительные цифровые миры начинаются не с эффектов. Они начинаются с любопытства. Расскажите, что хочется исследовать вам.</p>
+      <a class="email" id="email" href="mailto:hello@example.com">hello@example.com ↗</a>
+    </div>
+  </section>
+</main>
+
+<footer class="mono">
+  <span>© <span id="year">2026</span> Pelagic / Concept experience</span>
+  <span>Procedural life. Unreasonable curiosity.</span>
+  <a href="#home">Погрузиться снова ↑</a>
+</footer>
+
+<noscript>
+  <style>.loader{display:none}.chapter:first-of-type{opacity:1;visibility:visible}</style>
+  <p style="padding:25px">Для интерактивного океана нужен JavaScript. Контакты доступны выше.</p>
+</noscript>
+
+<script type="module">
+const EMAIL='hello@example.com';
+
+const $=s=>document.querySelector(s);
+const $$=s=>[...document.querySelectorAll(s)];
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const smooth=x=>{x=clamp(x);return x*x*(3-2*x)};
+const TAU=Math.PI*2;
+
+$('#year').textContent=new Date().getFullYear();
+$('#email').textContent=EMAIL+' ↗';
+$('#email').href='mailto:'+EMAIL+'?subject='+encodeURIComponent('Есть идея для погружения');
+
+const journey=$('#journey'),stage=$('#stage');
+const chapters=$$('.chapter'),nav=$$('[data-goto]');
+const stops=[0,.32,.65,1];
+const names=['Open water','Aurelia imaginata','Manta noctis','The unnamed'];
+const notes=[
+  'Light remains / Visibility stable',
+  'Bioluminescent / Slow pulse',
+  'Silent migration / Wingspan unknown',
+  'Origin unknown / Signal detected'
+];
+
+const motionQuery=matchMedia('(prefers-reduced-motion: reduce)');
+let reduced=motionQuery.matches;
+let paused=false,auto=false,visible=true,dirty=true;
+let startY=0,length=1,target=0,progress=0,active=-1;
+let frame=0,last=0,time=0,engine=null;
+const pointer={x:0,y:0,tx:0,ty:0};
+
+function measure(){
+  startY=journey.getBoundingClientRect().top+scrollY;
+  length=Math.max(1,journey.offsetHeight-stage.clientHeight);
+  engine?.resize(stage.clientWidth,stage.clientHeight);
+  readScroll();
+}
+function readScroll(){
+  target=clamp((scrollY-startY)/length);
+  $('.progress').style.transform=`scaleX(${target})`;
+  dirty=true;wake();
+}
+addEventListener('scroll',readScroll,{passive:true});
+addEventListener('resize',measure,{passive:true});
+
+function setAuto(value){
+  auto=value&&!paused&&!reduced;
+  $('#autopilot').setAttribute('aria-pressed',String(auto));
+  $('#autopilot').innerHTML=auto?'Стоп <span class="control-icon" aria-hidden="true">Ⅱ</span>':'Авто <span class="control-icon" aria-hidden="true">↓</span>';
+  wake();
+}
+$('#autopilot').addEventListener('click',()=>{
+  if(!auto&&target>.995){
+    scrollTo({top:startY,behavior:'instant'});
+    target=progress=0;
+  }
+  setAuto(!auto);
+});
+addEventListener('wheel',()=>setAuto(false),{passive:true});
+addEventListener('touchstart',()=>setAuto(false),{passive:true});
+addEventListener('keydown',e=>{
+  if(['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' '].includes(e.key))setAuto(false);
+});
+
+function updateMotion(){
+  if(paused||reduced)setAuto(false);
+  const stopped=paused||reduced;
+  $('#pause').textContent=stopped?'▶':'Ⅱ';
+  $('#pause').setAttribute('aria-pressed',String(stopped));
+  $('#pause').setAttribute('aria-label',stopped?'Включить движение':'Приостановить движение');
+  $('#pause').disabled=reduced;
+  $('#sonar').disabled=stopped||!engine;
+  $('#autopilot').disabled=stopped||!engine;
+  dirty=true;wake();
+}
+$('#pause').addEventListener('click',()=>{paused=!paused;updateMotion()});
+motionQuery.addEventListener('change',e=>{reduced=e.matches;updateMotion()});
+
+$('#cinema').addEventListener('click',()=>{
+  const hidden=document.body.classList.toggle('cinema');
+  $('#cinema').setAttribute('aria-pressed',String(hidden));
+  $('#cinema').setAttribute('aria-label',hidden?'Показать интерфейс':'Скрыть интерфейс');
+});
+
+if(!document.fullscreenEnabled)$('#fullscreen').hidden=true;
+$('#fullscreen').addEventListener('click',async()=>{
+  try{
+    if(document.fullscreenElement)await document.exitFullscreen();
+    else await document.documentElement.requestFullscreen();
+  }catch{
+    $('#engine-status').textContent='Полноэкранный режим недоступен';
+  }
+});
+document.addEventListener('fullscreenchange',()=>{
+  $('#fullscreen').setAttribute('aria-label',document.fullscreenElement?'Выйти из полноэкранного режима':'На весь экран');
+  measure();
+});
+
+nav.forEach(button=>button.addEventListener('click',()=>{
+  setAuto(false);
+  scrollTo({top:startY+length*stops[Number(button.dataset.goto)],behavior:reduced?'instant':'smooth'});
+}));
+
+stage.addEventListener('pointermove',e=>{
+  if(e.pointerType==='touch'||reduced||paused)return;
+  const r=stage.getBoundingClientRect();
+  pointer.tx=(e.clientX-r.left)/r.width*2-1;
+  pointer.ty=(e.clientY-r.top)/r.height*2-1;
+},{passive:true});
+stage.addEventListener('pointerleave',()=>{pointer.tx=pointer.ty=0});
+
+$('#sonar').addEventListener('click',()=>{
+  if(reduced||paused||!engine)return;
+  engine.sonar();
+  const flash=$('#sonar-flash');
+  flash.classList.remove('pulse');
+  void flash.offsetWidth;
+  flash.classList.add('pulse');
+  wake();
+});
+
+if('IntersectionObserver'in window){
+  new IntersectionObserver(entries=>{
+    visible=entries[0].isIntersecting;
+    if(!visible)setAuto(false);
+    else{dirty=true;wake()}
+  }).observe(journey);
+}
+
+function nearest(p){
+  let n=0;
+  stops.forEach((s,i)=>{if(Math.abs(s-p)<Math.abs(stops[n]-p))n=i});
+  return n;
+}
+function updateUI(){
+  const n=nearest(progress);
+  if(n!==active){
+    active=n;
+    chapters.forEach((chapter,i)=>chapter.setAttribute('aria-hidden',String(i!==n)));
+    nav.forEach((button,i)=>{
+      if(i===n)button.setAttribute('aria-current','step');
+      else button.removeAttribute('aria-current');
+    });
+    $('#specimen-name').textContent=names[n];
+    $('#specimen-note').textContent=notes[n];
+  }
+  const mobile=stage.clientWidth<700;
+  chapters.forEach((chapter,i)=>{
+    const d=(progress-stops[i])*3;
+    const opacity=reduced?Number(i===active):1-smooth((Math.abs(d)-.12)/.48);
+    chapter.style.opacity=opacity;
+    chapter.style.visibility=opacity>.005?'visible':'hidden';
+    chapter.style.transform=reduced
+      ?`translateY(${mobile?0:-50}%)`
+      :`translate3d(${-d*50}px,calc(${mobile?'0%':'-50%'} + ${-d*95}px),0)`;
+    chapter.style.filter=reduced?'none':`blur(${Math.max(0,Math.abs(d)-.2)*8}px)`;
+  });
+  $('#depth-value').textContent=String(Math.round(progress*4280)).padStart(4,'0');
+  $('#depth-ruler').style.setProperty('--depth',progress*100+'%');
+  $('#scroll-hint').style.opacity=1-smooth(progress/.065);
+}
+
+function wake(){
+  if(!frame&&!document.hidden){last=0;frame=requestAnimationFrame(tick)}
+}
+function tick(now){
+  frame=0;
+  if(document.hidden)return;
+  const dt=last?Math.min((now-last)/1000,.04):1/60;
+  last=now;
+
+  if(auto&&visible&&engine){
+    target=clamp(target+dt*.011);
+    scrollTo({top:startY+length*target,behavior:'instant'});
+    if(target>=1)setAuto(false);
+  }
+  const previous=progress;
+  progress=reduced?target:lerp(progress,target,1-Math.exp(-dt*5));
+  if(Math.abs(progress-target)<.000005)progress=target;
+
+  const moving=!paused&&!reduced;
+  if(moving&&visible)time+=dt;
+  pointer.x=lerp(pointer.x,moving?pointer.tx:0,1-Math.exp(-dt*3));
+  pointer.y=lerp(pointer.y,moving?pointer.ty:0,1-Math.exp(-dt*3));
+
+  if(visible&&(dirty||progress!==previous||moving)){
+    updateUI();
+    engine?.render(reduced?stops[nearest(progress)]:progress,time,pointer,moving?dt:0);
+    dirty=false;
+  }
+  if((visible&&moving)||Math.abs(progress-target)>.000005||auto){
+    frame=requestAnimationFrame(tick);
+  }else last=0;
+}
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){cancelAnimationFrame(frame);frame=0;last=0}
+  else{dirty=true;wake()}
+});
+
+measure();
+updateMotion();
+updateUI();
+
+/* =====================================================
+   PROCEDURAL OCEAN
+===================================================== */
+
+try{
+  const THREE=await import('https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js');
+
+  const mobile=stage.clientWidth<700;
+  const renderer=new THREE.WebGLRenderer({antialias:!mobile,powerPreference:'high-performance'});
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,mobile?1.35:1.7));
+  renderer.outputColorSpace=THREE.SRGBColorSpace;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure=1.1;
+  $('#ocean').append(renderer.domElement);
+
+  const scene=new THREE.Scene();
+  scene.background=new THREE.Color('#0a3439');
+  scene.fog=new THREE.FogExp2('#0a3439',.009);
+
+  const camera=new THREE.PerspectiveCamera(61,1,.15,900);
+  scene.add(camera);
+
+  let seed=83723;
+  function random(){seed=seed*16807%2147483647;return(seed-1)/2147483646}
+
+  const route=new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0,3,55),
+    new THREE.Vector3(-8,-7,0),
+    new THREE.Vector3(8,-23,-75),
+    new THREE.Vector3(24,-35,-135),
+    new THREE.Vector3(-13,-58,-210),
+    new THREE.Vector3(-28,-75,-285),
+    new THREE.Vector3(8,-104,-365),
+    new THREE.Vector3(3,-117,-423)
+  ],false,'centripetal');
+  route.arcLengthDivisions=1400;
+  route.updateArcLengths();
+
+  function point(t){return route.getPointAt(clamp(t))}
+  function offset(t,x,y,z=0){
+    const tangent=route.getTangentAt(clamp(t)).normalize();
+    const right=new THREE.Vector3().crossVectors(tangent,new THREE.Vector3(0,1,0)).normalize();
+    return point(t).addScaledVector(right,x).add(new THREE.Vector3(0,y,0)).addScaledVector(tangent,z);
+  }
+
+  /* ---- Lighting & generated sprite texture ---- */
+
+  scene.add(new THREE.HemisphereLight(0xafdcca,0x031511,2.2));
+  const sun=new THREE.DirectionalLight(0xc7eed0,3);
+  sun.position.set(-30,100,35);
+  scene.add(sun);
+
+  const canvas=document.createElement('canvas');
+  canvas.width=canvas.height=128;
+  const context=canvas.getContext('2d');
+  const gradient=context.createRadialGradient(64,64,0,64,64,64);
+  gradient.addColorStop(0,'rgba(255,255,255,1)');
+  gradient.addColorStop(.12,'rgba(255,255,255,.7)');
+  gradient.addColorStop(.38,'rgba(255,255,255,.12)');
+  gradient.addColorStop(1,'rgba(255,255,255,0)');
+  context.fillStyle=gradient;context.fillRect(0,0,128,128);
+
+  const glowTexture=new THREE.CanvasTexture(canvas);
+  glowTexture.colorSpace=THREE.SRGBColorSpace;
+
+  function glow(color,size,opacity){
+    const sprite=new THREE.Sprite(new THREE.SpriteMaterial({
+      map:glowTexture,color,transparent:true,opacity,
+      blending:THREE.AdditiveBlending,depthWrite:false
+    }));
+    sprite.scale.set(size,size,1);
+    return sprite;
+  }
+
+  /* ---- Suspended marine snow ---- */
+
+  const dustCount=mobile?3800:8000;
+  const dustPositions=new Float32Array(dustCount*3);
+  const dustRandom=new Float32Array(dustCount);
+  for(let i=0;i<dustCount;i++){
+    dustPositions.set([(random()-.5)*230,20-random()*200,100-random()*650],i*3);
+    dustRandom[i]=random();
+  }
+  const dustGeometry=new THREE.BufferGeometry();
+  dustGeometry.setAttribute('position',new THREE.BufferAttribute(dustPositions,3));
+  dustGeometry.setAttribute('aRandom',new THREE.BufferAttribute(dustRandom,1));
+
+  const dustMaterial=new THREE.ShaderMaterial({
+    transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+    uniforms:{
+      uTime:{value:0},
+      uPixel:{value:renderer.getPixelRatio()},
+      uPulse:{value:-1},
+      uOrigin:{value:new THREE.Vector3()}
+    },
+    vertexShader:`
+      attribute float aRandom;
+      uniform float uTime;
+      uniform float uPixel;
+      uniform float uPulse;
+      uniform vec3 uOrigin;
+      varying float vAlpha;
+      varying float vSonar;
+      void main(){
+        vec3 p=position;
+        p.x+=sin(uTime*.12+aRandom*30.0)*1.4;
+        p.y+=sin(uTime*.19+aRandom*40.0)*1.0;
+        vec4 mv=modelViewMatrix*vec4(p,1.0);
+        gl_Position=projectionMatrix*mv;
+        gl_PointSize=clamp((.5+aRandom)*uPixel*80.0/max(5.0,-mv.z),1.0,6.0);
+        vAlpha=(.15+aRandom*.45)*exp(-max(0.0,-mv.z)*.014);
+        float d=length(p-uOrigin);
+        vSonar=uPulse<0.0?0.0:exp(-pow((d-uPulse)*.16,2.0));
+      }
+    `,
+    fragmentShader:`
+      varying float vAlpha;
+      varying float vSonar;
+      void main(){
+        float d=length(gl_PointCoord-.5)*2.0;
+        if(d>1.0)discard;
+        vec3 color=mix(vec3(.40,.72,.65),vec3(.7,1.0,.77),vSonar);
+        gl_FragColor=vec4(color,pow(1.0-d,1.6)*(vAlpha+vSonar*.8));
+      }
+    `
+  });
+  scene.add(new THREE.Points(dustGeometry,dustMaterial));
+
+  /* ---- Broad shafts of sunlight ---- */
+
+  const rayMaterial=new THREE.ShaderMaterial({
+    transparent:true,depthWrite:false,side:THREE.DoubleSide,
+    blending:THREE.AdditiveBlending,
+    uniforms:{uTime:{value:0}},
+    vertexShader:`
+      varying vec2 vUv;
+      void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}
+    `,
+    fragmentShader:`
+      uniform float uTime;
+      varying vec2 vUv;
+      void main(){
+        float edge=pow(max(0.0,1.0-abs(vUv.x-.5)*2.0),2.5);
+        float fade=sin(vUv.y*3.14159);
+        float bands=.75+.25*sin(vUv.x*35.0+uTime*.25);
+        gl_FragColor=vec4(.5,.86,.72,edge*fade*bands*.065);
+      }
+    `
+  });
+
+  for(let i=0;i<9;i++){
+    const ray=new THREE.Mesh(new THREE.PlaneGeometry(12+random()*15,150),rayMaterial);
+    ray.position.set(-60+i*17,5,-15-random()*120);
+    ray.rotation.z=-.22;
+    ray.rotation.y=(random()-.5)*.4;
+    scene.add(ray);
+  }
+
+  /* ---- Jellyfish: translucent bell ---- */
+
+  function bellGeometry(radius){
+    const positions=[],uvs=[],indices=[];
+    const rows=36,columns=96;
+    for(let y=0;y<=rows;y++){
+      const v=y/rows;
+      const theta=v*1.83;
+      for(let x=0;x<=columns;x++){
+        const u=x/columns;
+        const a=u*TAU;
+        const scallop=1+Math.pow(v,8)*Math.sin(a*18)*.055;
+        positions.push(
+          Math.cos(a)*Math.sin(theta)*radius*scallop,
+          Math.cos(theta)*radius*.72,
+          Math.sin(a)*Math.sin(theta)*radius*scallop
+        );
+        uvs.push(u,v);
+      }
+    }
+    for(let y=0;y<rows;y++)for(let x=0;x<columns;x++){
+      const a=y*(columns+1)+x,b=a+columns+1;
+      indices.push(a,b,a+1,b,b+1,a+1);
+    }
+    const geometry=new THREE.BufferGeometry();
+    geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+    geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+    geometry.setIndex(indices);
+    geometry.computeVertexNormals();
+    return geometry;
+  }
+
+  const jellyUniforms={uTime:{value:0}};
+  const jellyMaterial=new THREE.ShaderMaterial({
+    uniforms:jellyUniforms,transparent:true,depthWrite:false,
+    side:THREE.DoubleSide,blending:THREE.AdditiveBlending,
+    vertexShader:`
+      uniform float uTime;
+      varying vec2 vUv;
+      varying vec3 vNormal;
+      varying vec3 vView;
+      void main(){
+        vUv=uv;
+        vec3 p=position;
+        float pulse=sin(uTime*1.25);
+        p.xz*=1.0+pulse*.055*uv.y;
+        p.y+=pulse*.45*uv.y;
+        vec4 mv=modelViewMatrix*vec4(p,1.0);
+        vNormal=normalize(normalMatrix*normal);
+        vView=normalize(-mv.xyz);
+        gl_Position=projectionMatrix*mv;
+      }
+    `,
+    fragmentShader:`
+      uniform float uTime;
+      varying vec2 vUv;
+      varying vec3 vNormal;
+      varying vec3 vView;
+      void main(){
+        float rim=pow(1.0-abs(dot(normalize(vNormal),normalize(vView))),2.1);
+        float veins=pow(max(0.0,sin(vUv.x*6.283185*18.0+sin(vUv.y*12.0)*.4)),19.0);
+        float edge=pow(vUv.y,12.0);
+        float flow=.6+.4*sin(vUv.y*24.0-uTime*1.5);
+        vec3 color=mix(vec3(.12,.52,.62),vec3(.60,1.0,.75),rim);
+        color+=vec3(.22,.65,.45)*veins*flow;
+        float alpha=.035+rim*.5+veins*.18+edge*.3;
+        gl_FragColor=vec4(color,alpha);
+      }
+    `
+  });
+
+  const jelly=new THREE.Group();
+  jelly.position.copy(offset(.365,14,9,-8));
+  jelly.rotation.z=-.12;
+  scene.add(jelly);
+
+  const bell=new THREE.Mesh(bellGeometry(12),jellyMaterial);
+  jelly.add(bell);
+
+  const innerBell=new THREE.Mesh(bellGeometry(8.1),jellyMaterial);
+  innerBell.position.y=-.5;
+  jelly.add(innerBell);
+
+  const jellyCore=glow(0x82ffd1,17,.4);
+  jellyCore.position.y=2;
+  jelly.add(jellyCore);
+
+  const tentaclePositions=[],roots=[],along=[];
+  const tentacleCount=mobile?34:58;
+  const segments=85;
+
+  for(let i=0;i<tentacleCount;i++){
+    const angle=i/tentacleCount*TAU;
+    const r=i%3===0?5.7:10.7;
+    const len=17+random()*16;
+    for(let j=0;j<segments;j++){
+      for(const k of [j,j+1]){
+        const t=k/segments;
+        tentaclePositions.push(Math.cos(angle)*r,-2-t*len,Math.sin(angle)*r);
+        roots.push(angle,len,r);
+        along.push(t);
+      }
+    }
+  }
+
+  const tentacleGeometry=new THREE.BufferGeometry();
+  tentacleGeometry.setAttribute('position',new THREE.Float32BufferAttribute(tentaclePositions,3));
+  tentacleGeometry.setAttribute('aRoot',new THREE.Float32BufferAttribute(roots,3));
+  tentacleGeometry.setAttribute('aAlong',new THREE.Float32BufferAttribute(along,1));
+
+  const tentacleMaterial=new THREE.ShaderMaterial({
+    uniforms:jellyUniforms,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+    vertexShader:`
+      uniform float uTime;
+      attribute vec3 aRoot;
+      attribute float aAlong;
+      varying float vAlong;
+      varying float vGlow;
+      void main(){
+        vAlong=aAlong;
+        vec3 p=position;
+        float a=aAlong;
+        p.x+=sin(a*8.0-uTime*.75+aRoot.x*2.0)*a*2.7;
+        p.z+=cos(a*7.0-uTime*.6+aRoot.x)*a*2.2;
+        p.y+=sin(uTime*1.25)*.4;
+        vGlow=pow(max(0.0,sin(a*24.0-uTime*1.7+aRoot.x)),7.0);
+        gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.0);
+      }
+    `,
+    fragmentShader:`
+      varying float vAlong;
+      varying float vGlow;
+      void main(){
+        vec3 color=mix(vec3(.15,.57,.63),vec3(.73,1.0,.70),vGlow);
+        gl_FragColor=vec4(color,(.22+vGlow*.65)*(1.0-vAlong*.7));
+      }
+    `
+  });
+  const tentacles=new THREE.LineSegments(tentacleGeometry,tentacleMaterial);
+  tentacles.frustumCulled=false;
+  jelly.add(tentacles);
+
+  // A smaller distant organism, sharing geometry and materials.
+  const smallJelly=jelly.clone();
+  smallJelly.position.copy(offset(.40,-31,14,25));
+  smallJelly.scale.setScalar(.31);
+  scene.add(smallJelly);
+
+  /* ---- Manta: a procedural animated membrane ---- */
+
+  const manta=new THREE.Group();
+  manta.position.copy(offset(.69,2,4,2));
+  scene.add(manta);
+
+  function wingGeometry(){
+    const positions=[],uvs=[],indices=[];
+    const nx=72,nz=28;
+    for(let j=0;j<=nz;j++){
+      const v=j/nz;
+      for(let i=0;i<=nx;i++){
+        const u=i/nx*2-1;
+        const a=Math.abs(u);
+        const width=20;
+        const chord=1+7*Math.pow(1-a,.65);
+        const sweep=a*8;
+        positions.push(u*width,(1-a)*.3,(v-.5)*chord+sweep);
+        uvs.push(i/nx,v);
+      }
+    }
+    for(let j=0;j<nz;j++)for(let i=0;i<nx;i++){
+      const a=j*(nx+1)+i,b=a+nx+1;
+      indices.push(a,b,a+1,b,b+1,a+1);
+    }
+    const g=new THREE.BufferGeometry();
+    g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+    g.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));
+    g.setIndex(indices);
+    g.computeVertexNormals();
+    return g;
+  }
+
+  const mantaUniforms={uTime:{value:0}};
+  const mantaMaterial=new THREE.ShaderMaterial({
+    uniforms:mantaUniforms,side:THREE.DoubleSide,
+    vertexShader:`
+      uniform float uTime;
+      varying vec2 vUv;
+      varying float vWing;
+      varying float vDistance;
+      void main(){
+        vUv=uv;
+        vec3 p=position;
+        float wing=abs(p.x)/20.0;
+        p.y+=sin(uTime*.85-wing*2.1)*pow(wing,1.45)*5.0;
+        p.z+=sin(uTime*.85-wing)*wing*.6;
+        vWing=wing;
+        vec4 mv=modelViewMatrix*vec4(p,1.0);
+        vDistance=-mv.z;
+        gl_Position=projectionMatrix*mv;
+      }
+    `,
+    fragmentShader:`
+      uniform float uTime;
+      varying vec2 vUv;
+      varying float vWing;
+      varying float vDistance;
+      void main(){
+        vec3 base=mix(vec3(.025,.085,.11),vec3(.10,.22,.24),vWing);
+        float edge=pow(abs(vUv.y-.5)*2.0,20.0);
+        float tip=pow(vWing,15.0);
+        float dots=pow(max(0.0,sin(vUv.x*230.0)*sin(vUv.y*95.0)),24.0);
+        float stripe=pow(max(0.0,sin(vWing*32.0-vUv.y*3.0)),24.0);
+        vec3 color=base+vec3(.30,.8,.65)*(edge*.7+tip*.45+dots*.45+stripe*.09);
+        float fog=1.0-exp(-max(vDistance,0.0)*.007);
+        color=mix(color,vec3(.009,.043,.049),fog);
+        gl_FragColor=vec4(color,1.0);
+      }
+    `
+  });
+
+  manta.add(new THREE.Mesh(wingGeometry(),mantaMaterial));
+
+  const bodyMaterial=new THREE.MeshStandardMaterial({
+    color:0x14353c,roughness:.65,metalness:.1,emissive:0x08251e,emissiveIntensity:.5
+  });
+  const body=new THREE.Mesh(new THREE.SphereGeometry(1,36,24),bodyMaterial);
+  body.scale.set(2.4,.85,6.5);
+  manta.add(body);
+
+  const tailCurve=new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0,0,4),
+    new THREE.Vector3(0,-.2,10),
+    new THREE.Vector3(.8,-.6,17),
+    new THREE.Vector3(1.6,-1.2,23)
+  ]);
+  manta.add(new THREE.Mesh(new THREE.TubeGeometry(tailCurve,48,.14,6,false),bodyMaterial));
+
+  for(const side of [-1,1]){
+    const eye=glow(0xbfffc7,.65,1);
+    eye.position.set(side*1.5,.2,-4.3);
+    manta.add(eye);
+  }
+
+  /* ---- Schools of fish ---- */
+
+  const fishCount=mobile?260:520;
+  const fishGeometry=new THREE.ConeGeometry(.17,1.3,5);
+  fishGeometry.rotateX(-Math.PI/2);
+
+  const fishMaterial=new THREE.MeshStandardMaterial({
+    color:0x90b5ac,roughness:.48,metalness:.4,
+    emissive:0x143a35,emissiveIntensity:.2
+  });
+  const fish=new THREE.InstancedMesh(fishGeometry,fishMaterial,fishCount);
+  const fishData=[];
+  const dummy=new THREE.Object3D();
+  const fishTarget=new THREE.Vector3();
+
+  for(let i=0;i<fishCount;i++){
+    const school=i%3;
+    fishData.push({
+      school,
+      phase:random()*TAU,
+      radius:7+random()*18,
+      height:(random()-.5)*15,
+      speed:.055+random()*.055,
+      size:.55+random()*.8
+    });
+  }
+  fish.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  fish.frustumCulled=false;
+  scene.add(fish);
+
+  const schoolCenters=[
+    offset(.12,-12,3),
+    offset(.45,-19,-2),
+    offset(.78,22,8)
+  ];
+
+  /* ---- Abyss organism ---- */
+
+  const organism=new THREE.Group();
+  organism.position.copy(offset(.975,0,0,35));
+  scene.add(organism);
+
+  const orbUniforms={uTime:{value:0}};
+  const orbMaterial=new THREE.ShaderMaterial({
+    uniforms:orbUniforms,transparent:true,depthWrite:false,
+    blending:THREE.AdditiveBlending,side:THREE.DoubleSide,
+    vertexShader:`
+      uniform float uTime;
+      varying vec3 vP;
+      varying vec3 vN;
+      varying vec3 vV;
+      void main(){
+        vec3 p=position;
+        float n=sin(p.x*.85+uTime*.55)*sin(p.y*.7-uTime*.3)*sin(p.z*.8);
+        p+=normal*n*.7;
+        vP=p;
+        vec4 mv=modelViewMatrix*vec4(p,1.0);
+        vN=normalize(normalMatrix*normal);
+        vV=normalize(-mv.xyz);
+        gl_Position=projectionMatrix*mv;
+      }
+    `,
+    fragmentShader:`
+      uniform float uTime;
+      varying vec3 vP;
+      varying vec3 vN;
+      varying vec3 vV;
+      void main(){
+        float rim=pow(1.0-abs(dot(normalize(vN),normalize(vV))),2.2);
+        float network=pow(max(0.0,sin(vP.x*2.2+sin(vP.y*1.4)+uTime*.2)
+          *cos(vP.y*2.1+sin(vP.z*1.3))*sin(vP.z*2.0+sin(vP.x))),8.0);
+        vec3 color=mix(vec3(.10,.30,.27),vec3(.75,1.0,.49),rim);
+        color+=network*vec3(.43,.9,.48);
+        gl_FragColor=vec4(color,.025+rim*.7+network*.8);
+      }
+    `
+  });
+
+  const orb=new THREE.Mesh(new THREE.SphereGeometry(9,80,56),orbMaterial);
+  organism.add(orb);
+
+  const inner=new THREE.Mesh(new THREE.IcosahedronGeometry(4,3),orbMaterial);
+  organism.add(inner);
+
+  const core=glow(0xcdff92,23,.65);
+  organism.add(core);
+
+  const filaments=new THREE.Group();
+  for(let i=0;i<24;i++){
+    const points=[];
+    const a=i/24*TAU;
+    for(let j=0;j<=70;j++){
+      const t=j/70;
+      const r=9+t*9;
+      points.push(new THREE.Vector3(
+        Math.cos(a+t*2)*r,
+        Math.sin(t*6+a)*3.3,
+        Math.sin(a+t*2)*r
+      ));
+    }
+    const line=new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(points),
+      new THREE.LineBasicMaterial({color:0x98db8c,transparent:true,opacity:.25,depthWrite:false,blending:THREE.AdditiveBlending})
+    );
+    filaments.add(line);
+  }
+  organism.add(filaments);
+
+  /* ---- Distant seabed ---- */
+
+  const floorGeometry=new THREE.PlaneGeometry(450,750,70,100);
+  floorGeometry.rotateX(-Math.PI/2);
+  const fp=floorGeometry.attributes.position;
+  for(let i=0;i<fp.count;i++){
+    const x=fp.getX(i),z=fp.getZ(i);
+    fp.setY(i,Math.sin(x*.035)*4+Math.cos(z*.025)*5+Math.sin(x*.09+z*.04)*2);
+  }
+  floorGeometry.computeVertexNormals();
+
+  const floor=new THREE.Mesh(floorGeometry,new THREE.MeshStandardMaterial({color:0x0c2524,roughness:1}));
+  floor.position.set(0,-151,-230);
+  scene.add(floor);
+
+  /* ---- Sonar pulse ---- */
+
+  let sonarAge=-1;
+  const sonarOrigin=new THREE.Vector3();
+  const sonarMaterial=new THREE.ShaderMaterial({
+    transparent:true,depthWrite:false,side:THREE.DoubleSide,
+    blending:THREE.AdditiveBlending,
+    uniforms:{uAlpha:{value:0}},
+    vertexShader:`
+      varying vec3 vN;
+      varying vec3 vV;
+      void main(){
+        vec4 p=modelViewMatrix*vec4(position,1.0);
+        vN=normalize(normalMatrix*normal);
+        vV=normalize(-p.xyz);
+        gl_Position=projectionMatrix*p;
+      }
+    `,
+    fragmentShader:`
+      uniform float uAlpha;
+      varying vec3 vN;
+      varying vec3 vV;
+      void main(){
+        float rim=pow(1.0-abs(dot(normalize(vN),normalize(vV))),5.0);
+        gl_FragColor=vec4(.5,1.0,.72,rim*uAlpha);
+      }
+    `
+  });
+  const sonarShell=new THREE.Mesh(new THREE.SphereGeometry(1,48,32),sonarMaterial);
+  sonarShell.visible=false;
+  scene.add(sonarShell);
+
+  /* ---- Camera ---- */
+
+  const look=new THREE.Vector3();
+  const matrix=new THREE.Matrix4();
+  const baseQ=new THREE.Quaternion();
+  const localQ=new THREE.Quaternion();
+  const euler=new THREE.Euler(0,0,0,'YXZ');
+  const up=new THREE.Vector3(0,1,0);
+  const surfaceColor=new THREE.Color('#0a3439');
+  const deepColor=new THREE.Color('#020b11');
+  const background=new THREE.Color();
+  let width=stage.clientWidth,height=stage.clientHeight;
+  let lost=false;
+
+  renderer.domElement.addEventListener('webglcontextlost',e=>{
+    e.preventDefault();lost=true;setAuto(false);
+    $('#engine-status').textContent='Графика приостановлена системой. Попробуйте перезагрузить страницу.';
+  });
+  renderer.domElement.addEventListener('webglcontextrestored',()=>{
+    lost=false;dirty=true;wake();
+    $('#engine-status').textContent='Экспедиция восстановлена';
+  });
+
+  engine={
+    resize(w,h){
+      width=w;height=h;
+      renderer.setSize(w,h);
+      camera.aspect=w/h;
+      camera.fov=w<700?72:61;
+      camera.updateProjectionMatrix();
+    },
+
+    sonar(){
+      sonarAge=0;
+      camera.getWorldDirection(look);
+      sonarOrigin.copy(camera.position).addScaledVector(look,21);
+      sonarShell.position.copy(sonarOrigin);
+      sonarShell.visible=true;
+      dustMaterial.uniforms.uOrigin.value.copy(sonarOrigin);
+    },
+
+    render(p,t,mouse,dt){
+      if(lost)return;
+
+      const cameraPosition=point(p);
+      const tangent=route.getTangentAt(p);
+
+      if(p<.985)look.copy(point(Math.min(1,p+.019)));
+      else look.copy(cameraPosition).addScaledVector(tangent,20);
+
+      camera.position.copy(cameraPosition);
+      matrix.lookAt(cameraPosition,look,up);
+      baseQ.setFromRotationMatrix(matrix);
+
+      euler.set(-mouse.y*.10,-mouse.x*.15,-mouse.x*.012,'YXZ');
+      localQ.setFromEuler(euler);
+      camera.quaternion.copy(baseQ).multiply(localQ);
+
+      background.copy(surfaceColor).lerp(deepColor,smooth(p));
+      scene.background.copy(background);
+      scene.fog.color.copy(background);
+      scene.fog.density=lerp(.009,.005,p);
+
+      sun.intensity=lerp(3,.18,p);
+      jellyUniforms.uTime.value=t;
+      mantaUniforms.uTime.value=t;
+      orbUniforms.uTime.value=t;
+      dustMaterial.uniforms.uTime.value=t;
+      rayMaterial.uniforms.uTime.value=t;
+
+      jelly.rotation.z=-.12+Math.sin(t*.17)*.04;
+      jelly.rotation.y=Math.sin(t*.11)*.08;
+      smallJelly.rotation.z=.12+Math.sin(t*.2)*.08;
+
+      manta.rotation.z=Math.sin(t*.32)*.07;
+      manta.rotation.y=Math.sin(t*.19)*.12;
+      manta.position.y=offset(.69,2,4,2).y+Math.sin(t*.38)*1.4;
+
+      orb.rotation.y=t*.05;
+      inner.rotation.x=-t*.09;
+      inner.rotation.z=t*.07;
+      filaments.rotation.y=-t*.028;
+      filaments.rotation.z=Math.sin(t*.15)*.16;
+      core.material.opacity=.5+Math.sin(t*.8)*.12;
+
+      for(let i=0;i<fishCount;i++){
+        const d=fishData[i],c=schoolCenters[d.school];
+        const a=d.phase+t*d.speed;
+        const x=Math.cos(a)*d.radius;
+        const z=Math.sin(a)*d.radius*.7;
+        const y=d.height+Math.sin(a*2+t*.4)*1.2;
+        dummy.position.set(c.x+x,c.y+y,c.z+z);
+        fishTarget.set(
+          c.x+Math.cos(a+.035)*d.radius,
+          c.y+y,
+          c.z+Math.sin(a+.035)*d.radius*.7
+        );
+        dummy.lookAt(fishTarget);
+        dummy.scale.set(d.size*(1+Math.sin(t*7+d.phase)*.12),d.size,d.size);
+        dummy.updateMatrix();
+        fish.setMatrixAt(i,dummy.matrix);
+      }
+      fish.instanceMatrix.needsUpdate=true;
+
+      if(sonarAge>=0){
+        sonarAge+=dt;
+        const radius=sonarAge*52+.5;
+        sonarShell.scale.setScalar(radius);
+        sonarMaterial.uniforms.uAlpha.value=.36*(1-smooth(sonarAge/3));
+        dustMaterial.uniforms.uPulse.value=radius;
+        if(sonarAge>3){
+          sonarAge=-1;sonarShell.visible=false;
+          dustMaterial.uniforms.uPulse.value=-1;
+        }
+      }
+
+      renderer.render(scene,camera);
+    }
+  };
+
+  engine.resize(stage.clientWidth,stage.clientHeight);
+  $('#engine-status').textContent=
+    `${dustCount.toLocaleString('en-US')} suspended particles / ${fishCount} schooling fish / Live ecosystem`;
+
+  $('#loader').classList.add('done');
+  updateMotion();
+  dirty=true;wake();
+
+}catch(error){
+  console.error(error);
+  $('.loader-orbit').style.display='none';
+  $('#loading-text').textContent=
+    'Не удалось запустить океан. Проверьте интернет и поддержку WebGL в браузере. Попробуйте актуальный Chrome, Edge, Firefox или Safari.';
+  $('#loader-skip').hidden=false;
+  $('#engine-status').textContent='3D недоступно. Контакты доступны ниже.';
+  setAuto(false);
+}
+</script>
+</body>
+</html>

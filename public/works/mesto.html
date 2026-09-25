@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#151a17">
+<title>МЕСТО — ремонт, который становится домом</title>
+<meta name="description" content="От бетонной коробки до пространства для жизни. Интерактивная концепция ремонта под ключ.">
+
+<style>
+:root{
+  --bg:#151a17;
+  --ink:#f2f0e8;
+  --muted:#939e91;
+  --accent:#ddedb5;
+  --line:#edf3e528;
+  --pad:clamp(22px,4.8vw,80px);
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:90px}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:Arial,Helvetica,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,p{margin:0}
+a{color:inherit;text-decoration:none}
+button,input,textarea{font:inherit}
+button{cursor:pointer;color:inherit;touch-action:manipulation}
+button,a{-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:2px solid var(--accent);outline-offset:5px}
+::selection{background:var(--accent);color:var(--bg)}
+.mono{font-family:"Courier New",monospace;font-size:10px;line-height:1.6;letter-spacing:.06em;text-transform:uppercase}
+.wrap{padding-inline:var(--pad)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+.skip{position:fixed;top:-90px;left:20px;z-index:200;padding:15px;background:var(--accent);color:var(--bg)}
+.skip:focus{top:15px}
+header{
+  position:fixed;top:0;left:0;right:0;z-index:40;
+  padding:24px var(--pad);display:flex;justify-content:space-between;align-items:center;gap:25px;
+  background:linear-gradient(#151a17d9,transparent);
+}
+.logo{font-weight:800;font-size:27px;letter-spacing:-.07em}
+.logo i{display:inline-block;width:9px;height:9px;margin-left:5px;background:var(--accent);font-style:normal}
+.header-note{font-size:8px;color:#acb5a5;margin-right:auto}
+nav{display:flex;gap:24px;align-items:center}
+nav a{font-size:11px}
+.nav-cta{border:1px solid var(--line);padding:12px 17px;border-radius:3px;background:#17201760;backdrop-filter:blur(12px)}
+.progress{position:fixed;top:0;left:0;height:2px;width:100%;background:var(--accent);transform:scaleX(0);transform-origin:left;z-index:100}
+
+.journey{height:470svh;position:relative}
+.stage{position:sticky;top:0;height:100svh;overflow:hidden;background:var(--bg);isolation:isolate}
+#world{position:absolute;inset:0}
+#world canvas{width:100%;height:100%;display:block}
+.shade{
+  position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(90deg,#151a17df 0%,#151a1780 24%,transparent 54%),
+  linear-gradient(0deg,#151a17 0%,transparent 21%,transparent 85%,#151a1740);
+}
+.stage-top{position:absolute;left:var(--pad);right:var(--pad);top:106px;display:flex;justify-content:space-between;gap:20px;font-size:8px;color:#7d8f7b}
+.stage-top span:last-child{text-align:right}
+.chapter{
+  position:absolute;left:var(--pad);top:43%;width:46%;
+  opacity:0;visibility:hidden;pointer-events:none;
+  will-change:transform,opacity;
+}
+.chapter:first-of-type{opacity:1;visibility:visible}
+.eyebrow{display:flex;align-items:center;gap:12px;color:var(--accent);font-size:9px;margin-bottom:25px}
+.eyebrow:before{content:"";width:25px;height:1px;background:currentColor}
+.chapter h1,.chapter h2{font-size:clamp(51px,6.9vw,107px);font-weight:400;letter-spacing:-.065em;line-height:.94}
+.chapter em{font-family:Georgia,serif;font-weight:400;color:var(--accent)}
+.chapter p{max-width:285px;font-size:13px;line-height:1.9;color:#a0af99;margin-top:27px}
+.chapter .small{font-size:8px;color:#657b60;margin-top:25px}
+.scene-label{position:absolute;right:var(--pad);bottom:145px;text-align:right;pointer-events:none}
+.scene-label .mono{font-size:8px;color:#879b7b}
+.scene-label strong{display:block;font-size:29px;font-weight:400;letter-spacing:-.04em;margin-top:6px}
+
+.bottom{
+  position:absolute;bottom:28px;left:var(--pad);right:var(--pad);
+  display:grid;grid-template-columns:1fr auto 1fr;gap:24px;align-items:end;
+}
+.scroll-hint{font-size:8px;color:#899e7c;display:flex;gap:15px;align-items:center}
+.scroll-icon{width:22px;height:36px;border:1px solid #9aae8355;border-radius:20px;position:relative}
+.scroll-icon:after{content:"";position:absolute;left:9px;top:7px;width:2px;height:7px;background:var(--accent);animation:scroll 1.7s infinite}
+@keyframes scroll{to{transform:translateY(13px);opacity:0}}
+.steps-nav{display:flex;gap:5px;padding:5px;border:1px solid var(--line);border-radius:35px;background:#17201780;backdrop-filter:blur(15px)}
+.steps-nav button{width:34px;height:34px;border:0;border-radius:50%;background:transparent;color:#829776;font:9px monospace}
+.steps-nav button[aria-current="step"]{background:var(--accent);color:var(--bg)}
+.materials{justify-self:end;display:flex;gap:12px;align-items:center;border:1px solid var(--line);padding:12px 14px;border-radius:4px;background:#17201780;backdrop-filter:blur(12px)}
+.materials .mono{font-size:8px;color:#b3c29e}
+.swatches{display:flex;gap:9px}
+.swatch{width:20px;height:20px;border:1px solid #ffffff40;border-radius:50%;padding:3px;background:transparent}
+.swatch:after{content:"";display:block;width:100%;height:100%;background:var(--color);border-radius:50%}
+.swatch[aria-pressed="true"]{outline:1px solid var(--accent);outline-offset:3px}
+.pause{position:absolute;right:var(--pad);top:157px;width:30px;height:30px;border:1px solid var(--line);background:#17201780;border-radius:50%;font-size:10px}
+.engine-note{position:absolute;left:var(--pad);bottom:101px;color:#617557;font-size:7px}
+.loader{position:absolute;inset:0;z-index:20;display:grid;place-items:center;background:#151a17;transition:opacity .8s,visibility .8s}
+.loader.done{opacity:0;visibility:hidden;pointer-events:none}
+.loader-inner{text-align:center;padding:25px;max-width:400px}
+.loader-icon{width:60px;height:60px;border:1px solid #ddedb53b;margin:0 auto 25px;position:relative;transform:rotate(45deg)}
+.loader-icon:after{content:"";position:absolute;inset:12px;border:1px solid var(--accent);animation:rotate 3s linear infinite}
+@keyframes rotate{to{transform:rotate(180deg)}}
+.loader p{font-size:10px;color:#aebe99;line-height:1.8}
+.loader a{display:inline-block;margin-top:20px;font-size:12px;border-bottom:1px solid var(--accent)}
+
+.intro{background:#eff0e7;color:#25331f;padding-block:90px}
+.intro-grid{display:grid;grid-template-columns:1fr 2fr;gap:40px}
+.label{font-size:9px;color:#7b886d}
+.section-title{font-size:clamp(36px,4.8vw,73px);font-weight:400;letter-spacing:-.055em;line-height:1.05}
+.section-title span{color:#939e82}
+.intro-copy{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:30px}
+.intro-copy p{font-size:13px;line-height:1.85;color:#758168}
+
+.scope{padding-block:75px;background:#e1e5d7;color:#28381f}
+.scope-head{display:flex;align-items:end;justify-content:space-between;gap:30px;margin-bottom:36px}
+.scope-head p{max-width:300px;font-size:12px;line-height:1.8;color:#7c886d}
+.scope-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+.scope-card{padding:27px;background:#f4f5ed;border:1px solid #2b3a2025;border-radius:4px}
+.scope-card .mono{font-size:9px;color:#8c9a7c}
+.scope-card h3{font-size:26px;font-weight:400;letter-spacing:-.045em;margin-top:31px}
+.scope-card p{font-size:12px;line-height:1.85;color:#7b896a;margin-top:15px}
+.scope-card ul{list-style:none;padding:0;margin:22px 0 0}
+.scope-card li{border-top:1px solid #2b3a2020;padding:11px 0;font-size:11px}
+.scope-card li:before{content:"↗";margin-right:10px;color:#78945c}
+
+.process{padding-block:80px}
+.process-grid{display:grid;grid-template-columns:1fr 1.5fr;gap:70px}
+.process .label{color:#a6b88e}
+.process h2{margin-top:24px}
+.process-intro p{font-size:12px;line-height:1.9;color:#849a73;max-width:290px;margin-top:23px}
+details{border-bottom:1px solid var(--line)}
+details:first-child{border-top:1px solid var(--line)}
+summary{list-style:none;padding:24px 0;display:flex;align-items:center;gap:20px;cursor:pointer}
+summary::-webkit-details-marker{display:none}
+summary .mono{font-size:9px;color:#a8be8c}
+summary b{font-size:22px;font-weight:400;letter-spacing:-.035em}
+summary i{margin-left:auto;font-style:normal;font-size:23px;transition:transform .3s}
+details[open] summary i{transform:rotate(45deg)}
+details p{font-size:12px;line-height:1.9;color:#8ba279;padding:0 15px 25px 34px}
+.checkpoint{display:block;color:#c2d4a5;margin-top:12px}
+
+.contact{background:#d6e7b8;color:#23351a;padding-block:70px 40px}
+.contact-grid{display:grid;grid-template-columns:1fr 1fr;gap:70px}
+.contact h2{margin-top:25px}
+.contact-copy p{font-size:13px;line-height:1.85;color:#70845b;max-width:315px;margin-top:24px}
+.email{display:inline-block;font-size:25px;letter-spacing:-.04em;border-bottom:1px solid #23351a70;margin-top:27px}
+.field{display:block;margin-bottom:22px}
+.field span{display:block;font-size:10px;margin-bottom:8px;color:#76895f}
+.field input,.field textarea{width:100%;border:0;border-bottom:1px solid #23351a45;background:transparent;padding:11px 0;border-radius:0;font-size:14px;color:#23351a}
+.field textarea{resize:vertical;min-height:85px}
+.field input::placeholder,.field textarea::placeholder{color:#91a37c}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.send{display:flex;align-items:center;justify-content:space-between;width:100%;padding:17px 20px;background:#2d4222;border:0;border-radius:3px;color:#edf4e2;font-size:12px}
+.form-help{font-size:10px;line-height:1.75;color:#7b8e66;margin-top:12px}
+#form-status{font-size:11px;line-height:1.7;min-height:18px;margin-top:12px}
+footer{padding:25px var(--pad);display:flex;justify-content:space-between;align-items:center;gap:25px;color:#748b61;font-size:8px}
+footer a{color:#c5d6b0}
+.reveal{opacity:1}
+.js .reveal{opacity:0;transform:translateY(25px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
+.js .reveal.visible{opacity:1;transform:none}
+
+@media(max-width:1000px){
+  .header-note{display:none}
+  .chapter h1,.chapter h2{font-size:7.5vw}
+  .contact-grid{gap:40px}
+}
+@media(max-width:700px){
+  header{padding-block:21px}
+  .logo{font-size:24px}
+  nav{gap:17px}
+  nav a{font-size:10px}
+  nav a:first-child{display:none}
+  .nav-cta{padding:10px 12px}
+  .stage-top{top:91px;font-size:7px}
+  .stage-top span:last-child{display:none}
+  .chapter{top:150px;width:87%}
+  .chapter h1,.chapter h2{font-size:clamp(48px,11.4vw,78px)}
+  .eyebrow{font-size:8px;margin-bottom:18px}
+  .chapter p{font-size:11px;max-width:240px;margin-top:19px;line-height:1.75}
+  .chapter .small{display:none}
+  .shade{background:linear-gradient(#151a1770,transparent 40%,transparent 77%,#151a17)}
+  .scene-label{bottom:132px}
+  .scene-label .mono{font-size:7px}
+  .scene-label strong{font-size:23px}
+  .bottom{grid-template-columns:1fr auto;gap:12px;bottom:23px}
+  .scroll-hint{display:none}
+  .steps-nav{padding:4px;gap:2px}
+  .steps-nav button{width:29px;height:29px;font-size:8px}
+  .materials{padding:10px 12px;gap:10px}
+  .materials .mono{font-size:7px}
+  .swatch{width:18px;height:18px}
+  .pause{top:91px;width:26px;height:26px}
+  .engine-note{bottom:80px;font-size:6px;max-width:230px}
+  .intro,.process{padding-block:55px}
+  .intro-grid,.process-grid{grid-template-columns:1fr;gap:27px}
+  .section-title{font-size:40px}
+  .intro-copy{gap:25px;margin-top:24px}
+  .intro-copy p{font-size:11px}
+  .scope{padding-block:55px}
+  .scope-head{display:block}
+  .scope-head p{margin-top:20px}
+  .scope-grid{grid-template-columns:1fr}
+  .scope-card{padding:25px}
+  .scope-card h3{margin-top:20px}
+  summary b{font-size:20px}
+  .contact{padding-block:50px 30px}
+  .contact-grid{grid-template-columns:1fr;gap:32px}
+  .contact-copy p{font-size:12px}
+  footer{flex-wrap:wrap;font-size:7px;gap:15px}
+}
+@media(max-height:700px){
+  .chapter{top:27%}
+  .chapter h1,.chapter h2{font-size:clamp(43px,6.5vw,82px)}
+  .chapter p{font-size:10px;margin-top:16px}
+  .scene-label{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{transition:none!important;animation:none!important}
+  .js .reveal{opacity:1;transform:none}
+}
+body.paused .scroll-icon:after{animation-play-state:paused}
+</style>
+</head>
+
+<body>
+<a class="skip" href="#scope">Пропустить 3D-презентацию</a>
+<div class="progress" aria-hidden="true"></div>
+
+<header>
+  <a class="logo" href="#home" aria-label="Место — на главную">МЕСТО<i aria-hidden="true"></i></a>
+  <span class="header-note mono">Ремонт заканчивается. Жизнь начинается.</span>
+  <nav aria-label="Основная навигация">
+    <a href="#scope">Что внутри</a>
+    <a href="#process">Как работаем</a>
+    <a href="#contact" class="nav-cta">Моя квартира ↗</a>
+  </nav>
+</header>
+
+<main id="home">
+  <section class="journey" id="journey" aria-label="От бетонной коробки до готового интерьера">
+    <div class="stage" id="stage">
+      <div id="world" aria-hidden="true"></div>
+      <div class="shade" aria-hidden="true"></div>
+
+      <div class="stage-top mono">
+        <span>Один интерьер / Четыре состояния</span>
+        <span>Процедурная 3D-иллюстрация / Не выполненный объект</span>
+      </div>
+
+      <button class="pause" id="pause" aria-label="Приостановить фоновое движение" aria-pressed="false">Ⅱ</button>
+
+      <article class="chapter">
+        <div class="eyebrow mono">01 / Пока здесь только возможности</div>
+        <h1>Сейчас —<br>просто стены.<br><em>Пока.</em></h1>
+        <p>Вы уже представляете, где будете пить кофе. Мы начинаем с того, что сделает этот момент возможным.</p>
+        <div class="small mono">Листайте. Ваша будущая квартира собирается.</div>
+      </article>
+
+      <article class="chapter" aria-hidden="true">
+        <div class="eyebrow mono">02 / То, чего потом не будет видно</div>
+        <h2>Красиво —<br>начинается<br><em>изнутри.</em></h2>
+        <p>Проводка, коммуникации, ровные основания. Самая важная часть ремонта обычно остаётся за кадром.</p>
+        <div class="small mono">Инженерия / Подготовка / Проверка скрытых работ</div>
+      </article>
+
+      <article class="chapter" aria-hidden="true">
+        <div class="eyebrow mono">03 / Пространство обретает характер</div>
+        <h2>Каждая деталь.<br><em>На своём<br>месте.</em></h2>
+        <p>Цвет, фактура, стыки, свет. От отдельных решений — к ощущению цельного пространства.</p>
+        <div class="small mono">Чистовая отделка / Монтаж / Контроль примыканий</div>
+      </article>
+
+      <article class="chapter" aria-hidden="true">
+        <div class="eyebrow mono">04 / Теперь можно просто жить</div>
+        <h2>Это больше<br>не ремонт.<br><em>Это дома.</em></h2>
+        <p>Передаём не красивую картинку, а проверенный результат. С документами, замечаниями и понятной приёмкой.</p>
+        <div class="small mono">Комплектация показана для иллюстрации и согласуется отдельно</div>
+      </article>
+
+      <div class="scene-label">
+        <div class="mono">Текущее состояние</div>
+        <strong id="scene-name">Бетонная коробка</strong>
+      </div>
+
+      <div class="engine-note mono" id="engine-note" role="status">Собираем пространство…</div>
+
+      <div class="bottom">
+        <div class="scroll-hint mono">
+          <span class="scroll-icon" aria-hidden="true"></span>
+          <span>Не смотрите на ремонт.<br>Пройдите через него.</span>
+        </div>
+
+        <nav class="steps-nav" aria-label="Состояния квартиры">
+          <button data-goto="0" aria-label="Бетонная коробка" aria-current="step">01</button>
+          <button data-goto="1" aria-label="Инженерные работы">02</button>
+          <button data-goto="2" aria-label="Чистовая отделка">03</button>
+          <button data-goto="3" aria-label="Готовый интерьер">04</button>
+        </nav>
+
+        <div class="materials" role="group" aria-label="Палитра интерьера">
+          <span class="mono">Ваш оттенок</span>
+          <div class="swatches">
+            <button class="swatch" data-palette="0" style="--color:#a2ab86" aria-label="Шалфей" aria-pressed="true"></button>
+            <button class="swatch" data-palette="1" style="--color:#bb876b" aria-label="Терракота" aria-pressed="false"></button>
+            <button class="swatch" data-palette="2" style="--color:#919ba6" aria-label="Туман" aria-pressed="false"></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="loader" id="loader">
+        <div class="loader-inner">
+          <div class="loader-icon" aria-hidden="true"></div>
+          <p class="mono" id="loader-text">У каждого дома есть начало.<br>Подготавливаем пространство…</p>
+          <a href="#scope">Перейти к описанию ↓</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="intro wrap">
+    <div class="intro-grid">
+      <div class="label mono reveal">Не про квадратные метры. Про вашу жизнь.</div>
+      <div>
+        <h2 class="section-title reveal">Вам не нужен ремонт.<br><span>Вам нужно место,<br>в котором хорошо.</span></h2>
+        <div class="intro-copy reveal">
+          <p>Где розетки там, где нужна техника. Где свет не раздражает вечером. Где двери открываются, не задевая мебель.</p>
+          <p>Поэтому начинать стоит не с выбора краски. А с ваших привычек, бюджета и решений, которые нужно принять до первого мешка смеси.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="scope wrap" id="scope">
+    <div class="scope-head reveal">
+      <h2 class="section-title">Что значит<br>«под ключ» — <span>для вас?</span></h2>
+      <p>Не прячем объём за красивым выражением. Каждый блок нужно отдельно зафиксировать в смете и договоре.</p>
+    </div>
+    <div class="scope-grid">
+      <article class="scope-card reveal">
+        <span class="mono">01 / Основа</span>
+        <h3>Чтобы всё работало.</h3>
+        <p>Подготовка и инженерия — основа, на которой держится весь последующий результат.</p>
+        <ul><li>Обмеры и обследование</li><li>Демонтаж и подготовка</li><li>Электрика и сантехнические трассы</li><li>Проверка скрытых работ</li></ul>
+      </article>
+      <article class="scope-card reveal">
+        <span class="mono">02 / Отделка</span>
+        <h3>Чтобы всё сложилось.</h3>
+        <p>Реализация согласованных материалов, раскладок и узлов. Не «похоже на картинку», а по принятому решению.</p>
+        <ul><li>Стены, пол и потолок</li><li>Плитка и примыкания</li><li>Монтаж согласованных изделий</li><li>Проверка чистовых поверхностей</li></ul>
+      </article>
+      <article class="scope-card reveal">
+        <span class="mono">03 / Комплектация</span>
+        <h3>Чтобы можно было жить.</h3>
+        <p>Мебель, техника и декор — не автоматически включённая часть ремонта. Их состав и бюджет обсуждаются отдельно.</p>
+        <ul><li>Кухня и встроенная мебель</li><li>Светильники и оборудование</li><li>Доставка и сборка</li><li>Финальная комплектация</li></ul>
+      </article>
+    </div>
+  </section>
+
+  <section class="process wrap" id="process">
+    <div class="process-grid">
+      <div class="process-intro reveal">
+        <div class="label mono">Прозрачность — тоже часть результата</div>
+        <h2 class="section-title">Меньше<br>«разберёмся».<br>Больше ясности.</h2>
+        <p>Вот что стоит согласовать с подрядчиком до начала ремонта, чтобы управлять не только эстетикой, но и рисками.</p>
+      </div>
+      <div class="reveal">
+        <details open>
+          <summary><span class="mono">01</span><b>Цена: из чего она состоит?</b><i aria-hidden="true">+</i></summary>
+          <p>Смета по работам, объёмам и единицам измерения. Отдельно — материалы, доставка, демонтаж, комплектация и исключения.
+            <span class="checkpoint">Контрольная точка: нет общей суммы без понятного состава.</span>
+          </p>
+        </details>
+        <details>
+          <summary><span class="mono">02</span><b>Изменения: кто согласует?</b><i aria-hidden="true">+</i></summary>
+          <p>Дополнительные работы могут появиться после вскрытия или изменения проекта. До выполнения нужно согласовать причину, цену и влияние на срок.
+            <span class="checkpoint">Контрольная точка: сначала решение заказчика, потом выполнение.</span>
+          </p>
+        </details>
+        <details>
+          <summary><span class="mono">03</span><b>Качество: чем подтверждается?</b><i aria-hidden="true">+</i></summary>
+          <p>Не только фотографиями готовой комнаты. Нужны согласованные проверки, фиксация скрытых работ, исполнительные схемы и документы в предусмотренном договором объёме.
+            <span class="checkpoint">Контрольная точка: важное проверяется до того, как его закроют.</span>
+          </p>
+        </details>
+        <details>
+          <summary><span class="mono">04</span><b>Финал: как принимаем?</b><i aria-hidden="true">+</i></summary>
+          <p>Осмотр по согласованному перечню, проверка оборудования, список замечаний и порядок их устранения. Гарантийные обязательства должны быть записаны в договоре.
+            <span class="checkpoint">Контрольная точка: результат принимается, а не просто показывается.</span>
+          </p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section class="contact wrap" id="contact">
+    <div class="contact-grid">
+      <div class="contact-copy reveal">
+        <div class="label mono">Теперь — ваша квартира</div>
+        <h2 class="section-title">Что вы хотите<br>назвать <span>домом?</span></h2>
+        <p>Расскажите, что есть сейчас и что хочется получить. Начнём с исходных данных, а не со случайной цены за метр.</p>
+        <a class="email" id="email" href="mailto:hello@example.com">hello@example.com ↗</a>
+      </div>
+
+      <form id="brief" class="reveal">
+        <div class="form-row">
+          <label class="field"><span>Ваше имя</span><input name="name" autocomplete="name" required maxlength="100" placeholder="Как к вам обращаться"></label>
+          <label class="field"><span>Контакт для ответа</span><input name="contact" required maxlength="160" placeholder="Телефон или почта"></label>
+        </div>
+        <div class="form-row">
+          <label class="field"><span>Город</span><input name="city" autocomplete="address-level2" required maxlength="120" placeholder="Где находится квартира"></label>
+          <label class="field"><span>Площадь, м²</span><input name="area" type="number" min="1" max="3000" step=".1" required placeholder="Например, 65"></label>
+        </div>
+        <label class="field"><span>Что за задача?</span><textarea name="message" required maxlength="2000" placeholder="Новостройка или вторичка? Есть проект? Когда хотите начать?"></textarea></label>
+        <button class="send" type="submit">Подготовить бриф <span aria-hidden="true">↗</span></button>
+        <p class="form-help">Откроется почтовое приложение с готовым письмом. Эта демонстрационная версия не отправляет данные на сервер.</p>
+        <p id="form-status" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer class="mono">
+  <span>© <span id="year">2026</span> МЕСТО / Концепция сайта</span>
+  <span>Интерьер демонстрационный. Не портфолио выполненных работ.</span>
+  <a href="#home">С начала ↑</a>
+</footer>
+
+<noscript>
+  <style>.loader{display:none}.chapter:first-of-type{transform:translateY(-50%)}</style>
+  <p style="padding:25px">Для 3D-презентации включите JavaScript. Описание и контакты доступны ниже.</p>
+</noscript>
+
+<script type="module">
+const EMAIL='hello@example.com';
+const $=s=>document.querySelector(s);
+const $$=s=>[...document.querySelectorAll(s)];
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const smooth=x=>{x=clamp(x);return x*x*(3-2*x)};
+const stage=$('#stage'),journey=$('#journey');
+const chapters=$$('.chapter');
+const mq=matchMedia('(prefers-reduced-motion: reduce)');
+
+document.documentElement.classList.add('js');
+$('#year').textContent=new Date().getFullYear();
+$('#email').textContent=EMAIL+' ↗';
+$('#email').href='mailto:'+EMAIL;
+
+let reduced=mq.matches,paused=false,visible=true,dirty=true;
+let target=0,progress=0,active=-1,startY=0,length=1;
+let frame=0,last=0,time=0,engine=null,palette=0;
+const pointer={x:0,y:0,tx:0,ty:0};
+const names=['Бетонная коробка','Всё начинается внутри','Появляется характер','Можно просто жить'];
+const paletteNames=['Шалфей','Терракота','Туман'];
+
+if('IntersectionObserver'in window){
+  const observer=new IntersectionObserver(entries=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  },{threshold:.07});
+  $$('.reveal').forEach(el=>observer.observe(el));
+
+  new IntersectionObserver(entries=>{
+    visible=entries[0].isIntersecting;
+    if(visible){dirty=true;wake()}
+  }).observe(journey);
+}else $$('.reveal').forEach(el=>el.classList.add('visible'));
+
+function readScroll(){
+  target=clamp((scrollY-startY)/length)*3;
+  $('.progress').style.transform=`scaleX(${target/3})`;
+  dirty=true;wake();
+}
+function measure(){
+  startY=journey.getBoundingClientRect().top+scrollY;
+  length=Math.max(1,journey.offsetHeight-stage.clientHeight);
+  engine?.resize(stage.clientWidth,stage.clientHeight);
+  readScroll();
+}
+addEventListener('scroll',readScroll,{passive:true});
+addEventListener('resize',measure,{passive:true});
+
+$$('[data-goto]').forEach(button=>button.addEventListener('click',()=>{
+  scrollTo({
+    top:startY+length*Number(button.dataset.goto)/3,
+    behavior:reduced?'instant':'smooth'
+  });
+}));
+
+$$('[data-palette]').forEach(button=>button.addEventListener('click',()=>{
+  palette=Number(button.dataset.palette);
+  $$('[data-palette]').forEach(el=>el.setAttribute('aria-pressed',String(el===button)));
+  dirty=true;wake();
+}));
+
+function syncMotion(){
+  const stopped=paused||reduced;
+  document.body.classList.toggle('paused',stopped);
+  $('#pause').textContent=stopped?'▶':'Ⅱ';
+  $('#pause').setAttribute('aria-pressed',String(stopped));
+  $('#pause').setAttribute('aria-label',stopped?'Включить фоновое движение':'Приостановить фоновое движение');
+  $('#pause').disabled=reduced;
+  dirty=true;wake();
+}
+$('#pause').addEventListener('click',()=>{paused=!paused;syncMotion()});
+mq.addEventListener('change',e=>{reduced=e.matches;syncMotion()});
+
+stage.addEventListener('pointermove',e=>{
+  if(e.pointerType==='touch'||paused||reduced)return;
+  const r=stage.getBoundingClientRect();
+  pointer.tx=(e.clientX-r.left)/r.width*2-1;
+  pointer.ty=(e.clientY-r.top)/r.height*2-1;
+},{passive:true});
+stage.addEventListener('pointerleave',()=>{pointer.tx=pointer.ty=0});
+
+function updateText(){
+  const n=Math.round(progress);
+  if(n!==active){
+    active=n;
+    $('#scene-name').textContent=names[n];
+    chapters.forEach((el,i)=>el.setAttribute('aria-hidden',String(i!==n)));
+    $$('[data-goto]').forEach((el,i)=>{
+      if(i===n)el.setAttribute('aria-current','step');
+      else el.removeAttribute('aria-current');
+    });
+  }
+  const mobile=stage.clientWidth<700;
+  chapters.forEach((el,i)=>{
+    const d=progress-i;
+    const opacity=reduced?Number(i===n):1-smooth((Math.abs(d)-.10)/.50);
+    el.style.opacity=opacity;
+    el.style.visibility=opacity>.005?'visible':'hidden';
+    el.style.transform=reduced
+      ?`translateY(${mobile?'0%':'-50%'})`
+      :`translate3d(${-d*45}px,calc(${mobile?'0%':'-50%'} + ${-d*65}px),0)`;
+  });
+}
+
+$('#brief').addEventListener('submit',e=>{
+  e.preventDefault();
+  const form=e.currentTarget;
+  if(!form.reportValidity())return;
+  const d=new FormData(form);
+  for(const key of ['name','contact','city','message']){
+    if(!String(d.get(key)||'').trim()){
+      $('#form-status').textContent='Пожалуйста, заполните обязательные поля.';
+      return;
+    }
+  }
+  const body=[
+    'Здравствуйте! Хочу обсудить ремонт.',
+    '',
+    'Имя: '+String(d.get('name')).trim(),
+    'Контакт: '+String(d.get('contact')).trim(),
+    'Город: '+String(d.get('city')).trim(),
+    'Площадь: '+d.get('area')+' м²',
+    'Понравившаяся палитра: '+paletteNames[palette],
+    '',
+    String(d.get('message')).trim()
+  ].join('\n');
+
+  $('#form-status').textContent='Письмо подготовлено. Отправьте его из почтового приложения. Если оно не открылось, напишите на адрес слева.';
+  location.href=`mailto:${EMAIL}?subject=${encodeURIComponent('Моя квартира / МЕСТО')}&body=${encodeURIComponent(body)}`;
+});
+
+function wake(){
+  if(!frame&&!document.hidden){last=0;frame=requestAnimationFrame(tick)}
+}
+function tick(now){
+  frame=0;
+  if(document.hidden)return;
+  const dt=last?Math.min((now-last)/1000,.04):1/60;
+  last=now;
+  const previous=progress;
+  progress=reduced?Math.round(target):lerp(progress,target,1-Math.exp(-dt*5.5));
+  if(!reduced&&Math.abs(progress-target)<.0001)progress=target;
+  const moving=!paused&&!reduced;
+  if(moving&&visible)time+=dt;
+
+  pointer.x=lerp(pointer.x,moving?pointer.tx:0,1-Math.exp(-dt*3));
+  pointer.y=lerp(pointer.y,moving?pointer.ty:0,1-Math.exp(-dt*3));
+
+  if(visible&&(dirty||moving||progress!==previous)){
+    updateText();
+    engine?.render(progress,time,pointer,palette);
+    dirty=false;
+  }
+  if((visible&&moving)||(!reduced&&Math.abs(progress-target)>.0001)){
+    frame=requestAnimationFrame(tick);
+  }else last=0;
+}
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){cancelAnimationFrame(frame);frame=0;last=0}
+  else{dirty=true;wake()}
+});
+
+measure();syncMotion();updateText();
+
+/* ======================================================
+   REAL 3D ROOM — NO EXTERNAL MODELS OR TEXTURES
+====================================================== */
+
+try{
+  const THREE=await import('https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js');
+  const mobile=stage.clientWidth<700;
+  const renderer=new THREE.WebGLRenderer({antialias:!mobile,powerPreference:'high-performance'});
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,mobile?1.4:1.7));
+  renderer.setClearColor(0x151a17);
+  renderer.outputColorSpace=THREE.SRGBColorSpace;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure=1.2;
+  renderer.shadowMap.enabled=true;
+  renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  $('#world').append(renderer.domElement);
+
+  const scene=new THREE.Scene();
+  scene.fog=new THREE.Fog(0x151a17,24,60);
+  const camera=new THREE.PerspectiveCamera(38,1,.1,90);
+
+  const room=new THREE.Group();
+  scene.add(room);
+
+  scene.add(new THREE.HemisphereLight(0xe2ebd8,0x4a5145,2.3));
+  const sunlight=new THREE.DirectionalLight(0xffecd0,3.5);
+  sunlight.position.set(-5,9,6);
+  sunlight.castShadow=true;
+  sunlight.shadow.mapSize.set(mobile?1024:2048,mobile?1024:2048);
+  sunlight.shadow.camera.left=-8;
+  sunlight.shadow.camera.right=8;
+  sunlight.shadow.camera.top=8;
+  sunlight.shadow.camera.bottom=-8;
+  sunlight.shadow.normalBias=.04;
+  scene.add(sunlight);
+
+  const fill=new THREE.DirectionalLight(0xbdd8d0,1.0);
+  fill.position.set(6,4,-1);
+  scene.add(fill);
+
+  let seed=46321;
+  function random(){seed=seed*16807%2147483647;return(seed-1)/2147483646}
+
+  // Procedural concrete texture.
+  const textureCanvas=document.createElement('canvas');
+  textureCanvas.width=textureCanvas.height=256;
+  const tc=textureCanvas.getContext('2d');
+  const pixels=tc.createImageData(256,256);
+  for(let i=0;i<pixels.data.length;i+=4){
+    const v=132+random()*33;
+    pixels.data[i]=v;
+    pixels.data[i+1]=v+3;
+    pixels.data[i+2]=v-4;
+    pixels.data[i+3]=255;
+  }
+  tc.putImageData(pixels,0,0);
+  const concreteMap=new THREE.CanvasTexture(textureCanvas);
+  concreteMap.colorSpace=THREE.SRGBColorSpace;
+  concreteMap.wrapS=concreteMap.wrapT=THREE.RepeatWrapping;
+  concreteMap.repeat.set(3,2);
+
+  const mat=(color,roughness=.8)=>new THREE.MeshStandardMaterial({color,roughness});
+  const concrete=new THREE.MeshStandardMaterial({map:concreteMap,color:0xc0c1b7,roughness:1});
+  const wallMat=mat(0xe5e0d0);
+  const sideMat=mat(0xd5d8c4);
+  const woodMat=mat(0xb69265,.65);
+  const darkWood=mat(0x66513b);
+  const sofaMat=mat(0x8e9d79);
+  const cushionMat=mat(0xc5c9b2);
+  const metal=mat(0x333c30,.4);
+  const ceramic=mat(0xc7b99b,.65);
+  const leafMat=mat(0x597949);
+  leafMat.side=THREE.DoubleSide;
+  const brass=mat(0xb9a173,.4);
+  brass.metalness=.45;
+
+  function box(w,h,d,material,x=0,y=0,z=0,parent=room){
+    const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);
+    mesh.position.set(x,y,z);
+    mesh.castShadow=true;
+    mesh.receiveShadow=true;
+    parent.add(mesh);
+    return mesh;
+  }
+  function cylinder(rt,rb,h,material,x,y,z,parent=room,segments=36){
+    const mesh=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,segments),material);
+    mesh.position.set(x,y,z);
+    mesh.castShadow=true;mesh.receiveShadow=true;
+    parent.add(mesh);
+    return mesh;
+  }
+
+  // Physical shell remains throughout the story.
+  box(7.5,.3,6.1,concrete,0,-.22,0);
+  box(7.5,3.75,.22,concrete,0,1.725,-3);
+  box(.22,3.75,6.1,concrete,-3.75,1.725,0);
+
+  // Floating foundation under the cutaway.
+  const foundation=box(7.6,.16,6.2,mat(0x394333),0,-.46,0);
+
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(120,120),mat(0x151a17));
+  ground.rotation.x=-Math.PI/2;
+  ground.position.y=-.58;
+  ground.receiveShadow=true;
+  scene.add(ground);
+
+  // Finished wall layers.
+  const wallFinish=new THREE.Group();
+  room.add(wallFinish);
+  box(7.25,3.62,.04,wallMat,0,1.72,-2.86,wallFinish);
+  box(.04,3.62,5.85,sideMat,-3.60,1.72,0,wallFinish);
+  box(7.25,.09,.06,mat(0xf0eddf),0,.005,-2.80,wallFinish);
+  box(.06,.09,5.82,mat(0xf0eddf),-3.55,.005,0,wallFinish);
+
+  // Floor is installed plank by plank.
+  const planks=[];
+  const plankMats=[];
+  for(let i=0;i<6;i++){
+    plankMats.push(mat(new THREE.Color(0xb69265).multiplyScalar(.86+i*.045),.7));
+  }
+  for(let x=0;x<15;x++){
+    for(let z=0;z<5;z++){
+      const plank=box(.477,.045,1.155,plankMats[(x+z*3)%6],
+        -3.38+x*.483,-.037,-2.32+z*1.166);
+      planks.push({mesh:plank,x,z});
+    }
+  }
+
+  // Exposed engineering routes.
+  const engineering=new THREE.Group();
+  room.add(engineering);
+  const wireMat=new THREE.MeshStandardMaterial({
+    color:0xf0b265,emissive:0x9e5013,emissiveIntensity:.55,roughness:.55
+  });
+  function pipe(points,material,r=.025,parent=engineering){
+    const curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)),false,'centripetal');
+    const mesh=new THREE.Mesh(new THREE.TubeGeometry(curve,64,r,7,false),material);
+    parent.add(mesh);
+    return mesh;
+  }
+  pipe([[-2.9,.35,-2.72],[-2.9,2.95,-2.72],[2.5,2.95,-2.72],[2.5,.45,-2.72]],wireMat);
+  pipe([[-1.1,.45,-2.72],[-1.1,2.68,-2.72],[1.15,2.68,-2.72],[1.15,1.4,-2.72]],wireMat);
+  pipe([[-3.45,.2,1.8],[-3.45,.2,-2.6],[-2.65,.2,-2.6],[-2.65,.7,-2.6]],mat(0x719cb5),.04);
+  pipe([[-3.3,.2,1.8],[-3.3,.2,-2.45],[-2.45,.2,-2.45],[-2.45,.7,-2.45]],mat(0xc48c75),.04);
+  for(const x of [-2.9,2.5,-1.1])box(.17,.22,.06,metal,x,.43,-2.68,engineering);
+  box(.45,.6,.10,metal,-2.9,2.48,-2.67,engineering);
+
+  // Some temporary construction elements.
+  const temporary=new THREE.Group();
+  room.add(temporary);
+  box(1.0,.68,.74,mat(0x9f8a64),1.75,.31,1.4,temporary);
+  box(.7,.42,.55,mat(0xbba17b),2.2,.2,1.9,temporary);
+  for(const x of [-2.6,-2.05]){
+    const rail=box(.055,2.4,.075,metal,x,1.04,-.65,temporary);
+    rail.rotation.z=-.14;
+  }
+  for(let i=0;i<7;i++)box(.56,.055,.075,metal,-2.31+i*.027,.17+i*.3,-.65,temporary);
+
+  // Furniture assembly.
+  const furnishings=new THREE.Group();
+  room.add(furnishings);
+  const pieces=[];
+
+  function piece(group,delay,direction){
+    furnishings.add(group);
+    pieces.push({group,delay,base:group.position.clone(),direction});
+    return group;
+  }
+
+  // Sofa.
+  const sofa=new THREE.Group();
+  sofa.position.set(.25,0,-1.83);
+  box(3.7,.38,1.3,sofaMat,0,.45,0,sofa);
+  box(3.6,.68,.27,sofaMat,0,.89,-.51,sofa);
+  box(.27,.6,1.32,sofaMat,-1.8,.74,0,sofa);
+  box(.27,.6,1.32,sofaMat,1.8,.74,0,sofa);
+  for(let i=0;i<3;i++){
+    box(1.06,.2,.97,cushionMat,-1.08+i*1.08,.72,.03,sofa);
+    box(1.07,.46,.18,sofaMat,-1.08+i*1.08,1,-.31,sofa);
+  }
+  for(const x of [-1.55,1.55])for(const z of [-.43,.43]){
+    cylinder(.045,.035,.25,darkWood,x,.11,z,sofa,10);
+  }
+  const pillow1=box(.54,.54,.19,mat(0xe2d5b9),-1.18,1,.03,sofa);
+  pillow1.rotation.z=.13;
+  const pillow2=box(.47,.46,.18,mat(0xbb8c6e),1.14,.97,.04,sofa);
+  pillow2.rotation.z=-.14;
+  piece(sofa,0,new THREE.Vector3(0,0,-4));
+
+  // Rug.
+  const rugGroup=new THREE.Group();
+  box(4.4,.025,2.65,mat(0xb8bea6),.1,.004,.28,rugGroup);
+  for(let i=0;i<17;i++)box(4.25,.004,.016,mat(0xa8b197),.1,.022,-.95+i*.15,rugGroup);
+  piece(rugGroup,-.12,new THREE.Vector3(0,-.5,0));
+
+  // Coffee table.
+  const table=new THREE.Group();
+  table.position.set(.25,0,.5);
+  cylinder(.83,.83,.09,woodMat,0,.66,0,table,64);
+  for(let i=0;i<3;i++){
+    const a=i/3*Math.PI*2;
+    cylinder(.043,.056,.58,darkWood,Math.cos(a)*.53,.31,Math.sin(a)*.53,table,12);
+  }
+  const book=box(.42,.045,.29,mat(0xe2dfca),-.2,.73,.03,table);
+  book.rotation.y=.2;
+  cylinder(.1,.085,.16,ceramic,.3,.80,-.14,table,24);
+  piece(table,.12,new THREE.Vector3(4,0,3));
+
+  // Framed artwork.
+  const art=new THREE.Group();
+  art.position.set(.3,2.24,-2.69);
+  box(1.83,1.37,.07,darkWood,0,0,0,art);
+  box(1.73,1.27,.025,mat(0xe4dfc9),0,0,.051,art);
+  const shape=new THREE.Mesh(new THREE.CircleGeometry(.37,64),mat(0xa2ae84));
+  shape.position.set(-.19,-.12,.071);
+  art.add(shape);
+  const circle=new THREE.Mesh(new THREE.CircleGeometry(.19,40),mat(0xbb8765));
+  circle.position.set(.39,.26,.076);
+  art.add(circle);
+  box(1.34,.023,.014,mat(0x798b5f),0,-.43,.08,art);
+  piece(art,.06,new THREE.Vector3(0,1.3,-2));
+
+  // Plant.
+  const plant=new THREE.Group();
+  plant.position.set(2.73,0,-1.85);
+  cylinder(.37,.26,.61,ceramic,0,.32,0,plant);
+  cylinder(.31,.31,.018,mat(0x3b412c),0,.635,0,plant);
+  for(let i=0;i<11;i++){
+    const a=i*2.39996;
+    const h=.83+i*.09;
+    const reach=.4+(i%3)*.08;
+    const tip=[Math.cos(a)*reach,h,Math.sin(a)*reach];
+    pipe([[0,.55,0],[Math.cos(a)*.12,h-.15,Math.sin(a)*.12],tip],leafMat,.014,plant);
+    const leaf=new THREE.Mesh(new THREE.SphereGeometry(1,12,8),leafMat);
+    leaf.scale.set(.18,.035,.4);
+    leaf.position.set(...tip);
+    leaf.rotation.set(.35,a,.25);
+    plant.add(leaf);
+  }
+  piece(plant,.20,new THREE.Vector3(3,0,0));
+
+  // Pendant light.
+  const pendant=new THREE.Group();
+  pendant.position.set(.3,0,.1);
+  cylinder(.014,.014,1.05,metal,0,3.02,0,pendant,8);
+  cylinder(.26,.65,.45,brass,0,2.35,0,pendant,48);
+  const diffuser=new THREE.Mesh(
+    new THREE.CylinderGeometry(.56,.56,.022,48),
+    new THREE.MeshStandardMaterial({color:0xffe1a4,emissive:0xffd997,emissiveIntensity:1.2})
+  );
+  diffuser.position.y=2.115;
+  pendant.add(diffuser);
+  piece(pendant,.24,new THREE.Vector3(0,3,0));
+
+  const warmLight=new THREE.PointLight(0xffd49b,0,8,2);
+  warmLight.position.set(.3,2.03,.1);
+  room.add(warmLight);
+
+  // Finished electrical fixtures.
+  const outlets=new THREE.Group();
+  room.add(outlets);
+  for(const x of [-2.9,2.5]){
+    box(.17,.15,.055,mat(0xeae9dc),x,.40,-2.81,outlets);
+    for(const dx of [-.027,.027])box(.012,.021,.006,metal,x+dx,.40,-2.776,outlets);
+  }
+
+  // Construction dust during transitions.
+  const count=mobile?240:550;
+  const particlePositions=new Float32Array(count*3);
+  const particleBase=[];
+  for(let i=0;i<count;i++){
+    const p=[(random()-.5)*8,random()*4.3,(random()-.5)*6.5];
+    particleBase.push(p);
+    particlePositions.set(p,i*3);
+  }
+  const particleGeometry=new THREE.BufferGeometry();
+  particleGeometry.setAttribute('position',new THREE.BufferAttribute(particlePositions,3));
+  const particleMaterial=new THREE.PointsMaterial({
+    color:0xdce9b8,size:.025,transparent:true,opacity:0,depthWrite:false
+  });
+  const particles=new THREE.Points(particleGeometry,particleMaterial);
+  room.add(particles);
+
+  const palettes=[
+    {sofa:0x8e9d79,side:0xd5d8c4,cushion:0xc5c9b2},
+    {sofa:0xb18268,side:0xdfd4c3,cushion:0xdbc7ae},
+    {sofa:0x84959f,side:0xd4dcda,cushion:0xc7d0ca}
+  ];
+  let currentPalette=-1;
+  let width=stage.clientWidth,height=stage.clientHeight;
+  let contextLost=false;
+  const look=new THREE.Vector3();
+
+  renderer.domElement.addEventListener('webglcontextlost',e=>{
+    e.preventDefault();contextLost=true;
+    $('#engine-note').textContent='3D приостановлено системой. Описание и контакты доступны ниже.';
+  });
+  renderer.domElement.addEventListener('webglcontextrestored',()=>{
+    contextLost=false;dirty=true;wake();
+  });
+
+  engine={
+    resize(w,h){
+      width=w;height=h;
+      renderer.setSize(w,h);
+      camera.aspect=w/h;
+      camera.fov=w<700?47:38;
+      camera.updateProjectionMatrix();
+    },
+
+    render(p,t,mouse,paletteIndex){
+      if(contextLost)return;
+
+      const engineeringIn=smooth((p-.18)/.50);
+      const finishesIn=smooth((p-1.05)/.72);
+      const furnitureIn=smooth((p-1.97)/.91);
+
+      engineering.visible=engineeringIn>.005&&finishesIn<.95;
+      engineering.scale.setScalar(Math.max(.001,engineeringIn));
+      engineering.position.y=(1-engineeringIn)*-.6;
+
+      temporary.visible=p<1.25;
+      temporary.position.y=-smooth((p-.65)/.6)*3;
+
+      wallFinish.visible=finishesIn>.001;
+      wallFinish.scale.y=Math.max(.001,finishesIn);
+
+      for(let i=0;i<planks.length;i++){
+        const plank=planks[i];
+        const delay=(plank.x+plank.z*.6)/22;
+        const amount=smooth((p-1.10-delay*.42)/.55);
+        plank.mesh.visible=amount>.001;
+        plank.mesh.position.y=-.037+(1-amount)*(1.5+plank.x*.04);
+        plank.mesh.rotation.z=(1-amount)*.16;
+        plank.mesh.scale.z=Math.max(.001,amount);
+      }
+
+      for(const piece of pieces){
+        const a=smooth((p-2.0-piece.delay)/(.75-piece.delay*.3));
+        piece.group.visible=a>.001;
+        piece.group.position.copy(piece.base).addScaledVector(piece.direction,1-a);
+        piece.group.scale.setScalar(Math.max(.001,.82+a*.18));
+      }
+      outlets.visible=finishesIn>.95;
+
+      warmLight.intensity=furnitureIn*11;
+      diffuser.material.emissiveIntensity=.2+furnitureIn*1.8;
+
+      const dust=(Math.sin(clamp(p/3)*Math.PI)**2)*.22;
+      particleMaterial.opacity=dust*(1-furnitureIn);
+      const pos=particleGeometry.attributes.position;
+      for(let i=0;i<count;i++){
+        const b=particleBase[i];
+        pos.setXYZ(i,b[0]+Math.sin(t*.25+i)*.12,b[1]+Math.sin(t*.4+i*2)*.16,b[2]);
+      }
+      pos.needsUpdate=true;
+
+      if(currentPalette!==paletteIndex){
+        const c=palettes[paletteIndex];
+        sofaMat.color.set(c.sofa);
+        sideMat.color.set(c.side);
+        cushionMat.color.set(c.cushion);
+        currentPalette=paletteIndex;
+      }
+
+      const narrow=width<700;
+      const orbit=-.18+Math.sin(p*.9)*.19;
+      const radius=narrow?15.8:13.8;
+      camera.position.set(
+        Math.sin(.56+orbit)*radius+mouse.x*.22,
+        narrow?10.7:8.7,
+        Math.cos(.56+orbit)*radius
+      );
+
+      // Offset the composition to reserve space for the narrative.
+      look.set(narrow?0:-2.4,narrow?2.7:1.15,0);
+      camera.lookAt(look);
+      camera.rotateX(mouse.y*.008);
+      room.rotation.y=Math.sin(t*.13)*.009;
+
+      renderer.render(scene,camera);
+    }
+  };
+
+  engine.resize(stage.clientWidth,stage.clientHeight);
+  $('#loader').classList.add('done');
+  $('#engine-note').textContent='LIVE 3D / Иллюстративный интерьер / Палитру можно изменить';
+  dirty=true;wake();
+
+}catch(error){
+  console.error(error);
+  $('.loader-icon').style.display='none';
+  $('#loader-text').textContent='Не удалось запустить 3D. Проверьте интернет и поддержку WebGL. Описание и форма ниже работают без 3D.';
+  $('#engine-note').textContent='3D недоступно';
+}
+</script>
+</body>
+</html>

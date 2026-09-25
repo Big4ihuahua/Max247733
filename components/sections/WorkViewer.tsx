@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { gsap, prefersReducedMotion } from "@/lib/gsap";
 import { useIsoLayoutEffect } from "@/hooks/useIsoLayoutEffect";
-import { getLenis } from "@/lib/lenis";
+import { lockScroll, unlockScroll } from "@/lib/lenis";
 import { pad2 } from "@/lib/format";
-import { DEMO_SANDBOX, workSrc, works } from "@/data/works";
+import { DEMO_SANDBOX, workSrc, type Demo } from "@/data/works";
 import { ArrowIcon } from "@/components/ui/Icons";
 
 type Device = "desktop" | "tablet" | "phone";
@@ -16,9 +16,9 @@ const DEVICES: { id: Device; label: string; w: number; h: number }[] = [
   { id: "phone", label: "Телефон", w: 390, h: 844 },
 ];
 
-type Props = { index: number; onNavigate: (index: number) => void; onClose: () => void };
+type Props = { items: Demo[]; index: number; onNavigate: (index: number) => void; onClose: () => void };
 
-export function WorkViewer({ index, onNavigate, onClose }: Props) {
+export function WorkViewer({ items: works, index, onNavigate, onClose }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const closing = useRef(false);
@@ -32,8 +32,7 @@ export function WorkViewer({ index, onNavigate, onClose }: Props) {
 
   useIsoLayoutEffect(() => {
     const el = ref.current!;
-    getLenis()?.stop();
-    document.documentElement.classList.add("modal-open");
+    lockScroll();
     if (!prefersReducedMotion()) {
       gsap.fromTo(el.querySelector(".viewer-backdrop"), { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.5, ease: "power2.out" });
       gsap.fromTo(
@@ -51,8 +50,8 @@ export function WorkViewer({ index, onNavigate, onClose }: Props) {
     const focusCall = gsap.delayedCall(0.35, () => el.querySelector<HTMLButtonElement>(".viewer-close")?.focus({ preventScroll: true }));
     return () => {
       focusCall.kill();
-      getLenis()?.start();
-      document.documentElement.classList.remove("modal-open", "cursor-off");
+      unlockScroll();
+      document.documentElement.classList.remove("cursor-off");
     };
   }, []);
 
@@ -77,12 +76,14 @@ export function WorkViewer({ index, onNavigate, onClose }: Props) {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" && e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+      // Capture phase + stop: a case modal underneath must not also react to Escape.
+      e.stopPropagation();
       if (e.key === "Escape") close();
-      else if (e.key === "ArrowRight") onNavigate(next);
-      else if (e.key === "ArrowLeft") onNavigate(prev);
+      else onNavigate(e.key === "ArrowRight" ? next : prev);
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
   });
 
   const frameStyle =

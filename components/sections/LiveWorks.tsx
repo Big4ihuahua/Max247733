@@ -1,41 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { DEMO_SANDBOX, workSrc, workThumb, works } from "@/data/works";
+import { workThumb, works } from "@/data/works";
 import { pad2 } from "@/lib/format";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { ArrowIcon } from "@/components/ui/Icons";
+import { LIVE_PREVIEW_QUERY, LiveFrame } from "@/components/ui/LiveFrame";
 import { WorkViewer } from "./WorkViewer";
 
-const LIVE_QUERY = "(min-width: 1024px) and (pointer: fine) and (prefers-reduced-motion: no-preference)";
 const DWELL_MS = 550;
-
-/** Scaled, non-interactive live preview of the active demo inside the browser frame. */
-function LivePreview({ slug, onReady }: { slug: string; onReady: () => void }) {
-  const [shown, setShown] = useState(false);
-  return (
-    <iframe
-      className={`stage-live ${shown ? "is-on" : ""}`}
-      src={workSrc(slug)}
-      title=""
-      aria-hidden="true"
-      tabIndex={-1}
-      sandbox={DEMO_SANDBOX}
-      onLoad={() => {
-        // Give the demo's canvas a moment to paint its first frames before revealing it.
-        window.setTimeout(() => {
-          setShown(true);
-          onReady();
-        }, 700);
-      }}
-    />
-  );
-}
 
 export function LiveWorks() {
   const root = useRef<HTMLElement>(null);
-  const screen = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
   const [seen, setSeen] = useState<Set<number>>(() => new Set([0]));
   const [liveSlug, setLiveSlug] = useState<string | null>(null);
@@ -43,7 +20,7 @@ export function LiveWorks() {
   const [inView, setInView] = useState(false);
   const [viewer, setViewer] = useState<number | null>(null);
   const lastTrigger = useRef<HTMLElement | null>(null);
-  const canLive = useMediaQuery(LIVE_QUERY);
+  const canLive = useMediaQuery(LIVE_PREVIEW_QUERY);
   const w = works[active];
 
   const activate = useCallback((i: number) => {
@@ -66,14 +43,6 @@ export function LiveWorks() {
     const id = window.setTimeout(() => setLiveSlug(works[active].slug), DWELL_MS);
     return () => window.clearTimeout(id);
   }, [active, canLive, inView, viewer]);
-
-  useEffect(() => {
-    const el = screen.current;
-    if (!el) return;
-    const ro = new ResizeObserver(([entry]) => el.style.setProperty("--s", String(entry.contentRect.width / 1440)));
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
 
   const open = (i: number, trigger: HTMLElement | null) => {
     lastTrigger.current = trigger;
@@ -157,7 +126,7 @@ export function LiveWorks() {
                 <span className="stage-url">lumen.studio/works/{w.slug}</span>
                 <span className={`stage-status ${liveReady ? "is-live" : ""}`}>{liveReady ? "live" : "превью"}</span>
               </div>
-              <div ref={screen} className="stage-screen" onClick={() => open(active, null)} data-cursor="view" data-cursor-label="Открыть">
+              <div className="stage-screen" onClick={() => open(active, null)} data-cursor="view" data-cursor-label="Открыть">
                 {works.map((item, i) =>
                   seen.has(i) ? (
                     <img
@@ -171,7 +140,7 @@ export function LiveWorks() {
                     />
                   ) : null,
                 )}
-                {liveSlug && <LivePreview key={liveSlug} slug={liveSlug} onReady={() => setLiveReady(true)} />}
+                {liveSlug && <LiveFrame key={liveSlug} slug={liveSlug} onReady={() => setLiveReady(true)} />}
                 <span className="stage-open">
                   Открыть демо <ArrowIcon />
                 </span>
@@ -197,7 +166,7 @@ export function LiveWorks() {
         </div>
       </div>
 
-      {viewer !== null && <WorkViewer index={viewer} onNavigate={navigate} onClose={close} />}
+      {viewer !== null && <WorkViewer items={works} index={viewer} onNavigate={navigate} onClose={close} />}
     </section>
   );
 }
