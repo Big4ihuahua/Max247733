@@ -9,15 +9,8 @@
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
-  "services": [
-    {
-      "binding": "WORKER_SELF_REFERENCE",
-      "service": "max247733"
-    }
-  ],
-  "images": {
-    "binding": "IMAGES"
-  },
+  // No IMAGES or WORKER_SELF_REFERENCE bindings: the site uses neither next/image optimisation nor ISR,
+  // and OpenNext treats both as optional.
   "observability": {
     "enabled": true
   }
