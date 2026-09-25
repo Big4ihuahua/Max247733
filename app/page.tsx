@@ -13,6 +13,7 @@ import { Manifesto } from "@/components/sections/Manifesto";
 import { Services } from "@/components/sections/Services";
 import { Process } from "@/components/sections/Process";
 import { Cases } from "@/components/sections/Cases";
+import { LiveWorks } from "@/components/sections/LiveWorks";
 import { Tech } from "@/components/sections/Tech";
 import { Stats } from "@/components/sections/Stats";
 import { Testimonials } from "@/components/sections/Testimonials";
@@ -34,6 +35,7 @@ export default function Home() {
         <Services />
         <Process />
         <Cases />
+        <LiveWorks />
         <Tech />
         <Stats />
         <Testimonials />

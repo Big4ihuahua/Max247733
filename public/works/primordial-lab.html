@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRIMORDIAL LAB // WORKSTATION V6</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #030407;
+            --panel: rgba(10, 13, 22, 0.82);
+            --border: rgba(255, 255, 255, 0.08);
+            --border-focus: rgba(0, 255, 170, 0.4);
+            --accent: #00ffaa;
+            --danger: #ff0055;
+            --text-dim: #707589;
+            --text-main: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: var(--bg);
+            font-family: 'Fira Code', monospace;
+            color: var(--text-main);
+        }
+
+        #viewport {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        /* Виньетка */
+        .lens-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: radial-gradient(circle at center, transparent 50%, rgba(2, 3, 6, 0.75) 100%);
+            box-shadow: inset 0 0 120px rgba(0,0,0,0.8);
+        }
+
+        /* UI КОНТЕЙНЕРЫ */
+        .hud-layer {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 340px 1fr 340px;
+            grid-template-rows: auto 1fr auto;
+            gap: 15px;
+            transition: opacity 0.3s;
+        }
+
+        .hud-hidden {
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
+        .interactive {
+            pointer-events: auto;
+        }
+
+        /* Стиль стеклянных панелей */
+        .glass-panel {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            backdrop-filter: blur(20px);
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .glass-panel::-webkit-scrollbar {
+            width: 4px;
+        }
+        .glass-panel::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.15);
+            border-radius: 4px;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 12px;
+            letter-spacing: 2px;
+            color: var(--accent);
+            text-transform: uppercase;
+        }
+
+        /* Группы элементов управления */
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .control-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .control-label span.val {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        /* Кастомные слайдеры */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 2px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--accent);
+            transition: 0.1s transform;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.3);
+        }
+
+        /* Селекторы и кнопки */
+        select, .btn {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 8px 12px;
+            font-family: 'Fira Code', monospace;
+            font-size: 11px;
+            border-radius: 4px;
+            cursor: pointer;
+            outline: none;
+            transition: 0.2s all;
+        }
+
+        select option {
+            background: #0d1117;
+            color: #fff;
+        }
+
+        .btn:hover {
+            border-color: var(--accent);
+            background: rgba(0, 255, 170, 0.08);
+            color: var(--accent);
+        }
+
+        .btn.active {
+            background: var(--accent);
+            color: #000;
+            font-weight: 700;
+            border-color: var(--accent);
+        }
+
+        .btn-danger:hover {
+            border-color: var(--danger);
+            background: rgba(255, 0, 85, 0.1);
+            color: var(--danger);
+        }
+
+        .grid-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        /* Матрица ДНК */
+        .matrix-table {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 4px;
+            background: rgba(0,0,0,0.3);
+            padding: 6px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .m-cell {
+            aspect-ratio: 1;
+            display: grid;
+            place-items: center;
+            font-size: 9px;
+            border-radius: 2px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .m-cell:hover {
+            transform: scale(1.15);
+            z-index: 10;
+            box-shadow: 0 0 8px #fff;
+        }
+
+        /* Плашка инспектора (микроскоп) */
+        .inspector-badge {
+            background: rgba(0, 255, 170, 0.05);
+            border: 1px solid var(--accent);
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        /* Нижний статус-бар */
+        footer {
+            grid-column: 1 / 4;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 10px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+            padding: 0 10px;
+        }
+
+        .keyboard-hints span {
+            color: var(--accent);
+        }
+
+        /* Переключатель свитчей */
+        .switch-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+        }
+
+        input[type="checkbox"] {
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="viewport"></canvas>
+    <div class="lens-overlay"></div>
+
+    <div class="hud-layer" id="hud">
+        
+        <!-- ЛЕВАЯ ПАНЕЛЬ: Физика и ДНК -->
+        <div class="glass-panel interactive">
+            <div class="panel-header">
+                <span>01 // ФИЗИКА ВСЕЛЕННОЙ</span>
+                <span id="fps-meter">60 FPS</span>
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">ЧИСЛО АТОМОВ: <span class="val" id="lbl-count">3600</span></div>
+                <input type="range" id="param-count" min="600" max="6000" step="300" value="3600">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">ВЯЗКОСТЬ СРЕДЫ: <span class="val" id="lbl-friction">0.85</span></div>
+                <input type="range" id="param-friction" min="0.50" max="0.99" step="0.01" value="0.85">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">РАДИУС ВЗАИМОДЕЙСТВИЯ (R_max): <span class="val" id="lbl-rmax">90</span></div>
+                <input type="range" id="param-rmax" min="30" max="180" step="5" value="90">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">ЯДЕРНОЕ ОТТАЛКИВАНИЕ (R_min): <span class="val" id="lbl-rmin">18</span></div>
+                <input type="range" id="param-rmin" min="5" max="40" step="1" value="18">
+            </div>
+
+            <div class="switch-row">
+                <span>БЕСКОНЕЧНЫЙ ТОР (СКВОЗНЫЕ СТЕНЫ)</span>
+                <input type="checkbox" id="param-wrap" checked>
+            </div>
+
+            <div class="panel-header" style="margin-top: 10px;">
+                <span>02 // СИЛОВАЯ МАТРИЦА ДНК</span>
+                <span id="dna-name">КЛЕТКИ</span>
+            </div>
+
+            <div class="matrix-table" id="matrix-grid"></div>
+
+            <div class="control-group" id="cell-editor" style="display: none; background: rgba(255,255,255,0.03); padding: 8px; border-radius: 4px;">
+                <div class="control-label">СВЯЗЬ <span id="cell-pair">A -> B</span>: <span class="val" id="cell-val">0.00</span></div>
+                <input type="range" id="cell-slider" min="-1" max="1" step="0.05" value="0">
+            </div>
+
+            <div class="grid-buttons">
+                <button class="btn" onclick="randomizePhysics()">МУТАЦИЯ ДНК [R]</button>
+                <button class="btn btn-danger" onclick="resetParticles()">СБРОС МАТЕРИИ [C]</button>
+            </div>
+        </div>
+
+        <!-- ЦЕНТРАЛЬНАЯ ВЕРХНЯЯ ЧАСТЬ (Пресеты) -->
+        <div style="display: flex; justify-content: center; align-items: flex-start; gap: 8px;" class="interactive">
+            <button class="btn active preset-btn" onclick="applyPreset(0, this)">МИТОЗ КЛЕТОК</button>
+            <button class="btn preset-btn" onclick="applyPreset(1, this)">ХИЩНИКИ & СТАИ</button>
+            <button class="btn preset-btn" onclick="applyPreset(2, this)">БИО-ЗМЕИ</button>
+            <button class="btn preset-btn" onclick="applyPreset(3, this)">КРИСТАЛЛИЗАЦИЯ</button>
+            <button class="btn preset-btn" onclick="applyPreset(4, this)">ГЛИЦЕРИНОВЫЙ ХАОС</button>
+        </div>
+
+        <!-- ПРАВАЯ ПАНЕЛЬ: Оптика и Визуализация -->
+        <div class="glass-panel interactive">
+            <div class="panel-header">
+                <span>03 // ОПТИКА И РЕНДЕР</span>
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">ЦВЕТОВАЯ ПАЛИТРА</div>
+                <select id="opt-palette" onchange="changePalette(this.value)">
+                    <option value="cyber">CYBERPUNK NEON</option>
+                    <option value="bio">DEEP-SEA BIOLUMINESCENCE</option>
+                    <option value="thermal">THERMAL SPECTRUM</option>
+                    <option value="toxic">ACID MONOCHROME</option>
+                    <option value="cosmic">COSMIC DUST</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">ДЛИНА ШЛЕЙФА (PHOSPHOR TRAIL): <span class="val" id="lbl-trails">0.35</span></div>
+                <input type="range" id="opt-trails" min="0.05" max="0.95" step="0.05" value="0.35">
+            </div>
+
+            <div class="control-group">
+                <div class="control-label">РАДИУС СВЕЧЕНИЯ ЯДРА: <span class="val" id="lbl-psize">2.2</span></div>
+                <input type="range" id="opt-psize" min="1.0" max="6.0" step="0.2" value="2.2">
+            </div>
+
+            <div class="switch-row">
+                <span>АДДИТИВНЫЙ ФОТОННЫЙ BLOOM</span>
+                <input type="checkbox" id="opt-bloom" checked>
+            </div>
+
+            <div class="switch-row">
+                <span>МОЛЕКУЛЯРНЫЕ СВЯЗИ (BOND LINES)</span>
+                <input type="checkbox" id="opt-bonds">
+            </div>
+
+            <div class="panel-header" style="margin-top: 10px;">
+                <span>04 // ИНСТРУМЕНТ КУРСОРА</span>
+            </div>
+
+            <div class="grid-buttons">
+                <button class="btn tool-btn active" onclick="setTool('vortex', this)">ВИХРЬ (TORNADO)</button>
+                <button class="btn tool-btn" onclick="setTool('attract', this)">ГРАВИТАЦИЯ</button>
+                <button class="btn tool-btn" onclick="setTool('repel', this)">РАЗРЫВ</button>
+                <button class="btn tool-btn" onclick="setTool('brush', this)">КИСТЬ ЖИЗНИ</button>
+            </div>
+
+            <div class="control-group" id="brush-color-picker" style="display: none;">
+                <div class="control-label">ВИД ЧАСТИЦ КИСТИ</div>
+                <select id="opt-brush-type">
+                    <option value="0">ВИД 0 (ALPHA)</option>
+                    <option value="1">ВИД 1 (BETA)</option>
+                    <option value="2">ВИД 2 (GAMMA)</option>
+                    <option value="3">ВИД 3 (DELTA)</option>
+                    <option value="4">ВИД 4 (EPSILON)</option>
+                    <option value="5">ВИД 5 (ZETA)</option>
+                </select>
+            </div>
+
+            <div class="panel-header" style="margin-top: 10px;">
+                <span>05 // ИНСПЕКТОР ОРГАНИЗМА</span>
+            </div>
+
+            <div class="inspector-badge" id="inspector-data">
+                <div>СТАТУС: КЛИКНИ ПО АТОМУ В МИРЕ</div>
+                <div>СКОРОСТЬ: 0.000 // КИНЕТИКА: 0.00</div>
+                <div>СОСЕДЕЙ В КЛАСТЕРЕ: 0</div>
+            </div>
+        </div>
+
+        <!-- ФУТЕР -->
+        <footer class="interactive">
+            <div class="keyboard-hints">
+                [<span>ПРОБЕЛ</span>] ПАУЗА // [<span>R</span>] МУТАЦИЯ // [<span>C</span>] ПЕРЕМЕШАТЬ // [<span>H</span>] СКРЫТЬ ИНТЕРФЕЙС
+            </div>
+            <div>PRIMORDIAL LIFE ENGINE // SPATIAL GRID O(N) ACCELERATED</div>
+        </footer>
+    </div>
+
+    <script>
+        /* ========================================================
+           1. ПАЛИТРЫ ЦВЕТОВ
+           ======================================================== */
+        const PALETTES = {
+            cyber: ['#ff0055', '#00ffaa', '#00e1ff', '#ffe600', '#b533ff', '#ffffff'],
+            bio: ['#0d5c75', '#1995ad', '#a1d6e2', '#f1f1f2', '#00ffa2', '#45b69c'],
+            thermal: ['#0000ff', '#4b0082', '#9400d3', '#ff1493', '#ff4500', '#ffff00'],
+            toxic: ['#1b4332', '#2d6a4f', '#40916c', '#52b788', '#74c69d', '#d8f3dc'],
+            cosmic: ['#ff7b00', '#ff006e', '#8338ec', '#3a86ff', '#06d6a0', '#ffbe0b']
+        };
+
+        let currentPalette = PALETTES.cyber;
+        const NUM_TYPES = 6;
+
+        /* ========================================================
+           2. ПРЕСЕТЫ ДНК
+           ======================================================== */
+        const PRESETS = [
+            {
+                name: "МИТОЗ КЛЕТОК",
+                matrix: [
+                    [ 0.4, -0.6, -0.3,  0.2, -0.8,  0.1],
+                    [-0.4,  0.8,  0.5, -0.7,  0.2,  0.3],
+                    [-0.3,  0.3,  0.7, -0.2, -0.5,  0.4],
+                    [ 0.5, -0.5, -0.2,  0.6, -0.3, -0.6],
+                    [-0.7,  0.2, -0.4, -0.1,  0.9,  0.2],
+                    [ 0.2,  0.4,  0.2, -0.5,  0.3, -0.3]
+                ]
+            },
+            {
+                name: "ХИЩНИКИ & СТАИ",
+                matrix: [
+                    [ 0.2,  1.0, -0.6,  0.0, -0.7,  0.0],
+                    [-1.0,  0.3,  0.4, -0.2,  0.0,  0.5],
+                    [ 0.0, -0.6,  0.4,  0.8, -0.2,  0.0],
+                    [ 0.6,  0.0, -0.8,  0.2,  0.6, -0.4],
+                    [-0.8,  0.0,  0.0, -0.6,  0.5,  0.3],
+                    [ 0.0, -0.4,  0.3,  0.3, -0.5,  0.1]
+                ]
+            },
+            {
+                name: "БИО-ЗМЕИ",
+                matrix: [
+                    [ 0.3,  0.8, -0.9,  0.0,  0.0,  0.2],
+                    [-0.8,  0.5,  0.7, -0.3,  0.0,  0.0],
+                    [ 0.0, -0.7,  0.6,  0.8, -0.5,  0.0],
+                    [ 0.0,  0.0, -0.8,  0.4,  0.7, -0.2],
+                    [-0.4,  0.0,  0.0, -0.7,  0.5,  0.6],
+                    [ 0.5, -0.3,  0.0,  0.0, -0.6,  0.3]
+                ]
+            },
+            {
+                name: "КРИСТАЛЛИЗАЦИЯ",
+                matrix: [
+                    [ 0.9, -0.8,  0.1, -0.1,  0.2, -0.3],
+                    [-0.8,  0.9, -0.8,  0.1, -0.1,  0.2],
+                    [ 0.1, -0.8,  0.9, -0.8,  0.1, -0.1],
+                    [-0.1,  0.1, -0.8,  0.9, -0.8,  0.1],
+                    [ 0.2, -0.1,  0.1, -0.8,  0.9, -0.8],
+                    [-0.3,  0.2, -0.1,  0.1, -0.8,  0.9]
+                ]
+            },
+            {
+                name: "ГЛИЦЕРИНОВЫЙ ХАОС",
+                matrix: [
+                    [-0.5,  0.6, -0.7,  0.8, -0.9,  1.0],
+                    [ 1.0, -0.5,  0.6, -0.7,  0.8, -0.9],
+                    [-0.9,  1.0, -0.5,  0.6, -0.7,  0.8],
+                    [ 0.8, -0.9,  1.0, -0.5,  0.6, -0.7],
+                    [-0.7,  0.8, -0.9,  1.0, -0.5,  0.6],
+                    [ 0.6, -0.7,  0.8, -0.9,  1.0, -0.5]
+                ]
+            }
+        ];
+
+        /* ========================================================
+           3. ДВИЖОК СИМУЛЯЦИИ (SPATIAL GRID PARTITIONING)
+           ======================================================== */
+        const canvas = document.getElementById('viewport');
+        const ctx = canvas.getContext('2d');
+
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        let numParticles = 3600;
+        let friction = 0.85;
+        let rMax = 90.0;
+        let rMin = 18.0;
+        let wrap = true;
+
+        // Память симуляции
+        let posX = new Float32Array(numParticles);
+        let posY = new Float32Array(numParticles);
+        let velX = new Float32Array(numParticles);
+        let velY = new Float32Array(numParticles);
+        let types = new Uint8Array(numParticles);
+
+        let matrix = [];
+        let isPaused = false;
+
+        // Spatial Grid Структура
+        let cellSize = rMax;
+        let gridCols = 0, gridRows = 0;
+        let head = new Int32Array(0);
+        let next = new Int32Array(0);
+
+        function resizeGrid() {
+            cellSize = rMax;
+            gridCols = Math.ceil(width / cellSize);
+            gridRows = Math.ceil(height / cellSize);
+            head = new Int32Array(gridCols * gridRows);
+            next = new Int32Array(numParticles);
+        }
+
+        function initParticles(count) {
+            numParticles = count;
+            posX = new Float32Array(numParticles);
+            posY = new Float32Array(numParticles);
+            velX = new Float32Array(numParticles);
+            velY = new Float32Array(numParticles);
+            types = new Uint8Array(numParticles);
+            resizeGrid();
+
+            for (let i = 0; i < numParticles; i++) {
+                posX[i] = Math.random() * width;
+                posY[i] = Math.random() * height;
+                velX[i] = 0;
+                velY[i] = 0;
+                types[i] = Math.floor(Math.random() * NUM_TYPES);
+            }
+        }
+
+        /* ========================================================
+           4. ВЫЧИСЛЕНИЯ ФИЗИКИ С УСКОРЕНИЕМ СЕТКОЙ
+           ======================================================== */
+        function stepSimulation() {
+            if (isPaused) return;
+
+            // Очистка и заполнение сетки разбиения пространства
+            head.fill(-1);
+            for (let i = 0; i < numParticles; i++) {
+                let cx = Math.floor(posX[i] / cellSize);
+                let cy = Math.floor(posY[i] / cellSize);
+                if (wrap) {
+                    cx = (cx % gridCols + gridCols) % gridCols;
+                    cy = (cy % gridRows + gridRows) % gridRows;
+                } else {
+                    cx = Math.max(0, Math.min(gridCols - 1, cx));
+                    cy = Math.max(0, Math.min(gridRows - 1, cy));
+                }
+                const cellIdx = cy * gridCols + cx;
+                next[i] = head[cellIdx];
+                head[cellIdx] = i;
+            }
+
+            const rMaxSq = rMax * rMax;
+
+            // Расчет взаимодействий через 9 соседних ячеек сетки
+            for (let i = 0; i < numParticles; i++) {
+                let fx = 0, fy = 0;
+                const typeA = types[i];
+                const px = posX[i];
+                const py = posY[i];
+
+                const cx = Math.floor(px / cellSize);
+                const cy = Math.floor(py / cellSize);
+
+                for (let ox = -1; ox <= 1; ox++) {
+                    for (let oy = -1; oy <= 1; oy++) {
+                        let nx = cx + ox;
+                        let ny = cy + oy;
+
+                        if (wrap) {
+                            nx = (nx % gridCols + gridCols) % gridCols;
+                            ny = (ny % gridRows + gridRows) % gridRows;
+                        } else {
+                            if (nx < 0 || nx >= gridCols || ny < 0 || ny >= gridRows) continue;
+                        }
+
+                        const targetCell = ny * gridCols + nx;
+                        let j = head[targetCell];
+
+                        while (j !== -1) {
+                            if (i !== j) {
+                                let dx = posX[j] - px;
+                                let dy = posY[j] - py;
+
+                                if (wrap) {
+                                    if (dx > width * 0.5) dx -= width;
+                                    if (dx < -width * 0.5) dx += width;
+                                    if (dy > height * 0.5) dy -= height;
+                                    if (dy < -height * 0.5) dy += height;
+                                }
+
+                                const d2 = dx * dx + dy * dy;
+
+                                if (d2 > 0 && d2 < rMaxSq) {
+                                    const d = Math.sqrt(d2);
+                                    let force = 0;
+
+                                    if (d < rMin) {
+                                        // Закон ядерного отталкивания
+                                        force = (d / rMin - 1.0);
+                                    } else {
+                                        // Химическое притяжение матрицы
+                                        const attraction = matrix[typeA][types[j]];
+                                        force = attraction * (1.0 - Math.abs(2.0 * d - rMax - rMin) / (rMax - rMin));
+                                    }
+
+                                    fx += (dx / d) * force;
+                                    fy += (dy / d) * force;
+                                }
+                            }
+                            j = next[j];
+                        }
+                    }
+                }
+
+                // Интерактивное воздействие курсора
+                if (mouse.active) {
+                    let mdx = mouse.x - px;
+                    let mdy = mouse.y - py;
+                    if (wrap) {
+                        if (mdx > width * 0.5) mdx -= width;
+                        if (mdx < -width * 0.5) mdx += width;
+                        if (mdy > height * 0.5) mdy -= height;
+                        if (mdy < -height * 0.5) mdy += height;
+                    }
+                    const mDist2 = mdx * mdx + mdy * mdy;
+                    if (mDist2 < 250 * 250 && mDist2 > 0) {
+                        const mDist = Math.sqrt(mDist2);
+                        if (currentTool === 'attract') {
+                            fx += (mdx / mDist) * 3.5;
+                            fy += (mdy / mDist) * 3.5;
+                        } else if (currentTool === 'repel') {
+                            fx -= (mdx / mDist) * 5.0;
+                            fy -= (mdy / mDist) * 5.0;
+                        } else if (currentTool === 'vortex') {
+                            fx += (-mdy / mDist) * 4.0;
+                            fy += (mdx / mDist) * 4.0;
+                        }
+                    }
+                }
+
+                // Интегрирование Эйлера
+                velX[i] = (velX[i] + fx * 0.45) * friction;
+                velY[i] = (velY[i] + fy * 0.45) * friction;
+
+                posX[i] += velX[i];
+                posY[i] += velY[i];
+
+                // Границы
+                if (wrap) {
+                    if (posX[i] < 0) posX[i] += width;
+                    if (posX[i] >= width) posX[i] -= width;
+                    if (posY[i] < 0) posY[i] += height;
+                    if (posY[i] >= height) posY[i] -= height;
+                } else {
+                    if (posX[i] < 5) { posX[i] = 5; velX[i] *= -1; }
+                    if (posX[i] > width - 5) { posX[i] = width - 5; velX[i] *= -1; }
+                    if (posY[i] < 5) { posY[i] = 5; velY[i] *= -1; }
+                    if (posY[i] > height - 5) { posY[i] = height - 5; velY[i] *= -1; }
+                }
+            }
+        }
+
+        /* ========================================================
+           5. РЕНДЕРИНГ И ОПТИКА
+           ======================================================== */
+        let trailPersistence = 0.35;
+        let particleSize = 2.2;
+        let useBloom = true;
+        let useBonds = false;
+        let trackedParticle = -1;
+
+        function render() {
+            // Эффект послесвечения люминофора (длина хвоста)
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.fillStyle = `rgba(3, 4, 7, ${1.0 - trailPersistence})`;
+            ctx.fillRect(0, 0, width, height);
+
+            if (useBloom) {
+                ctx.globalCompositeOperation = 'lighter';
+            }
+
+            // Отрисовка химических связей (Bond lines)
+            if (useBonds) {
+                ctx.lineWidth = 0.5;
+                for (let i = 0; i < numParticles; i += 3) {
+                    const cx = Math.floor(posX[i] / cellSize);
+                    const cy = Math.floor(posY[i] / cellSize);
+                    const cellIdx = cy * gridCols + cx;
+                    let j = head[cellIdx];
+                    while (j !== -1) {
+                        if (i < j) {
+                            const dx = posX[j] - posX[i];
+                            const dy = posY[j] - posY[i];
+                            const d = Math.hypot(dx, dy);
+                            if (d < rMin * 1.5) {
+                                ctx.strokeStyle = `rgba(255,255,255,${0.3 * (1 - d / (rMin * 1.5))})`;
+                                ctx.beginPath();
+                                ctx.moveTo(posX[i], posY[i]);
+                                ctx.lineTo(posX[j], posY[j]);
+                                ctx.stroke();
+                            }
+                        }
+                        j = next[j];
+                    }
+                }
+            }
+
+            // Отрисовка ядер атомов
+            for (let i = 0; i < numParticles; i++) {
+                ctx.fillStyle = currentPalette[types[i]];
+                ctx.beginPath();
+                ctx.arc(posX[i], posY[i], particleSize, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Прицел микроскопа за захваченной частицей
+            if (trackedParticle >= 0 && trackedParticle < numParticles) {
+                const tx = posX[trackedParticle];
+                const ty = posY[trackedParticle];
+
+                ctx.strokeStyle = '#00ffaa';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.arc(tx, ty, 16, 0, Math.PI * 2);
+                ctx.moveTo(tx - 22, ty); ctx.lineTo(tx + 22, ty);
+                ctx.moveTo(tx, ty - 22); ctx.lineTo(tx, ty + 22);
+                ctx.stroke();
+
+                // Обновление данных инспектора
+                const spd = Math.hypot(velX[trackedParticle], velY[trackedParticle]);
+                document.getElementById('inspector-data').innerHTML = `
+                    <div>АТОМ: #${trackedParticle} // ВИД: [${types[trackedParticle]}]</div>
+                    <div>СКОРОСТЬ: ${spd.toFixed(3)} // КИНЕТИКА: ${(spd*spd*0.5).toFixed(3)}</div>
+                    <div>ПОЗИЦИЯ: X:${tx.toFixed(0)} Y:${ty.toFixed(0)}</div>
+                `;
+            }
+        }
+
+        /* ========================================================
+           6. ИНТЕРФЕЙС И ВЗАИМОДЕЙСТВИЕ
+           ======================================================== */
+        let mouse = { x: 0, y: 0, active: false };
+        let currentTool = 'vortex'; // vortex, attract, repel, brush
+
+        window.addEventListener('pointerdown', (e) => {
+            if (e.target.closest('.interactive')) return;
+            mouse.active = true;
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+
+            if (currentTool === 'brush') {
+                spawnBrushCluster(e.clientX, e.clientY);
+            } else {
+                // Выбор частицы для инспекции кликом
+                let closest = -1, minDist = 25;
+                for (let i = 0; i < numParticles; i++) {
+                    const d = Math.hypot(posX[i] - e.clientX, posY[i] - e.clientY);
+                    if (d < minDist) {
+                        minDist = d;
+                        closest = i;
+                    }
+                }
+                trackedParticle = closest;
+            }
+        });
+
+        window.addEventListener('pointermove', (e) => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+            if (mouse.active && currentTool === 'brush') {
+                spawnBrushCluster(e.clientX, e.clientY);
+            }
+        });
+
+        window.addEventListener('pointerup', () => mouse.active = false);
+
+        function spawnBrushCluster(x, y) {
+            const bType = parseInt(document.getElementById('opt-brush-type').value);
+            for (let k = 0; k < 6; k++) {
+                const replaceIdx = Math.floor(Math.random() * numParticles);
+                posX[replaceIdx] = x + (Math.random() - 0.5) * 40;
+                posY[replaceIdx] = y + (Math.random() - 0.5) * 40;
+                velX[replaceIdx] = 0;
+                velY[replaceIdx] = 0;
+                types[replaceIdx] = bType;
+            }
+        }
+
+        function setTool(tool, btn) {
+            currentTool = tool;
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('brush-color-picker').style.display = (tool === 'brush') ? 'block' : 'none';
+        }
+
+        // Рендер матрицы ДНК в таблицу
+        let selectedCell = null;
+
+        function renderMatrixTable() {
+            const container = document.getElementById('matrix-grid');
+            container.innerHTML = '';
+            for (let i = 0; i < NUM_TYPES; i++) {
+                for (let j = 0; j < NUM_TYPES; j++) {
+                    const val = matrix[i][j];
+                    const cell = document.createElement('div');
+                    cell.className = 'm-cell';
+                    cell.style.background = val > 0 
+                        ? `rgba(0, 255, 170, ${val * 0.75})` 
+                        : `rgba(255, 0, 85, ${Math.abs(val) * 0.75})`;
+                    cell.innerText = (val > 0 ? '+' : '') + val.toFixed(1);
+                    cell.onclick = () => openCellEditor(i, j);
+                    container.appendChild(cell);
+                }
+            }
+        }
+
+        function openCellEditor(i, j) {
+            selectedCell = { i, j };
+            document.getElementById('cell-editor').style.display = 'block';
+            document.getElementById('cell-pair').innerText = `[${i}] -> [${j}]`;
+            document.getElementById('cell-val').innerText = matrix[i][j].toFixed(2);
+            document.getElementById('cell-slider').value = matrix[i][j];
+        }
+
+        document.getElementById('cell-slider').addEventListener('input', (e) => {
+            if (!selectedCell) return;
+            const val = parseFloat(e.target.value);
+            matrix[selectedCell.i][selectedCell.j] = val;
+            document.getElementById('cell-val').innerText = val.toFixed(2);
+            renderMatrixTable();
+        });
+
+        function applyPreset(index, btn) {
+            if (btn) {
+                document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            }
+            matrix = JSON.parse(JSON.stringify(PRESETS[index].matrix));
+            document.getElementById('dna-name').innerText = PRESETS[index].name;
+            renderMatrixTable();
+        }
+
+        function randomizePhysics() {
+            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('dna-name').innerText = "МУТИРОВАННАЯ ДНК";
+            for (let i = 0; i < NUM_TYPES; i++) {
+                for (let j = 0; j < NUM_TYPES; j++) {
+                    matrix[i][j] = parseFloat(((Math.random() * 2) - 1).toFixed(2));
+                }
+            }
+            renderMatrixTable();
+        }
+
+        function resetParticles() {
+            initParticles(numParticles);
+        }
+
+        function changePalette(paletteKey) {
+            currentPalette = PALETTES[paletteKey];
+        }
+
+        // Обработчики слайдеров
+        document.getElementById('param-count').addEventListener('input', (e) => {
+            document.getElementById('lbl-count').innerText = e.target.value;
+            initParticles(parseInt(e.target.value));
+        });
+        document.getElementById('param-friction').addEventListener('input', (e) => {
+            friction = parseFloat(e.target.value);
+            document.getElementById('lbl-friction').innerText = friction.toFixed(2);
+        });
+        document.getElementById('param-rmax').addEventListener('input', (e) => {
+            rMax = parseFloat(e.target.value);
+            document.getElementById('lbl-rmax').innerText = rMax;
+            resizeGrid();
+        });
+        document.getElementById('param-rmin').addEventListener('input', (e) => {
+            rMin = parseFloat(e.target.value);
+            document.getElementById('lbl-rmin').innerText = rMin;
+        });
+        document.getElementById('param-wrap').addEventListener('change', (e) => wrap = e.target.checked);
+        document.getElementById('opt-trails').addEventListener('input', (e) => {
+            trailPersistence = parseFloat(e.target.value);
+            document.getElementById('lbl-trails').innerText = trailPersistence.toFixed(2);
+        });
+        document.getElementById('opt-psize').addEventListener('input', (e) => {
+            particleSize = parseFloat(e.target.value);
+            document.getElementById('lbl-psize').innerText = particleSize.toFixed(1);
+        });
+        document.getElementById('opt-bloom').addEventListener('change', (e) => useBloom = e.target.checked);
+        document.getElementById('opt-bonds').addEventListener('change', (e) => useBonds = e.target.checked);
+
+        // Горячие клавиши
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                isPaused = !isPaused;
+            } else if (e.code === 'KeyH') {
+                document.getElementById('hud').classList.toggle('hud-hidden');
+            } else if (e.code === 'KeyR') {
+                randomizePhysics();
+            } else if (e.code === 'KeyC') {
+                resetParticles();
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            resizeGrid();
+        });
+
+        /* ========================================================
+           7. ГЛАВНЫЙ ЦИКЛ С ИЗМЕРЕНИЕМ FPS
+           ======================================================== */
+        let lastFrame = performance.now();
+        let frameCount = 0;
+        let fps = 60;
+
+        applyPreset(0);
+        initParticles(numParticles);
+
+        function mainLoop() {
+            stepSimulation();
+            render();
+
+            frameCount++;
+            const now = performance.now();
+            if (now - lastFrame >= 1000) {
+                fps = frameCount;
+                frameCount = 0;
+                lastFrame = now;
+                document.getElementById('fps-meter').innerText = `${fps} FPS`;
+            }
+
+            requestAnimationFrame(mainLoop);
+        }
+
+        mainLoop();
+    </script>
+</body>
+</html>

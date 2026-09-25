@@ -45,7 +45,7 @@ export function Pricing() {
     <section id="pricing" data-section="pricing" className="section pricing">
       <div className="pricing-header">
         <div>
-          <SectionLabel index="09" label="Тарифы" />
+          <SectionLabel id="pricing" />
           <h2 className="h2" data-split>
             Прозрачные
             <br />

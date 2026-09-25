@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#e8e4d9">
+<title>ПОЛИФОНИЯ — архитектура, которую слышно</title>
+
+<style>
+:root {
+  --paper: #e8e4d9;
+  --ink: #243e42;
+  --muted: #89928a;
+  --line: #c8cec2;
+  --accent: #f06443;
+  --panel: #f1eee5;
+  --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+html { scroll-behavior: smooth; }
+button, input { font: inherit; }
+button { cursor: pointer; touch-action: manipulation; }
+button, a, input { -webkit-tap-highlight-color: transparent; }
+button:focus-visible, input:focus-visible, a:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+button:disabled { opacity: .45; cursor: wait; }
+a { color: inherit; text-decoration: none; }
+::selection { background: var(--accent); color: white; }
+.wrap { width: min(1400px, calc(100% - 72px)); margin-inline: auto; }
+.mono { font-family: var(--mono); }
+.grain {
+  position: fixed; inset: 0; z-index: 40;
+  opacity: .05; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 170 170' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath d='M0 0h170v170H0z' fill='black' filter='url(%23a)'/%3E%3C/svg%3E");
+}
+header {
+  min-height: 96px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 25px; border-bottom: 1px solid var(--line);
+}
+.brand { display: flex; gap: 14px; align-items: center; }
+.brand-icon {
+  width: 36px; height: 36px; display: flex; align-items: flex-end; gap: 3px;
+  transform: skewY(-12deg);
+}
+.brand-icon i { width: 8px; background: var(--ink); }
+.brand-icon i:nth-child(1) { height: 17px; }
+.brand-icon i:nth-child(2) { height: 32px; background: var(--accent); }
+.brand-icon i:nth-child(3) { height: 24px; }
+.brand strong { font-size: 17px; letter-spacing: -1px; }
+.brand small { display: block; margin-top: 6px; font: 7px var(--mono); letter-spacing: 1.5px; color: var(--muted); }
+.header-note { font: 8px/1.8 var(--mono); letter-spacing: .5px; color: #7e8d82; }
+.header-note b { color: var(--ink); font-weight: 400; }
+nav { display: flex; gap: 27px; font: 9px var(--mono); align-items: center; }
+nav a:hover { color: var(--accent); }
+.issue { color: var(--accent); border: 1px solid var(--accent); border-radius: 50%; width: 37px; height: 37px; display: grid; place-items: center; }
+
+.hero { position: relative; min-height: 660px; isolation: isolate; }
+#city { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: grab; z-index: -1; }
+#city:active { cursor: grabbing; }
+.hero-copy { padding-top: 82px; width: 360px; pointer-events: none; }
+.kicker {
+  display: flex; align-items: center; gap: 10px;
+  color: var(--accent); font: 8px var(--mono); letter-spacing: 1.5px;
+}
+.kicker::before { content: ''; height: 5px; width: 5px; background: var(--accent); border-radius: 50%; }
+h1 { font-size: clamp(52px, 5.3vw, 79px); line-height: 1.01; letter-spacing: -5px; font-weight: 500; margin: 28px 0 24px; }
+h1 em { color: var(--accent); font-family: Georgia, serif; font-weight: 400; }
+.hero-copy p { font-size: 12px; line-height: 1.9; color: #7d8a7f; max-width: 255px; margin: 0; }
+.hero-copy button { pointer-events: auto; }
+.start-button {
+  margin-top: 28px; background: var(--ink); color: #f3f0e5; border: 0;
+  padding: 16px 19px; border-radius: 5px;
+  display: flex; align-items: center; gap: 22px; font: 10px var(--mono);
+  box-shadow: 0 7px 20px rgba(34,58,53,.10); transition: .2s;
+}
+.start-button:hover { background: #356066; transform: translateY(-2px); }
+.start-button .play-icon { font-size: 13px; color: #ffa67d; }
+.sound-note { font: 8px/1.7 var(--mono); color: #8c9589; margin-top: 15px; }
+.coordinates { position: absolute; right: 0; top: 34px; color: #94a092; font: 8px/1.8 var(--mono); text-align: right; pointer-events: none; }
+.coordinates b { color: #5b7569; font-weight: 400; }
+.world-caption { position: absolute; right: 5%; bottom: 70px; font: 8px/1.8 var(--mono); color: #7a9080; pointer-events: none; }
+.world-caption strong { display: block; color: var(--ink); font-weight: 400; margin-bottom: 3px; }
+.hero-bottom { position: absolute; bottom: 24px; left: 0; right: 0; display: flex; justify-content: space-between; gap: 20px; align-items: center; }
+.city-id { font: 8px var(--mono); color: #859486; display: flex; align-items: center; gap: 13px; }
+.city-id::before { content: ''; width: 30px; height: 1px; background: var(--accent); }
+.city-id b { font-weight: 400; color: var(--ink); }
+.view-tools { display: flex; align-items: center; gap: 7px; }
+.view-tools span { font: 8px var(--mono); color: #869887; margin-right: 9px; }
+.view-button {
+  width: 31px; height: 31px; border: 1px solid #b8c6b7;
+  background: rgba(235,235,223,.7); color: #43635b; border-radius: 50%; font-size: 16px;
+}
+.view-button:hover { background: var(--ink); color: var(--paper); }
+
+.studio {
+  position: relative; z-index: 3;
+  border: 1px solid #bcc8b9; border-radius: 13px;
+  background: rgba(242,240,230,.92);
+  box-shadow: 0 18px 50px rgba(54,77,59,.035);
+  overflow: hidden;
+}
+.studio-top {
+  padding: 22px 25px; display: flex; align-items: center; gap: 23px;
+  border-bottom: 1px solid var(--line);
+}
+.studio-label { font: 8px/1.8 var(--mono); min-width: 130px; color: #849480; }
+.studio-label b { display: block; color: var(--ink); font-weight: 400; letter-spacing: 1px; }
+.transport {
+  width: 42px; height: 42px; border: 0; border-radius: 50%;
+  background: var(--accent); color: white; font-size: 14px;
+}
+.tempo { width: 135px; padding-right: 23px; border-right: 1px solid var(--line); }
+.tempo label { display: flex; justify-content: space-between; font: 8px var(--mono); color: #83907e; margin-bottom: 14px; }
+.tempo output { color: var(--ink); }
+input[type=range] { appearance: none; -webkit-appearance: none; width: 100%; height: 2px; display: block; background: #c3cdbb; cursor: pointer; }
+input[type=range]::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+input[type=range]::-moz-range-thumb { width: 8px; height: 8px; border: 0; border-radius: 50%; background: var(--accent); }
+.palettes { display: flex; gap: 5px; }
+.palette-button {
+  padding: 11px 13px; background: transparent; border: 1px solid transparent;
+  border-radius: 5px; color: #7f927c; font: 9px var(--mono);
+}
+.palette-button:hover { background: #e1e7d8; }
+.palette-button.active { border-color: #b9c7b2; color: var(--ink); background: #e6ecde; }
+.studio-actions { margin-left: auto; display: flex; gap: 8px; }
+.small-button {
+  border: 1px solid #bcc9b5; background: transparent; color: #536c4f;
+  border-radius: 5px; padding: 11px 13px; font: 9px var(--mono);
+}
+.small-button:hover { background: #e0e8d8; }
+.small-button.primary { color: #f6f5e9; background: var(--ink); border-color: var(--ink); }
+
+.sequencer { padding: 22px 25px 19px; display: grid; grid-template-columns: 130px 1fr 110px; gap: 23px; align-items: center; }
+.sequence-info h2 { font-size: 17px; font-weight: 500; letter-spacing: -.5px; margin: 0 0 10px; }
+.sequence-info p { font: 8px/1.9 var(--mono); color: #84927e; margin: 0; }
+.grid-shell { min-width: 0; }
+.step-numbers { display: grid; grid-template-columns: repeat(16, 1fr); gap: 5px; margin-bottom: 7px; }
+.step-numbers span { font: 7px var(--mono); text-align: center; color: #9baa92; }
+.step-numbers span.on { color: var(--accent); }
+.note-grid { display: grid; grid-template-columns: repeat(16, 1fr); gap: 5px; }
+.note-cell {
+  min-width: 0; height: 11px; padding: 0;
+  border: 0; border-radius: 2px; background: #e0e4d8; position: relative;
+}
+.note-cell:hover { background: #c1d2b9; }
+.note-cell.on { background: #658d82; }
+.note-cell.bass.on { background: #365b68; }
+.note-cell.drum.on { background: #e29268; }
+.note-cell.current { box-shadow: inset 0 0 0 1px #eb9c78; }
+.note-cell.on.current { background: var(--accent); box-shadow: 0 0 9px rgba(240,100,67,.2); }
+.sequence-meter { border-left: 1px solid var(--line); padding-left: 23px; }
+.big-step { font: 38px var(--mono); color: var(--ink); letter-spacing: -3px; }
+.big-step small { font-size: 11px; color: #9bab92; letter-spacing: 0; }
+.meter-caption { color: #899c80; font: 7px var(--mono); letter-spacing: 1px; margin-top: 8px; }
+.studio-foot { display: flex; justify-content: space-between; gap: 20px; padding: 13px 25px; background: #e8ecdf; border-top: 1px solid #d2dcca; font: 7px var(--mono); color: #83947a; }
+.studio-foot b { color: #426050; font-weight: 400; }
+
+.story { display: grid; grid-template-columns: 1.05fr 1fr 1fr; gap: 50px; padding: 65px 0; }
+.story .kicker { font-size: 7px; }
+.story h2 { font-size: 29px; font-weight: 500; line-height: 1.25; letter-spacing: -1px; margin: 19px 0 0; }
+.story h2 em { font: italic 33px Georgia, serif; color: var(--accent); }
+.story-item { padding-left: 26px; border-left: 1px solid var(--line); }
+.story-num { font: 8px var(--mono); color: var(--accent); }
+.story-item h3 { font-size: 14px; font-weight: 500; margin: 18px 0 13px; }
+.story-item p { font-size: 11px; line-height: 1.9; color: #80907b; margin: 0; max-width: 280px; }
+
+details { border-block: 1px solid var(--line); }
+summary { list-style: none; padding: 21px 0; display: flex; justify-content: space-between; cursor: pointer; font: 10px var(--mono); color: #688360; }
+summary::-webkit-details-marker { display: none; }
+.help-content { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; padding: 0 0 25px; color: #7e9176; font-size: 11px; line-height: 1.9; }
+.help-content p { margin: 0; }
+.help-content b { color: #41604a; font-weight: 400; }
+footer { display: flex; justify-content: space-between; gap: 25px; padding: 28px 0; font: 8px/1.8 var(--mono); color: #8c9d82; }
+footer b { font-weight: 400; color: #4b7051; }
+#toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translate(-50%, 12px);
+  opacity: 0; pointer-events: none; z-index: 60;
+  border-radius: 7px; padding: 14px 20px; max-width: calc(100% - 28px);
+  background: #253d39; color: #f0efde; box-shadow: 0 12px 40px #203b2920;
+  font: 10px/1.7 var(--mono); text-align: center; transition: .25s;
+}
+#toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+@media (max-width: 1100px) {
+  .wrap { width: calc(100% - 44px); }
+  .header-note { display: none; }
+  .hero-copy { width: 310px; }
+  h1 { font-size: 65px; }
+  .studio-top { gap: 15px; padding-inline: 19px; flex-wrap: wrap; }
+  .studio-label { min-width: 110px; }
+  .tempo { width: 115px; padding-right: 15px; }
+  .palette-button { padding-inline: 10px; }
+  .studio-actions { gap: 5px; }
+  .small-button { padding-inline: 10px; }
+  .sequencer { padding-inline: 19px; grid-template-columns: 110px 1fr 90px; gap: 15px; }
+  .sequence-meter { padding-left: 15px; }
+  .story { gap: 30px; }
+}
+@media (max-width: 850px) {
+  header { min-height: 83px; }
+  .brand strong { font-size: 15px; }
+  .hero { min-height: 810px; }
+  .hero-copy { padding-top: 45px; }
+  h1 { font-size: 65px; }
+  .coordinates { top: 29px; font-size: 7px; }
+  .world-caption { right: 2%; bottom: 77px; font-size: 7px; }
+  .hero-bottom { bottom: 20px; }
+  .studio-label { margin-right: auto; }
+  .studio-actions { width: 100%; border-top: 1px solid var(--line); padding-top: 14px; }
+  .studio-actions button { flex: 1; }
+  .sequencer { grid-template-columns: 1fr 65px; gap: 18px; }
+  .sequence-info { display: none; }
+  .note-grid, .step-numbers { gap: 4px; }
+  .note-cell { height: 13px; }
+  .big-step { font-size: 30px; }
+  .story { grid-template-columns: 1fr 1fr; padding: 45px 0; }
+  .story > div:first-child { grid-column: span 2; }
+  .story h2 br { display: none; }
+  .story-item { padding-left: 20px; }
+}
+@media (max-width: 520px) {
+  .wrap { width: calc(100% - 30px); }
+  nav { gap: 14px; font-size: 8px; }
+  .issue { width: 30px; height: 30px; font-size: 8px; }
+  .brand { gap: 10px; }
+  .brand strong { font-size: 13px; }
+  .brand small { font-size: 6px; letter-spacing: 1px; }
+  .brand-icon { width: 29px; height: 29px; gap: 2px; }
+  .brand-icon i { width: 7px; }
+  .hero { min-height: 820px; }
+  .hero-copy { padding-top: 38px; width: 270px; }
+  h1 { font-size: 60px; letter-spacing: -4px; margin-top: 24px; }
+  .hero-copy p { font-size: 11px; max-width: 240px; }
+  .kicker { font-size: 7px; letter-spacing: 1px; }
+  .coordinates { right: 0; top: 29px; font-size: 6px; }
+  .coordinates .extra { display: none; }
+  .start-button { margin-top: 22px; padding: 14px 17px; font-size: 9px; }
+  .sound-note { font-size: 7px; }
+  .world-caption { bottom: 71px; font-size: 6px; }
+  .city-id { font-size: 6px; gap: 7px; }
+  .city-id::before { width: 17px; }
+  .view-tools span { display: none; }
+  .view-button { width: 27px; height: 27px; }
+  .studio-top { padding: 16px 13px; gap: 13px; }
+  .studio-label { min-width: 80px; font-size: 7px; }
+  .transport { width: 35px; height: 35px; }
+  .tempo { border: 0; padding: 0; width: 110px; }
+  .palettes { width: 100%; justify-content: stretch; border-top: 1px solid var(--line); padding-top: 12px; }
+  .palette-button { flex: 1; font-size: 8px; }
+  .studio-actions { padding-top: 12px; }
+  .small-button { font-size: 8px; padding: 10px 5px; }
+  .sequencer { padding: 17px 13px; grid-template-columns: 1fr; }
+  .sequence-meter { display: none; }
+  .note-cell { height: 15px; }
+  .note-grid, .step-numbers { gap: 4px; }
+  .step-numbers span { font-size: 6px; }
+  .studio-foot { padding: 12px 13px; font-size: 6px; line-height: 1.7; }
+  .studio-foot span:last-child { max-width: 120px; text-align: right; }
+  .story { gap: 28px 19px; }
+  .story h2 { font-size: 25px; }
+  .story h2 em { font-size: 28px; }
+  .story-item { padding-left: 15px; }
+  .story-item h3 { font-size: 12px; }
+  .story-item p { font-size: 10px; }
+  .help-content { grid-template-columns: 1fr; gap: 18px; }
+  summary { font-size: 9px; }
+  footer { font-size: 7px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { transition: none !important; }
+}
+</style>
+</head>
+
+<body>
+<div class="grain"></div>
+
+<div class="wrap">
+  <header>
+    <a class="brand" href="#" aria-label="Полифония — на главную">
+      <span class="brand-icon" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span><strong>ПОЛИФОНИЯ</strong><small>ARCHITECTURE OF SOUND</small></span>
+    </a>
+    <div class="header-note">ЭКСПЕРИМЕНТАЛЬНОЕ БЮРО<br><b>ГОРОДОВ, КОТОРЫХ НЕ СУЩЕСТВУЕТ</b></div>
+    <nav>
+      <a href="#studio">Сочинить город ↗</a>
+      <span class="issue mono">004</span>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" id="hero">
+      <canvas id="city" aria-label="Вращаемый музыкальный город. Нажми на участок, чтобы построить или убрать здание. Потяни для вращения."></canvas>
+
+      <div class="hero-copy">
+        <div class="kicker">ТИШИНА — ЭТО ПУСТОЙ УЧАСТОК</div>
+        <h1>У каждого<br>города<br>есть <em>голос.</em></h1>
+        <p>Построй тот, которого ещё не слышал.<br>Каждое здание — нота. Каждая улица — ритм. Архитектура становится музыкой.</p>
+        <button class="start-button" id="start">
+          <span class="play-icon">▶</span>
+          <span id="start-label">Разбудить город</span>
+        </button>
+        <div class="sound-note mono">Лучше в наушниках. Громкость — умеренная.<br>Звук появится только после твоего нажатия.</div>
+      </div>
+
+      <div class="coordinates mono">
+        <b>UNBUILT CITY / 004</b><br>
+        <span class="extra">LAT 00.000 / LON ∞<br></span>
+        <span id="city-weather">18:42 / GOLDEN HOUR</span>
+      </div>
+
+      <div class="world-caption mono">
+        <strong>ЭТОТ ГОРОД МОЖНО ПЕРЕПИСАТЬ.</strong>
+        Нажми на здание или свободный участок.<br>
+        Потяни пространство, чтобы повернуть.
+      </div>
+
+      <div class="hero-bottom">
+        <div class="city-id">MASTERPLAN <b id="city-id">#00428</b> / <span id="building-count">—</span> BUILDINGS</div>
+        <div class="view-tools">
+          <span>ПОВОРОТ ПЛАНА</span>
+          <button class="view-button" id="rotate-left" aria-label="Повернуть город влево">↶</button>
+          <button class="view-button" id="rotate-right" aria-label="Повернуть город вправо">↷</button>
+          <button class="view-button" id="reset-view" aria-label="Вернуть исходный ракурс">⌂</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="studio" id="studio" aria-label="Музыкальная студия">
+      <div class="studio-top">
+        <div class="studio-label mono"><b>ГОРОДСКОЙ ПУЛЬТ</b>16 УЛИЦ / 8 ГОЛОСОВ</div>
+
+        <button class="transport" id="transport" aria-label="Запустить музыку" aria-pressed="false">▶</button>
+
+        <div class="tempo">
+          <label for="tempo">ТЕМП <output id="tempo-value">96 BPM</output></label>
+          <input type="range" id="tempo" min="55" max="150" value="96">
+        </div>
+
+        <div class="palettes" role="group" aria-label="Тембр и палитра">
+          <button class="palette-button active" data-mood="warm" aria-pressed="true">01 / Закат</button>
+          <button class="palette-button" data-mood="blue" aria-pressed="false">02 / Дождь</button>
+          <button class="palette-button" data-mood="rose" aria-pressed="false">03 / Сон</button>
+        </div>
+
+        <div class="studio-actions">
+          <button class="small-button" id="clear">Чистый лист</button>
+          <button class="small-button" id="generate">↻ Новый город</button>
+          <button class="small-button primary" id="save">Сохранить ↗</button>
+        </div>
+      </div>
+
+      <div class="sequencer">
+        <div class="sequence-info">
+          <h2>Генплан.</h2>
+          <p>Включай клетки.<br>Слушай изменения.<br>Ты здесь архитектор.</p>
+        </div>
+
+        <div class="grid-shell">
+          <div class="step-numbers" id="step-numbers" aria-hidden="true"></div>
+          <div class="note-grid" id="note-grid" role="group" aria-label="Редактор нот: 8 рядов, 16 шагов"></div>
+        </div>
+
+        <div class="sequence-meter">
+          <div class="big-step"><span id="current-step">01</span><small>/16</small></div>
+          <div class="meter-caption">ТЕКУЩАЯ УЛИЦА</div>
+        </div>
+      </div>
+
+      <div class="studio-foot mono">
+        <span><b id="play-state">ГОРОД СПИТ</b> · C MAJOR PENTATONIC</span>
+        <span>МЕЛОДИЯ / БАС / ПЕРКУССИЯ · WEB AUDIO</span>
+      </div>
+    </section>
+
+    <section class="story">
+      <div>
+        <div class="kicker">ГРАДОСТРОИТЕЛЬСТВО НА СЛУХ</div>
+        <h2>Не просто смотреть.<br><em>Быть причиной.</em></h2>
+      </div>
+      <article class="story-item">
+        <div class="story-num mono">[ 01 / ПРОСТРАНСТВО ]</div>
+        <h3>Музыка обрела адрес.</h3>
+        <p>Шестнадцать улиц — шестнадцать шагов секвенсора. Высокие башни играют мелодию, низкие корпуса — бас. Маленькие оранжевые павильоны отвечают за ритм.</p>
+      </article>
+      <article class="story-item">
+        <div class="story-num mono">[ 02 / ПРИСУТСТВИЕ ]</div>
+        <h3>Ни одной готовой записи.</h3>
+        <p>Все ноты рождаются внутри браузера. Все здания нарисованы математикой. Сохранённый генплан можно загрузить и продолжить сочинять — без регистрации и сервера.</p>
+      </article>
+    </section>
+
+    <details>
+      <summary>Инструкция для архитектора <span>+</span></summary>
+      <div class="help-content">
+        <p><b>Управление.</b> Нажми «Разбудить город». Клик по клетке внизу или участку в 3D включает и выключает ноту. Перетаскивание вращает сцену. Пробел — воспроизведение и остановка. Палитры меняют цвет и тембр, но не твою мелодию.</p>
+        <p><b>Сохранение.</b> Кнопка «Сохранить» выгружает JSON-генплан. <button class="small-button" id="load" style="padding:5px 9px">Загрузить генплан ↗</button> <button class="small-button" id="poster" style="padding:5px 9px">Снимок города PNG ↗</button><br>Музыка автоматически останавливается при уходе с вкладки. Для небольших экранов точнее редактировать клетки генплана.</p>
+      </div>
+    </details>
+    <input id="file-input" type="file" accept=".json,application/json" hidden>
+  </main>
+
+  <footer>
+    <span>© <span id="year"></span> ПОЛИФОНИЯ. <b>ГОРОДА НАЧИНАЮТСЯ С ВООБРАЖЕНИЯ.</b></span>
+    <span>NO MODELS. NO SAMPLES.<br>JUST CODE & A LITTLE SOUL.</span>
+  </footer>
+</div>
+
+<div id="toast" role="status"></div>
+
+<script>
+(() => {
+  'use strict';
+
+  const $ = selector => document.querySelector(selector);
+  const $$ = selector => [...document.querySelectorAll(selector)];
+  const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const COLS = 16, ROWS = 8;
+  const notes = [76, 74, 72, 69, 67, 64, 36, 0];
+  const noteNames = ['Ми 5', 'Ре 5', 'До 5', 'Ля 4', 'Соль 4', 'Ми 4', 'Бас До', 'Перкуссия'];
+
+  $('#year').textContent = new Date().getFullYear();
+
+  let seed = 428;
+  let bpm = 96;
+  let mood = 'warm';
+  let pattern = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
+  let currentStep = -1;
+  let playing = false;
+  let busy = false;
+
+  const moods = {
+    warm: {
+      roof: '#b8d5c2', front: '#608c81', side: '#416b6d',
+      light: '#ffe6b0', accent: '#f06443', base: '#779c89',
+      ground: '#adbfaa', weather: '18:42 / GOLDEN HOUR',
+      wave: 'sine', decay: .52
+    },
+    blue: {
+      roof: '#b5d3dc', front: '#729cac', side: '#426578',
+      light: '#d8faff', accent: '#447dce', base: '#759b9e',
+      ground: '#b1c4c3', weather: '06:18 / AFTER THE RAIN',
+      wave: 'triangle', decay: .35
+    },
+    rose: {
+      roof: '#dbc0cf', front: '#a386a8', side: '#6c698c',
+      light: '#ffdcf4', accent: '#b26da3', base: '#9b9da9',
+      ground: '#c4c0c1', weather: '03:03 / LUCID DREAM',
+      wave: 'sine', decay: .85
+    }
+  };
+
+  let toastTimer;
+  function toast(text) {
+    $('#toast').textContent = text;
+    $('#toast').classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => $('#toast').classList.remove('show'), 3000);
+  }
+
+  function seededRandom(value) {
+    return () => {
+      value |= 0;
+      value = value + 0x6D2B79F5 | 0;
+      let t = Math.imul(value ^ value >>> 15, 1 | value);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+
+  // ─── Генплан и его доступная кнопочная версия ─────────────────
+
+  const buttons = [];
+  const stepLabels = [];
+  for (let col = 0; col < COLS; col++) {
+    const label = document.createElement('span');
+    label.textContent = String(col + 1).padStart(2, '0');
+    $('#step-numbers').append(label);
+    stepLabels.push(label);
+  }
+
+  for (let row = 0; row < ROWS; row++) {
+    buttons[row] = [];
+    for (let col = 0; col < COLS; col++) {
+      const button = document.createElement('button');
+      button.className = `note-cell${row === 6 ? ' bass' : row === 7 ? ' drum' : ''}`;
+      button.setAttribute('aria-label', `${noteNames[row]}, шаг ${col + 1}`);
+      button.title = `${noteNames[row]} · улица ${col + 1}`;
+      button.addEventListener('click', () => toggleCell(row, col));
+
+      button.addEventListener('keydown', event => {
+        const offsets = {
+          ArrowLeft: [0, -1], ArrowRight: [0, 1],
+          ArrowUp: [-1, 0], ArrowDown: [1, 0]
+        };
+        if (!offsets[event.key]) return;
+        event.preventDefault();
+        const [dr, dc] = offsets[event.key];
+        buttons[(row + dr + ROWS) % ROWS][(col + dc + COLS) % COLS].focus();
+      });
+
+      buttons[row][col] = button;
+      $('#note-grid').append(button);
+    }
+  }
+
+  function syncPattern() {
+    let total = 0;
+    for (let row = 0; row < ROWS; row++) {
+      for (let col = 0; col < COLS; col++) {
+        const on = pattern[row][col];
+        buttons[row][col].classList.toggle('on', on);
+        buttons[row][col].setAttribute('aria-pressed', on);
+        if (on) total++;
+      }
+    }
+    $('#building-count').textContent = total;
+    $('#city-id').textContent = `#${String(seed).padStart(5, '0')}`;
+    requestDraw();
+  }
+
+  function toggleCell(row, col) {
+    pattern[row][col] = !pattern[row][col];
+    syncPattern();
+
+    // Прослушивание только после явного запуска аудиоконтекста.
+    if (pattern[row][col] && audio && !playing && audio.context.state === 'running') {
+      playVoice(row, col, audio.context.currentTime + .015, .7);
+    }
+  }
+
+  function generate(nextSeed) {
+    seed = nextSeed;
+    const random = seededRandom(seed);
+    pattern = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
+
+    const phrase = Array.from({ length: 8 }, () => Math.floor(random() * 6));
+
+    for (let col = 0; col < COLS; col++) {
+      if (random() > .14) {
+        let row = phrase[col % 8];
+        if (col >= 8 && random() > .65) row = Math.floor(random() * 6);
+        pattern[row][col] = true;
+        if (col % 4 === 0) pattern[(row + 2) % 6][col] = true;
+      }
+      if (col % 4 === 0 || (col % 4 === 2 && random() > .55)) pattern[6][col] = true;
+      if (col % 2 === 0 || random() > .78) pattern[7][col] = true;
+    }
+    syncPattern();
+  }
+
+  function syncStep(step) {
+    if (currentStep === step) return;
+    currentStep = step;
+    for (let col = 0; col < COLS; col++) {
+      stepLabels[col].classList.toggle('on', col === step);
+      for (let row = 0; row < ROWS; row++) {
+        buttons[row][col].classList.toggle('current', col === step);
+      }
+    }
+    $('#current-step').textContent = String(Math.max(0, step) + 1).padStart(2, '0');
+  }
+
+  function setMood(value) {
+    if (!Object.hasOwn(moods, value)) return;
+    mood = value;
+    const palette = moods[mood];
+    document.documentElement.style.setProperty('--accent', palette.accent);
+    $('#city-weather').textContent = palette.weather;
+    $$('.palette-button').forEach(button => {
+      const active = button.dataset.mood === mood;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', active);
+    });
+    requestDraw();
+  }
+
+  // ─── Проекция настоящих трёхмерных координат на Canvas ────────
+
+  const canvas = $('#city');
+  const ctx = canvas.getContext('2d');
+  let width = 0, height = 0, dpr = 1;
+  let centerX = 0, centerY = 0, unit = 30;
+  let angle = -.52;
+  let targetAngle = -.52;
+  let frame = 0, previousTime = 0;
+  let sceneVisible = true;
+  let hoverCell = null;
+  let picking = [];
+  let viewOrder = [];
+  let lastSortAngle = Infinity;
+
+  const buildings = Array.from({ length: ROWS }, (_, row) =>
+    Array.from({ length: COLS }, (_, col) => ({
+      row, col, height: 0, glow: 0,
+      target: row === 7 ? .36 : row === 6 ? .72 : 1.18 + (5 - row) * .24 + ((col * 7 + row * 3) % 5) * .12
+    }))
+  );
+
+  const pointer = { down: false, moved: false, startX: 0, startY: 0, lastX: 0 };
+
+  function project(x, z, y = 0) {
+    const cosine = Math.cos(angle), sine = Math.sin(angle);
+    const rx = x * cosine - z * sine;
+    const rz = x * sine + z * cosine;
+    return {
+      x: centerX + rx * unit,
+      y: centerY + rz * unit * .52 - y * unit,
+      depth: rz
+    };
+  }
+
+  function polygon(points, fill, stroke = null) {
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
+    ctx.closePath();
+    ctx.fillStyle = fill;
+    ctx.fill();
+    if (stroke) {
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = .55;
+      ctx.stroke();
+    }
+  }
+
+  function cuboid(x, z, w, depth, h, colors, collect = null, bottom = 0) {
+    const base = [
+      project(x, z, bottom),
+      project(x + w, z, bottom),
+      project(x + w, z + depth, bottom),
+      project(x, z + depth, bottom)
+    ];
+    const top = [
+      project(x, z, h),
+      project(x + w, z, h),
+      project(x + w, z + depth, h),
+      project(x, z + depth, h)
+    ];
+
+    const ca = Math.cos(angle), sa = Math.sin(angle);
+    const normals = [-ca, sa, ca, -sa];
+
+    for (let side = 0; side < 4; side++) {
+      if (normals[side] <= 0) continue;
+      const next = (side + 1) % 4;
+      const face = [base[side], base[next], top[next], top[side]];
+      polygon(face, side % 2 ? colors.side : colors.front);
+      if (collect) collect.push(face);
+    }
+
+    polygon(top, colors.roof);
+    if (collect) collect.push(top);
+    return { base, top, normals };
+  }
+
+  function containsPoint(x, y, points) {
+    let inside = false;
+    for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+      const a = points[i], b = points[j];
+      if (
+        (a.y > y) !== (b.y > y) &&
+        x < (b.x - a.x) * (y - a.y) / (b.y - a.y) + a.x
+      ) inside = !inside;
+    }
+    return inside;
+  }
+
+  function hitTest(x, y) {
+    for (let i = picking.length - 1; i >= 0; i--) {
+      const item = picking[i];
+      if (item.faces.some(face => containsPoint(x, y, face))) return item;
+    }
+    return null;
+  }
+
+  function resize() {
+    const rect = $('#hero').getBoundingClientRect();
+    width = rect.width;
+    height = rect.height;
+    dpr = Math.min(devicePixelRatio || 1, 2);
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const mobile = innerWidth <= 850;
+    centerX = width * (mobile ? .51 : .69);
+    centerY = mobile ? height * .735 : height * .54;
+    unit = mobile
+      ? Math.min(width / 20, 35)
+      : Math.min(width / 30, 43);
+
+    requestDraw();
+  }
+
+  function drawCity(now) {
+    frame = 0;
+    const dt = previousTime ? Math.min((now - previousTime) / 1000, .05) : 1 / 60;
+    previousTime = now;
+
+    // Музыкальные события отображаются по часам аудиоконтекста.
+    if (audio && playing) {
+      const clock = audio.context.currentTime;
+      while (visualEvents.length && visualEvents[0].time <= clock) {
+        const event = visualEvents.shift();
+        syncStep(event.step);
+        event.rows.forEach(row => { buildings[row][event.step].glow = 1; });
+      }
+    }
+
+    let animating = false;
+    if (Math.abs(angle - targetAngle) > .0001) {
+      angle = reduced ? targetAngle : angle + (targetAngle - angle) * Math.min(1, dt * 9);
+      animating = true;
+    }
+
+    ctx.clearRect(0, 0, width, height);
+    const palette = moods[mood];
+
+    // Мягкое цветовое поле, будто город стоит на большой карте.
+    const halo = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, unit * 12);
+    halo.addColorStop(0, mood === 'rose' ? '#d5cfd555' : mood === 'blue' ? '#c0d6d755' : '#c3d4bb70');
+    halo.addColorStop(1, '#e8e4d900');
+    ctx.fillStyle = halo;
+    ctx.fillRect(0, 0, width, height);
+
+    // Топографическая разметка.
+    ctx.lineWidth = .6;
+    ctx.strokeStyle = '#819d7825';
+    for (let i = -10; i <= 10; i++) {
+      const a = project(i, -6, -.22), b = project(i, 6, -.22);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+    for (let i = -6; i <= 6; i++) {
+      const a = project(-10, i, -.22), b = project(10, i, -.22);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    }
+
+    // Тень, затем несущая плита.
+    const shadow = [
+      project(-8.5, -4.5, -.5), project(8.9, -4.5, -.5),
+      project(8.9, 4.8, -.5), project(-8.5, 4.8, -.5)
+    ].map(p => ({ x: p.x + unit * .2, y: p.y + unit * .22 }));
+
+    polygon(shadow, '#4e705b16');
+    cuboid(-8.25, -4.25, 16.5, 8.5, -.02, {
+      roof: palette.ground, front: palette.base, side: '#668576'
+    }, null, -.28);
+
+    if (Math.abs(angle - lastSortAngle) > .001 || !viewOrder.length) {
+      viewOrder = buildings.flat().sort((a, b) => {
+        const da = project(a.col - 7.5, a.row - 3.5).depth;
+        const db = project(b.col - 7.5, b.row - 3.5).depth;
+        return da - db;
+      });
+      lastSortAngle = angle;
+    }
+
+    picking = [];
+    for (const building of viewOrder) {
+      const { row, col } = building;
+      const target = pattern[row][col] ? building.target : 0;
+      if (Math.abs(building.height - target) > .002) {
+        building.height = reduced
+          ? target
+          : building.height + (target - building.height) * Math.min(1, dt * 10);
+        animating = true;
+      } else building.height = target;
+
+      if (building.glow > .005) {
+        building.glow *= Math.exp(-dt * 5);
+        animating = true;
+      } else building.glow = 0;
+
+      const x = col - 8 + .12;
+      const z = row - 4 + .12;
+      const size = .76;
+      const faces = [];
+      const selected = hoverCell && hoverCell.row === row && hoverCell.col === col;
+      const lit = currentStep === col && playing;
+
+      // Каждый пустой участок тоже интерактивен.
+      const lot = [
+        project(x, z, .005), project(x + size, z, .005),
+        project(x + size, z + size, .005), project(x, z + size, .005)
+      ];
+
+      polygon(lot, selected ? '#f4dcad' : lit ? '#ecd8ac' : '#d9dfcc60', '#eff1dc55');
+      faces.push(lot);
+
+      if (building.height > .025) {
+        const roof = building.glow > .32 ? palette.light
+          : selected ? '#ffe9c4'
+          : row === 7 ? '#efb489' : palette.roof;
+
+        const shape = cuboid(x, z, size, size, building.height, {
+          roof,
+          front: row === 7 ? '#c18063' : palette.front,
+          side: row === 7 ? '#9f735d' : palette.side
+        }, faces);
+
+        // Окна рисуются на видимых фасадах.
+        if (row < 7 && building.height > .4) {
+          const floors = Math.floor(building.height / .29);
+          const baseCorners = [[x,z], [x+size,z], [x+size,z+size], [x,z+size]];
+
+          ctx.fillStyle = building.glow > .2 ? palette.light : '#dcebd39a';
+
+          for (let side = 0; side < 4; side++) {
+            if (shape.normals[side] <= 0) continue;
+            const a = baseCorners[side], b = baseCorners[(side + 1) % 4];
+
+            for (let floor = 1; floor <= floors; floor++) {
+              for (let window = 1; window <= 2; window++) {
+                if ((floor + window + row + col) % 5 === 0) continue;
+                const fraction = window / 3;
+                const point = project(
+                  a[0] + (b[0] - a[0]) * fraction,
+                  a[1] + (b[1] - a[1]) * fraction,
+                  floor * .25
+                );
+                ctx.fillRect(point.x - unit * .024, point.y - unit * .027, unit * .048, unit * .067);
+              }
+            }
+          }
+
+          // Небольшая надстройка на крыше.
+          if ((row + col) % 3 === 0) {
+            cuboid(x + .24, z + .24, .27, .27, building.height + .13, {
+              roof: '#e1e6d4', front: palette.front, side: palette.side
+            }, null, building.height);
+          }
+        }
+
+        if (building.glow > .05 && !reduced) {
+          const tip = project(x + size / 2, z + size / 2, building.height + .12);
+          ctx.strokeStyle = palette.accent;
+          ctx.globalAlpha = building.glow * .65;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.ellipse(tip.x, tip.y - (1 - building.glow) * 20, unit * .32, unit * .14, 0, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.globalAlpha = 1;
+        }
+      }
+      picking.push({ row, col, faces });
+    }
+
+    if (playing && currentStep >= 0) {
+      const a = project(currentStep - 7.5, -4.35, .03);
+      const b = project(currentStep - 7.5, 4.35, .03);
+      ctx.strokeStyle = palette.accent;
+      ctx.lineWidth = 1.5;
+      ctx.globalAlpha = .55;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+
+    if ((animating || playing) && sceneVisible && !document.hidden) requestDraw();
+  }
+
+  function requestDraw() {
+    if (!frame && sceneVisible && !document.hidden) frame = requestAnimationFrame(drawCity);
+  }
+
+  canvas.addEventListener('pointerdown', event => {
+    pointer.down = true;
+    pointer.moved = false;
+    pointer.startX = pointer.lastX = event.clientX;
+    pointer.startY = event.clientY;
+    canvas.setPointerCapture(event.pointerId);
+  });
+
+  canvas.addEventListener('pointermove', event => {
+    if (pointer.down) {
+      if (Math.hypot(event.clientX - pointer.startX, event.clientY - pointer.startY) > 5) pointer.moved = true;
+      if (pointer.moved) targetAngle += (event.clientX - pointer.lastX) * .006;
+      pointer.lastX = event.clientX;
+      hoverCell = null;
+    } else {
+      const rect = canvas.getBoundingClientRect();
+      hoverCell = hitTest(event.clientX - rect.left, event.clientY - rect.top);
+    }
+    requestDraw();
+  });
+
+  canvas.addEventListener('pointerup', event => {
+    if (!pointer.moved && pointer.down) {
+      const rect = canvas.getBoundingClientRect();
+      const hit = hitTest(event.clientX - rect.left, event.clientY - rect.top);
+      if (hit) toggleCell(hit.row, hit.col);
+    }
+    pointer.down = false;
+  });
+
+  canvas.addEventListener('pointercancel', () => { pointer.down = false; });
+  canvas.addEventListener('pointerleave', () => { hoverCell = null; requestDraw(); });
+
+  $('#rotate-left').addEventListener('click', () => { targetAngle -= Math.PI / 4; requestDraw(); });
+  $('#rotate-right').addEventListener('click', () => { targetAngle += Math.PI / 4; requestDraw(); });
+  $('#reset-view').addEventListener('click', () => { targetAngle = -.52; requestDraw(); });
+
+  // ─── Аудиодвижок с look-ahead планированием ───────────────────
+
+  let audio = null;
+  let timer = null;
+  let nextStep = 0;
+  let nextNoteTime = 0;
+  let visualEvents = [];
+  let audioGeneration = 0;
+
+  function createAudio() {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) throw new Error('Web Audio unavailable');
+
+    const context = new AudioContextClass();
+    const compressor = context.createDynamicsCompressor();
+    compressor.threshold.value = -20;
+    compressor.knee.value = 20;
+    compressor.ratio.value = 4;
+
+    const master = context.createGain();
+    master.gain.value = .5;
+    compressor.connect(master);
+    master.connect(context.destination);
+
+    const noiseBuffer = context.createBuffer(1, Math.floor(context.sampleRate * .3), context.sampleRate);
+    const channel = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < channel.length; i++) channel[i] = Math.random() * 2 - 1;
+
+    return { context, master, compressor, noiseBuffer };
+  }
+
+  function playVoice(row, col, when, velocity = 1) {
+    const { context, compressor } = audio;
+    const gain = context.createGain();
+    const panner = context.createStereoPanner();
+    panner.pan.value = (col / 15 - .5) * .65;
+    gain.connect(panner);
+    panner.connect(compressor);
+
+    let source, filter;
+    let duration;
+
+    if (row === 7) {
+      duration = .13;
+      source = context.createBufferSource();
+      source.buffer = audio.noiseBuffer;
+      filter = context.createBiquadFilter();
+      filter.type = col % 4 === 0 ? 'lowpass' : 'highpass';
+      filter.frequency.value = col % 4 === 0 ? 850 : 5500;
+      source.connect(filter);
+      filter.connect(gain);
+      gain.gain.setValueAtTime(.033 * velocity, when);
+      gain.gain.exponentialRampToValueAtTime(.0001, when + duration);
+    } else {
+      source = context.createOscillator();
+      source.type = row === 6 ? 'sine' : moods[mood].wave;
+      const frequency = 440 * Math.pow(2, (notes[row] - 69) / 12);
+      source.frequency.setValueAtTime(frequency, when);
+
+      duration = row === 6 ? .38 : moods[mood].decay;
+      if (row === 6) {
+        source.frequency.setValueAtTime(frequency * 1.8, when);
+        source.frequency.exponentialRampToValueAtTime(frequency, when + .055);
+      }
+
+      filter = context.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = row === 6 ? 380 : mood === 'blue' ? 1800 : 3600;
+      source.connect(filter);
+      filter.connect(gain);
+
+      gain.gain.setValueAtTime(.0001, when);
+      gain.gain.linearRampToValueAtTime((row === 6 ? .13 : .065) * velocity, when + .009);
+      gain.gain.exponentialRampToValueAtTime(.0001, when + duration);
+    }
+
+    source.start(when);
+    source.stop(when + duration + .025);
+    source.onended = () => {
+      source.disconnect();
+      if (filter) filter.disconnect();
+      gain.disconnect();
+      panner.disconnect();
+    };
+  }
+
+  function scheduler() {
+    if (!playing || !audio) return;
+    const now = audio.context.currentTime;
+
+    // При задержке фонового таймера не воспроизводим накопившийся залп.
+    if (nextNoteTime < now - .08) nextNoteTime = now + .02;
+
+    while (nextNoteTime < now + .1) {
+      const rows = [];
+      for (let row = 0; row < ROWS; row++) {
+        if (pattern[row][nextStep]) {
+          playVoice(row, nextStep, nextNoteTime);
+          rows.push(row);
+        }
+      }
+      visualEvents.push({ time: nextNoteTime, step: nextStep, rows });
+      nextNoteTime += 60 / bpm / 2;
+      nextStep = (nextStep + 1) % COLS;
+    }
+    requestDraw();
+  }
+
+  function syncTransport() {
+    $('#transport').textContent = playing ? 'Ⅱ' : '▶';
+    $('#transport').setAttribute('aria-pressed', playing);
+    $('#transport').setAttribute('aria-label', playing ? 'Остановить музыку' : 'Запустить музыку');
+    $('#start-label').textContent = playing ? 'Пусть город отдохнёт' : 'Разбудить город';
+    $('#start .play-icon').textContent = playing ? 'Ⅱ' : '▶';
+    $('#play-state').textContent = playing ? 'ГОРОД ЗВУЧИТ' : 'ГОРОД СПИТ';
+  }
+
+  function stopMusic() {
+    audioGeneration++;
+    playing = false;
+    clearInterval(timer);
+    timer = null;
+    visualEvents = [];
+    syncStep(-1);
+
+    if (audio) {
+      const now = audio.context.currentTime;
+      audio.master.gain.cancelScheduledValues(now);
+      audio.master.gain.setTargetAtTime(0, now, .025);
+    }
+
+    syncTransport();
+    requestDraw();
+  }
+
+  async function toggleMusic() {
+    if (busy) return;
+    if (playing) { stopMusic(); return; }
+
+    busy = true;
+    const generation = ++audioGeneration;
+    $('#transport').disabled = true;
+    $('#start').disabled = true;
+
+    try {
+      if (!audio) audio = createAudio();
+      await audio.context.resume();
+
+      if (document.hidden || generation !== audioGeneration) return;
+
+      audio.master.gain.cancelScheduledValues(audio.context.currentTime);
+      audio.master.gain.setTargetAtTime(.5, audio.context.currentTime, .035);
+
+      playing = true;
+      nextStep = 0;
+      nextNoteTime = audio.context.currentTime + .08;
+      visualEvents = [];
+      syncTransport();
+      scheduler();
+      timer = setInterval(scheduler, 25);
+      requestDraw();
+    } catch {
+      stopMusic();
+      toast('Не удалось включить звук. Попробуй современный браузер и нажми ещё раз.');
+    } finally {
+      busy = false;
+      $('#transport').disabled = false;
+      $('#start').disabled = false;
+    }
+  }
+
+  $('#transport').addEventListener('click', toggleMusic);
+  $('#start').addEventListener('click', toggleMusic);
+
+  $('#tempo').addEventListener('input', event => {
+    bpm = Number(event.target.value);
+    $('#tempo-value').textContent = `${bpm} BPM`;
+  });
+
+  $$('.palette-button').forEach(button => {
+    button.addEventListener('click', () => setMood(button.dataset.mood));
+  });
+
+  $('#generate').addEventListener('click', () => {
+    generate(1 + Math.floor(Math.random() * 99999));
+    toast('Новый генплан. Другие улицы, другая мелодия.');
+  });
+
+  $('#clear').addEventListener('click', () => {
+    pattern = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
+    syncPattern();
+    toast('Пустой участок. Начни с одной клетки.');
+  });
+
+  // ─── Сохранение и проверяемый импорт ─────────────────────────
+
+  function download(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  }
+
+  $('#save').addEventListener('click', () => {
+    const data = { format: 'polyphony-city', version: 1, seed, bpm, mood, pattern };
+    download(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }), `polyphony-${seed}.json`);
+    toast('Генплан отправлен на сохранение. Его можно загрузить обратно.');
+  });
+
+  $('#load').addEventListener('click', () => $('#file-input').click());
+
+  $('#file-input').addEventListener('change', async event => {
+    const file = event.target.files[0];
+    event.target.value = '';
+    if (!file) return;
+
+    try {
+      if (file.size > 100000) throw new Error('Файл слишком большой для генплана.');
+      const data = JSON.parse(await file.text());
+
+      if (
+        !data || data.format !== 'polyphony-city' || data.version !== 1 ||
+        !Number.isInteger(data.seed) || data.seed < 1 || data.seed > 99999 ||
+        !Number.isInteger(data.bpm) || data.bpm < 55 || data.bpm > 150 ||
+        !Object.hasOwn(moods, data.mood) ||
+        !Array.isArray(data.pattern) || data.pattern.length !== ROWS ||
+        !data.pattern.every(row =>
+          Array.isArray(row) && row.length === COLS &&
+          row.every(value => typeof value === 'boolean')
+        )
+      ) throw new Error('Это не совместимый генплан Полифонии.');
+
+      stopMusic();
+      seed = data.seed;
+      bpm = data.bpm;
+      pattern = data.pattern.map(row => [...row]);
+      $('#tempo').value = bpm;
+      $('#tempo-value').textContent = `${bpm} BPM`;
+      setMood(data.mood);
+      syncPattern();
+      toast('Город восстановлен. Нажми ▶, чтобы услышать его.');
+    } catch (error) {
+      toast(error instanceof SyntaxError ? 'Файл не содержит корректный JSON.' : error.message);
+    }
+  });
+
+  $('#poster').addEventListener('click', () => {
+    const output = document.createElement('canvas');
+    output.width = canvas.width;
+    output.height = canvas.height;
+
+    const out = output.getContext('2d');
+    out.fillStyle = '#e8e4d9';
+    out.fillRect(0, 0, output.width, output.height);
+    out.drawImage(canvas, 0, 0);
+    out.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    out.fillStyle = '#243e42';
+    out.font = 'bold 17px Arial';
+    out.fillText('ПОЛИФОНИЯ', 24, 34);
+    out.font = '9px monospace';
+    out.fillStyle = '#698467';
+    out.fillText(`MASTERPLAN #${seed} / ${bpm} BPM / ${mood.toUpperCase()}`, 24, 54);
+    out.fillText('ARCHITECTURE OF SOUND. BUILT BY YOU.', 24, height - 24);
+
+    output.toBlob(blob => {
+      if (!blob) return toast('Не удалось создать изображение.');
+      download(blob, `polyphony-${seed}.png`);
+      toast('Снимок города отправлен на сохранение.');
+    }, 'image/png');
+  });
+
+  // ─── Жизненный цикл и доступность ────────────────────────────
+
+  document.addEventListener('keydown', event => {
+    if (event.code !== 'Space' || event.repeat || event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.target instanceof Element &&
+      event.target.closest('button, input, textarea, select, a, summary, [contenteditable="true"]')) return;
+    event.preventDefault();
+    toggleMusic();
+  });
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      if (playing || busy) stopMusic();
+      if (frame) cancelAnimationFrame(frame);
+      frame = 0;
+    } else {
+      previousTime = 0;
+      requestDraw();
+    }
+  });
+
+  new IntersectionObserver(entries => {
+    sceneVisible = entries[0].isIntersecting;
+    if (sceneVisible) {
+      previousTime = 0;
+      requestDraw();
+    }
+  }, { rootMargin: '150px' }).observe($('#hero'));
+
+  // Секвенсор продолжает показывать шаги, даже когда город вне экрана.
+  setInterval(() => {
+    if (!playing || sceneVisible || !audio) return;
+    const now = audio.context.currentTime;
+    while (visualEvents.length && visualEvents[0].time <= now) {
+      const event = visualEvents.shift();
+      syncStep(event.step);
+    }
+  }, 40);
+
+  new ResizeObserver(resize).observe($('#hero'));
+
+  generate(seed);
+  syncTransport();
+  resize();
+})();
+</script>
+</body>
+</html>

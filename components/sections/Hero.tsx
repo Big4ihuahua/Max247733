@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { gsap, SplitText, useGSAP, prefersReducedMotion } from "@/lib/gsap";
 import { sceneStore } from "@/lib/scene-store";
-import { site } from "@/data/site";
+import { sectionTotal, site } from "@/data/site";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 import { LiveClock, StatusBadge } from "@/components/ui/LiveClock";
 import { ArrowIcon } from "@/components/ui/Icons";
@@ -86,9 +86,12 @@ export function Hero() {
 
   return (
     <section id="hero" ref={root} data-section="hero" className="hero">
+      <div id="hero-anchor" className="hero-anchor" aria-hidden="true" />
       <div className="hero-inner">
         <div className="hero-top" data-hero-hide data-hero-fade>
-          <span className="mono-label">[ 01 / 12 ] — {site.tagline}</span>
+          <span className="mono-label">
+            [ 01 / {sectionTotal} ] — {site.tagline}
+          </span>
           <span className="mono-label text-muted hero-top-list">Сайты · Веб-приложения · Мобильные приложения · Программы и боты</span>
         </div>
 

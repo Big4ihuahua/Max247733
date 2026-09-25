@@ -1,20 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { gsap, ScrollTrigger, useGSAP } from "@/lib/gsap";
+import { gsap, ScrollTrigger, useGSAP, prefersReducedMotion } from "@/lib/gsap";
 import { processSteps } from "@/data/process";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { pad2 } from "@/lib/format";
 
-// Kept shallow so the cards can alternate above and below the line without colliding.
-const PATH = "M0,205 C150,205 210,150 350,155 S560,255 700,240 S900,150 1050,165 S1170,215 1200,210";
-const FRACTIONS = processSteps.map((_, i) => 0.07 + (i * 0.86) / (processSteps.length - 1));
+const PATH = "M0,230 C150,230 210,120 350,130 S560,300 700,280 S900,110 1050,130 S1170,210 1200,200";
+const FRACTIONS = processSteps.map((_, i) => 0.06 + (i * 0.88) / (processSteps.length - 1));
 const WAVE = "(min-width: 1024px) and (prefers-reduced-motion: no-preference)";
 
 export function Process() {
   const root = useRef<HTMLElement>(null);
-  const [active, setActive] = useState(-1);
+  const detail = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(0);
   const [nodes, setNodes] = useState<{ x: number; y: number }[] | null>(null);
+  const step = processSteps[active];
 
   useEffect(() => {
     const path = root.current?.querySelector<SVGPathElement>(".process-path-base");
@@ -28,6 +29,16 @@ export function Process() {
     );
   }, []);
 
+  useEffect(() => {
+    const el = detail.current;
+    if (!el || prefersReducedMotion()) return;
+    gsap.fromTo(
+      el.querySelectorAll("[data-step-fade]"),
+      { y: 18, autoAlpha: 0, filter: "blur(6px)" },
+      { y: 0, autoAlpha: 1, filter: "blur(0px)", duration: 0.8, ease: "expo.out", stagger: 0.05, overwrite: true, clearProps: "filter" },
+    );
+  }, [active]);
+
   useGSAP(
     () => {
       const el = root.current!;
@@ -40,7 +51,7 @@ export function Process() {
         path.style.strokeDasharray = `${len}`;
         path.style.strokeDashoffset = `${len}`;
         const st = { p: 0 };
-        let last = -2;
+        let last = -1;
         gsap.to(st, {
           p: 1,
           ease: "none",
@@ -49,7 +60,7 @@ export function Process() {
             const pt = path.getPointAtLength(len * st.p);
             head.style.left = `${pt.x / 12}%`;
             head.style.top = `${pt.y / 4}%`;
-            const idx = FRACTIONS.filter((f) => st.p >= f - 0.015).length - 1;
+            const idx = Math.max(0, FRACTIONS.filter((f) => st.p >= f - 0.02).length - 1);
             if (idx !== last) {
               last = idx;
               setActive(idx);
@@ -87,23 +98,18 @@ export function Process() {
       <div className="process-pin">
         <div className="process-header">
           <div>
-            <SectionLabel index="04" label="Процесс" />
-            <h2 className="h2" data-split>
-              Как мы
-              <br />
-              <span className="text-outline">работаем</span>
+            <SectionLabel id="process" />
+            <h2 className="h2 process-title" data-split>
+              Как мы <span className="text-outline">работаем</span>
             </h2>
           </div>
-          <div className="process-aside" data-reveal>
-            <p>Шесть понятных этапов. На каждом — результат, который можно потрогать, и никаких сюрпризов в смете.</p>
-            <span className="mono-label">
-              Этап <span className="text-mint">{pad2(Math.max(active, 0) + 1)}</span> / {pad2(processSteps.length)}
-            </span>
-          </div>
+          <p className="process-lead" data-reveal>
+            Шесть понятных этапов. На каждом — результат, который можно потрогать, и никаких сюрпризов в смете.
+          </p>
         </div>
 
-        <div className="process-wave">
-          <svg className="process-svg" viewBox="0 0 1200 400" preserveAspectRatio="none" aria-hidden="true">
+        <div className="process-wave" aria-hidden="true">
+          <svg className="process-svg" viewBox="0 0 1200 400" preserveAspectRatio="none">
             <defs>
               <linearGradient id="process-grad" x1="0" x2="1200" y1="0" y2="0" gradientUnits="userSpaceOnUse">
                 <stop stopColor="#7CF5C8" />
@@ -114,30 +120,47 @@ export function Process() {
             <path className="process-path-base" d={PATH} />
             <path className="process-path-draw" d={PATH} />
           </svg>
-          <span className="process-head" aria-hidden="true" />
+          <span className="process-head" />
           {nodes &&
             processSteps.map((s, i) => {
               const n = nodes[i];
               const align = i === 0 ? "start" : i === processSteps.length - 1 ? "end" : "center";
+              // Label goes on the side of the curve that has more room.
+              const side = n.y > 50 ? "above" : "below";
               return (
                 <div
                   key={s.title}
-                  className={`process-node ${i % 2 === 0 ? "above" : "below"} align-${align} ${i <= active ? "is-done" : ""} ${
-                    i === active ? "is-active" : ""
-                  }`}
+                  className={`process-node ${side} align-${align} ${i <= active ? "is-done" : ""} ${i === active ? "is-active" : ""}`}
                   style={{ left: `${n.x}%`, top: `${n.y}%` }}
                 >
                   <span className="process-dot" />
-                  <div className="process-card">
-                    <span className="mono-label text-mint">
-                      {pad2(i + 1)} · {s.duration}
-                    </span>
-                    <h3>{s.title}</h3>
-                    <p>{s.text}</p>
-                  </div>
+                  <span className="process-tag">
+                    <span className="mono-label">{pad2(i + 1)}</span>
+                    <span className="process-tag-title">{s.title}</span>
+                  </span>
                 </div>
               );
             })}
+        </div>
+
+        <div ref={detail} className="process-detail" aria-live="polite">
+          <div className="process-detail-card">
+            <span className="process-detail-num" data-step-fade>
+              {pad2(active + 1)}
+            </span>
+            <div className="process-detail-body">
+              <span className="mono-label text-mint" data-step-fade>
+                Этап {pad2(active + 1)} · {step.duration}
+              </span>
+              <h3 data-step-fade>{step.title}</h3>
+              <p data-step-fade>{step.text}</p>
+            </div>
+          </div>
+          <div className="process-steps" aria-hidden="true">
+            {processSteps.map((s, i) => (
+              <span key={s.title} className={i <= active ? "is-on" : ""} />
+            ))}
+          </div>
         </div>
 
         <ol className="process-list">

@@ -6,6 +6,7 @@ import { useIsoLayoutEffect } from "@/hooks/useIsoLayoutEffect";
 import { caseFilters, cases, type CaseCategory } from "@/data/cases";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { Mockup } from "@/components/ui/Mockup";
+import { ArrowIcon } from "@/components/ui/Icons";
 import { pad2 } from "@/lib/format";
 import { CaseModal } from "./CaseModal";
 
@@ -110,7 +111,7 @@ export function Cases() {
     <section id="cases" ref={root} data-section="cases" className="section cases">
       <div className="cases-header">
         <div>
-          <SectionLabel index="05" label="Кейсы" />
+          <SectionLabel id="cases" />
           <h2 className="h2" data-split>
             Избранные
             <br />
@@ -154,20 +155,19 @@ export function Cases() {
                 <div className="case-media-inner">
                   <Mockup variant={c.mockup} colors={c.colors} />
                 </div>
-                <div className="case-tags" aria-hidden="true">
-                  {c.stack.map((t) => (
-                    <span key={t}>{t}</span>
-                  ))}
-                </div>
+                <span className="case-open" aria-hidden="true">
+                  Смотреть кейс <ArrowIcon />
+                </span>
               </div>
               <div className="case-info">
-                <div>
+                <div className="case-head">
                   <h3 className="case-title">{c.title}</h3>
-                  <p className="case-type">{c.type}</p>
-                </div>
-                <div className="case-meta">
-                  <span className="mono-label text-mint">{c.metric}</span>
                   <span className="mono-label text-muted">{c.year}</span>
+                </div>
+                <p className="case-type">{c.type}</p>
+                <div className="case-foot">
+                  <span className="case-metric">{c.metric}</span>
+                  <span className="case-stack mono-label">{c.stack.join(" · ")}</span>
                 </div>
               </div>
               <button

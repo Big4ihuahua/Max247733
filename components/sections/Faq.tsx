@@ -11,7 +11,7 @@ export function Faq() {
     <section id="faq" data-section="faq" className="section faq">
       <div className="faq-layout">
         <div className="faq-intro">
-          <SectionLabel index="10" label="FAQ" />
+          <SectionLabel id="faq" />
           <h2 className="h2" data-split>
             Частые
             <br />

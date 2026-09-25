@@ -4,8 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { gsap, ScrollTrigger, useGSAP } from "@/lib/gsap";
 import { getLenis, scrollToTarget } from "@/lib/lenis";
 import { menuLinks, site } from "@/data/site";
+import { useSceneStore } from "@/lib/scene-store";
 import { MagneticButton } from "@/components/ui/MagneticButton";
-import { LiveClock, StatusBadge } from "@/components/ui/LiveClock";
+import { StatusBadge } from "@/components/ui/LiveClock";
 import { LogoMark } from "@/components/ui/Icons";
 
 const CLOSED = "circle(0% at calc(100% - 3.25rem) 2.6rem)";
@@ -15,6 +16,7 @@ export function Header() {
   const [open, setOpen] = useState(false);
   const header = useRef<HTMLElement>(null);
   const openRef = useRef(open);
+  const section = useSceneStore((s) => s.section);
 
   useEffect(() => {
     openRef.current = open;
@@ -46,10 +48,15 @@ export function Header() {
           <LogoMark className="logo-mark" />
           <span className="logo-word">{site.name}</span>
         </a>
-        <div className="header-center">
-          <StatusBadge />
-          <LiveClock />
-        </div>
+        <nav className="header-nav" aria-label="Разделы">
+          {menuLinks
+            .filter((l) => l.id !== "contact")
+            .map((l) => (
+              <a key={l.id} href={`#${l.id}`} aria-current={section === l.id ? "true" : undefined}>
+                {l.label}
+              </a>
+            ))}
+        </nav>
         <div className="header-right">
           <MagneticButton href="#contact" variant="ghost" className="header-cta">
             Обсудить проект

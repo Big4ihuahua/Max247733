@@ -1,0 +1,1842 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#090b0a">
+<meta name="description" content="AETHER — независимая студия цифрового опыта. Создаём выразительные бренды, сайты и интерактивные миры.">
+<title>AETHER® — Beyond the ordinary</title>
+
+<style>
+/* ───────────── FOUNDATION ───────────── */
+:root {
+  --bg: #090b0a;
+  --panel: #111410;
+  --ink: #f1f2e9;
+  --muted: #969b91;
+  --lime: #d3ff67;
+  --line: rgba(241,242,233,.15);
+  --ease: cubic-bezier(.22,1,.36,1);
+  --pad: clamp(22px, 5vw, 88px);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+body {
+  margin: 0;
+  color: var(--ink);
+  background: var(--bg);
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+body.modal-open { overflow: hidden; }
+::selection { color: var(--bg); background: var(--lime); }
+a { color: inherit; text-decoration: none; }
+button, input, textarea, select { font: inherit; }
+button, a, input, textarea { -webkit-tap-highlight-color: transparent; }
+button { color: inherit; }
+button, a { touch-action: manipulation; }
+button { cursor: pointer; }
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--lime);
+  outline-offset: 6px;
+}
+button { border: 0; }
+img, canvas { display: block; }
+p, h1, h2, h3 { margin: 0; }
+section { position: relative; }
+.wrap { padding-inline: var(--pad); }
+.mono {
+  font-family: "Courier New", monospace;
+  font-size: 11px;
+  line-height: 1.6;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+}
+.muted { color: var(--muted); }
+.accent { color: var(--lime); }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+.skip {
+  position: fixed;
+  top: -80px;
+  left: 20px;
+  background: var(--lime);
+  color: var(--bg);
+  padding: 14px 20px;
+  z-index: 300;
+}
+.skip:focus { top: 15px; }
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  opacity: .035;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23fff' filter='url(%23n)' opacity='.8' d='M0 0h180v180H0z'/%3E%3C/svg%3E");
+}
+.progress {
+  position: fixed;
+  inset: 0 auto auto 0;
+  height: 2px;
+  width: 100%;
+  background: var(--lime);
+  transform: scaleX(0);
+  transform-origin: left;
+  z-index: 200;
+}
+.reveal {
+  opacity: 1;
+  transform: none;
+}
+.js .reveal {
+  opacity: 0;
+  transform: translateY(35px);
+  transition: opacity 1s var(--ease), transform 1s var(--ease);
+}
+.js .reveal.visible { opacity: 1; transform: none; }
+
+/* ───────────── NAVIGATION ───────────── */
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+  padding: 26px var(--pad);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid transparent;
+  transition: background .4s, padding .4s, border-color .4s;
+}
+.header.scrolled {
+  padding-block: 17px;
+  background: rgba(9,11,10,.83);
+  backdrop-filter: blur(20px);
+  border-color: var(--line);
+}
+.logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  font-weight: 800;
+  font-size: 25px;
+  letter-spacing: -.075em;
+}
+.logo sup {
+  font-size: 10px;
+  align-self: flex-start;
+  margin: 2px 0 0 -7px;
+  letter-spacing: 0;
+}
+.brand-mark {
+  width: 25px;
+  height: 25px;
+  position: relative;
+  display: inline-block;
+}
+.brand-mark::before, .brand-mark::after {
+  content: "";
+  position: absolute;
+  width: 7px;
+  height: 26px;
+  left: 9px;
+  top: 0;
+  background: var(--lime);
+  transform: rotate(35deg);
+}
+.brand-mark::after { transform: rotate(-35deg); }
+.nav { display: flex; align-items: center; gap: 35px; }
+.nav > a {
+  font-size: 12px;
+  position: relative;
+}
+.nav > a:not(.nav-cta)::after {
+  content: "";
+  position: absolute;
+  height: 1px;
+  background: var(--lime);
+  width: 100%;
+  left: 0;
+  bottom: -6px;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform .4s var(--ease);
+}
+.nav > a:hover::after { transform: scaleX(1); transform-origin: left; }
+.nav .nav-cta {
+  display: flex;
+  gap: 23px;
+  align-items: center;
+  padding: 13px 20px;
+  border: 1px solid var(--line);
+  border-radius: 40px;
+  transition: color .3s, background .3s;
+}
+.nav-cta:hover { color: var(--bg); background: var(--lime); }
+.menu-toggle {
+  display: none;
+  background: transparent;
+  width: 44px;
+  height: 44px;
+  padding: 10px;
+}
+.menu-toggle span {
+  display: block;
+  height: 1px;
+  background: var(--ink);
+  margin: 6px 0;
+  transition: transform .3s;
+}
+
+/* ───────────── HERO ───────────── */
+.hero {
+  min-height: 830px;
+  height: 100svh;
+  max-height: 1250px;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  border-bottom: 1px solid var(--line);
+}
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background:
+    radial-gradient(ellipse at 75% 46%, #192314 0, transparent 47%),
+    linear-gradient(90deg, #090b0a 10%, #0b0e0b);
+}
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+  background-size: 100px 100px;
+  mask-image: linear-gradient(90deg, transparent, #000);
+}
+#universe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+}
+.hero-topline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 35px;
+}
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--lime);
+  box-shadow: 0 0 15px #d3ff6770;
+  animation: pulse 2.5s infinite;
+}
+@keyframes pulse { 50% { opacity: .35; } }
+.hero-content {
+  position: relative;
+  padding-top: 30px;
+  pointer-events: none;
+}
+.hero-content a { pointer-events: auto; }
+.hero h1 {
+  font-size: clamp(80px, 10.7vw, 174px);
+  line-height: .84;
+  letter-spacing: -.085em;
+  font-weight: 500;
+  max-width: 1100px;
+}
+.hero h1 .line { display: block; overflow: hidden; padding: 0 .1em .12em 0; }
+.hero h1 .line > span { display: block; }
+.js .hero h1 .line > span {
+  animation: rise 1.45s var(--ease) both;
+}
+.js .hero h1 .line:nth-child(2) > span { animation-delay: .13s; }
+.js .hero h1 .line:nth-child(3) > span { animation-delay: .26s; }
+@keyframes rise {
+  from { transform: translateY(115%) rotate(4deg); }
+  to { transform: translateY(0) rotate(0); }
+}
+.hero h1 .outline {
+  color: transparent;
+  -webkit-text-stroke: 1px rgba(241,242,233,.75);
+}
+.hero h1 em {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  letter-spacing: -.08em;
+  color: var(--lime);
+}
+.hero-sub {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+  margin-top: 28px;
+}
+.hero-sub p {
+  max-width: 280px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: #b2b6ab;
+}
+.round-link {
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  font-size: 26px;
+  transition: transform .5s var(--ease), background .3s, color .3s;
+}
+.round-link:hover {
+  transform: rotate(-45deg);
+  background: var(--lime);
+  color: var(--bg);
+}
+.hero-bottom {
+  position: absolute;
+  bottom: 30px;
+  left: var(--pad);
+  right: var(--pad);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+.scroll-cue { display: flex; align-items: center; gap: 16px; color: var(--muted); }
+.scroll-cue i {
+  width: 23px;
+  height: 35px;
+  border: 1px solid #4c5146;
+  border-radius: 20px;
+  display: flex;
+  justify-content: center;
+  padding-top: 7px;
+}
+.scroll-cue i::after {
+  content: "";
+  width: 3px;
+  height: 7px;
+  background: var(--lime);
+  border-radius: 3px;
+  animation: scrollmark 1.8s infinite;
+}
+@keyframes scrollmark { to { transform: translateY(12px); opacity: 0; } }
+.shape-controls {
+  display: flex;
+  padding: 5px;
+  gap: 3px;
+  border: 1px solid var(--line);
+  border-radius: 30px;
+  background: rgba(9,11,10,.55);
+  backdrop-filter: blur(14px);
+}
+.shape-button {
+  padding: 10px 16px;
+  border-radius: 25px;
+  background: transparent;
+  font: 10px "Courier New", monospace;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: #a5ab9c;
+  transition: background .3s, color .3s;
+}
+.shape-button[aria-pressed="true"] { color: var(--bg); background: var(--lime); }
+.object-caption {
+  position: absolute;
+  right: var(--pad);
+  top: 28%;
+  color: #858f79;
+  text-align: right;
+}
+.object-caption::before {
+  content: "+";
+  color: var(--lime);
+  font-size: 25px;
+  display: block;
+  margin-bottom: 10px;
+}
+
+/* ───────────── MARQUEE ───────────── */
+.marquee {
+  overflow: hidden;
+  padding: 23px 0;
+  border-bottom: 1px solid var(--line);
+  background: #0e110d;
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 30s linear infinite;
+}
+.marquee-group {
+  display: flex;
+  align-items: center;
+  gap: 45px;
+  padding-right: 45px;
+  white-space: nowrap;
+  font-size: 14px;
+  letter-spacing: -.02em;
+}
+.marquee-group span { color: #9ba18f; }
+.marquee-group b { color: var(--lime); font-size: 19px; font-weight: 400; }
+@keyframes marquee { to { transform: translateX(-50%); } }
+
+/* ───────────── SECTION SYSTEM ───────────── */
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 30px;
+  margin-bottom: 55px;
+}
+.section-kicker { display: flex; gap: 18px; color: var(--muted); padding-top: 8px; }
+.section-kicker .num { color: var(--lime); }
+.section-title {
+  font-size: clamp(38px, 5.5vw, 85px);
+  line-height: .99;
+  letter-spacing: -.065em;
+  font-weight: 400;
+}
+.section-title em {
+  font-family: Georgia, serif;
+  font-weight: 400;
+  color: var(--muted);
+}
+.work { padding-block: 120px; }
+.work-heading { width: 66%; }
+.work-heading p {
+  margin-top: 25px;
+  max-width: 365px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.75;
+}
+.projects {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px 26px;
+}
+.project { min-width: 0; }
+.project:nth-child(2) { padding-top: 110px; }
+.project:nth-child(3) { grid-column: 1 / -1; }
+.project-open {
+  display: block;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+  background: transparent;
+}
+.project-visual {
+  height: clamp(320px, 35vw, 580px);
+  overflow: hidden;
+  position: relative;
+  border-radius: 3px;
+  isolation: isolate;
+}
+.project:nth-child(3) .project-visual { height: 470px; }
+.project-visual::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: inherit;
+  pointer-events: none;
+}
+.project-visual .visual-layer {
+  position: absolute;
+  inset: 0;
+  transition: transform 1.2s var(--ease);
+}
+.project-open:hover .visual-layer { transform: scale(1.055); }
+.project-tag {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  z-index: 4;
+  border: 1px solid currentColor;
+  border-radius: 30px;
+  padding: 7px 11px;
+  font-size: 9px;
+  letter-spacing: .1em;
+}
+.project-arrow {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 43px;
+  height: 43px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--bg);
+  display: grid;
+  place-items: center;
+  font-size: 21px;
+  z-index: 4;
+  transform: translateY(-70px);
+  transition: transform .5s var(--ease);
+}
+.project-open:hover .project-arrow, .project-open:focus-visible .project-arrow {
+  transform: translateY(0);
+}
+.project-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-top: 21px;
+}
+.project-info h3 { font-size: 22px; font-weight: 400; letter-spacing: -.04em; }
+.project-info span { color: var(--muted); font-size: 10px; text-align: right; }
+.art-orbit { background: #d8d8cd; color: #242721; }
+.art-orbit .visual-layer {
+  background:
+    radial-gradient(ellipse at 50% 120%, #8c9280 0, transparent 55%),
+    repeating-linear-gradient(0deg, transparent 0 49px, #24272109 49px 50px);
+}
+.orbit-word {
+  position: absolute;
+  top: 24%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: clamp(75px, 10vw, 170px);
+  font-weight: 700;
+  letter-spacing: -.09em;
+}
+.chrome-orb {
+  position: absolute;
+  width: 48%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  top: 42%;
+  left: 27%;
+  background:
+    radial-gradient(circle at 32% 22%, #fff 0, #f6f6e8 5%, transparent 25%),
+    radial-gradient(circle at 66% 70%, #1d241a 0, #414b36 15%, transparent 44%),
+    conic-gradient(from 25deg, #afb69e, #eff4df, #414a3a, #10190f, #cbd2bc, #fcfff2, #707967, #afb69e);
+  box-shadow: 20px 45px 40px #1b28182b, inset -8px -9px 20px #07120355;
+  transform: rotate(-25deg);
+}
+.chrome-orb::after {
+  content: "";
+  position: absolute;
+  width: 142%;
+  height: 27%;
+  border: 9px solid #c2c8b1;
+  border-top-color: #f7f8e7;
+  border-bottom-color: #606b51;
+  border-radius: 50%;
+  top: 39%;
+  left: -21%;
+  transform: rotate(-25deg);
+  box-shadow: 0 8px 9px #19211733;
+}
+.art-footer {
+  position: absolute;
+  bottom: 25px;
+  left: 25px;
+  right: 25px;
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  font-size: 9px;
+  letter-spacing: .07em;
+}
+.art-void { background: #241440; color: #edddff; }
+.art-void .visual-layer {
+  background:
+    radial-gradient(ellipse at 50% 55%, #7b44b766, transparent 60%),
+    repeating-linear-gradient(90deg, transparent 0 59px, #b787fc0a 60px);
+}
+.portal {
+  width: 54%;
+  height: 69%;
+  position: absolute;
+  top: 15%;
+  left: 23%;
+  border-radius: 50% 50% 5px 5px;
+  background:
+    radial-gradient(ellipse at 50% 100%, #b7a1ee 0, #673da6 14%, transparent 40%),
+    linear-gradient(90deg, #c4a1fb, #4e2a81 7%, #100a1e 16%, #08060e 80%, #8765c7 95%, #d5b7ff);
+  box-shadow: 0 0 60px #9e62ff33, inset 0 0 30px #0a0612;
+}
+.portal::before, .portal::after {
+  content: "";
+  position: absolute;
+  inset: 15px;
+  border: 1px solid #af82ff66;
+  border-radius: inherit;
+}
+.portal::after { inset: 30px; border-color: #af82ff30; }
+.void-word {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font: italic clamp(75px, 10vw, 150px) Georgia, serif;
+  letter-spacing: -.065em;
+  text-shadow: 0 5px 30px #08040f;
+}
+.art-terra { background: #d4f475; color: #1b2814; }
+.art-terra .visual-layer {
+  background:
+    radial-gradient(ellipse at 80% 100%, #517b3255, transparent 55%),
+    repeating-linear-gradient(90deg, transparent 0 99px, #1b281411 100px);
+}
+.terra-word {
+  position: absolute;
+  font-size: clamp(120px, 23vw, 350px);
+  line-height: 1;
+  left: 5%;
+  top: 14%;
+  font-weight: 700;
+  letter-spacing: -.095em;
+}
+.leaf {
+  position: absolute;
+  width: 25%;
+  height: 85%;
+  right: 17%;
+  top: 14%;
+  border-radius: 100% 0 100% 0;
+  background:
+    repeating-linear-gradient(40deg, transparent 0 13px, #d6f49320 14px 15px),
+    linear-gradient(110deg, #182b15, #7b9f40 48%, #d2ed85 49%, #4f772a 51%, #233d1a);
+  box-shadow: 20px 30px 30px #1b391333;
+  transform: rotate(24deg);
+}
+.leaf.two {
+  right: 6%;
+  top: 40%;
+  width: 17%;
+  height: 56%;
+  transform: rotate(68deg);
+}
+
+/* ───────────── MANIFESTO ───────────── */
+.about {
+  padding-block: 115px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: #10130e;
+}
+.about-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 50px; }
+.about-text {
+  font-size: clamp(30px, 4.2vw, 65px);
+  line-height: 1.13;
+  letter-spacing: -.055em;
+  font-weight: 400;
+}
+.about-text .dim { color: #626959; }
+.about-bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 50px;
+  margin-top: 50px;
+}
+.about-bottom p { color: var(--muted); font-size: 14px; line-height: 1.8; max-width: 350px; }
+.signature {
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-size: 32px;
+  letter-spacing: -.04em;
+  color: var(--lime);
+}
+.principles {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 85px;
+  border-top: 1px solid var(--line);
+}
+.principle { padding: 30px 20px 0 0; }
+.principle + .principle { border-left: 1px solid var(--line); padding-left: 30px; }
+.principle b {
+  display: block;
+  font-size: clamp(50px, 6vw, 90px);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -.08em;
+  margin-bottom: 15px;
+}
+.principle span { color: var(--muted); }
+
+/* ───────────── PROCESS ───────────── */
+.process { padding-block: 120px; }
+.process-layout { display: grid; grid-template-columns: 1fr 1.65fr; gap: 70px; }
+.process-intro .section-title { margin-top: 32px; }
+.process-intro p {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.8;
+  max-width: 270px;
+  margin-top: 25px;
+}
+.process-list { border-top: 1px solid var(--line); }
+.process-item { border-bottom: 1px solid var(--line); }
+.process-item summary {
+  padding: 29px 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  list-style: none;
+}
+.process-item summary::-webkit-details-marker { display: none; }
+.process-item summary:focus-visible { outline: 2px solid var(--lime); outline-offset: 4px; }
+.process-item summary .mono { color: var(--muted); }
+.process-item h3 { font-size: clamp(23px, 2.5vw, 36px); font-weight: 400; letter-spacing: -.045em; }
+.process-item .plus {
+  margin-left: auto;
+  font-size: 26px;
+  font-weight: 300;
+  color: var(--muted);
+  transition: transform .4s, color .4s;
+}
+.process-item[open] .plus { transform: rotate(45deg); color: var(--lime); }
+.process-item[open] h3 { color: var(--lime); }
+.process-body { padding: 0 35px 30px 40px; }
+.process-body p { color: var(--muted); font-size: 14px; line-height: 1.8; max-width: 470px; }
+.process-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+.process-tags span { border: 1px solid var(--line); border-radius: 20px; padding: 6px 11px; font-size: 10px; }
+
+/* ───────────── CONTACT ───────────── */
+.contact {
+  background: var(--lime);
+  color: var(--bg);
+  padding-block: 90px 50px;
+  overflow: hidden;
+}
+.contact .section-kicker, .contact .section-kicker .num { color: #435326; }
+.contact-title {
+  margin-top: 40px;
+  font-size: clamp(70px, 12.6vw, 200px);
+  font-weight: 500;
+  line-height: .88;
+  letter-spacing: -.085em;
+  position: relative;
+}
+.contact-title em { font-family: Georgia, serif; font-weight: 400; }
+.contact-title .star { display: inline-block; font-size: .7em; vertical-align: top; margin-left: .1em; }
+.contact-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  margin-top: 70px;
+  padding-top: 40px;
+  border-top: 1px solid #17210e40;
+}
+.contact-copy p { max-width: 310px; font-size: 16px; line-height: 1.65; color: #394825; }
+.contact-email {
+  display: inline-block;
+  font-size: clamp(19px, 2.4vw, 34px);
+  letter-spacing: -.045em;
+  margin-top: 32px;
+  border-bottom: 1px solid #18220e77;
+}
+.contact-note { margin-top: 23px; color: #46592d; font-size: 11px; line-height: 1.7; max-width: 330px; }
+.brief-form { min-width: 0; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.field { display: block; margin-bottom: 25px; }
+.field > span { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .09em; margin-bottom: 9px; }
+.field input, .field textarea {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid #25371655;
+  padding: 11px 0;
+  border-radius: 0;
+  background: transparent;
+  color: #17210f;
+  font-size: 15px;
+  outline: none;
+}
+.field textarea { resize: vertical; min-height: 76px; }
+.field input::placeholder, .field textarea::placeholder { color: #536535; opacity: 1; }
+.field input:focus, .field textarea:focus { border-bottom-color: #090b0a; }
+.contact :focus-visible { outline-color: var(--bg); }
+.services-picker { border: 0; padding: 0; margin: 0 0 26px; }
+.services-picker legend { margin-bottom: 12px; font-size: 10px; letter-spacing: .09em; text-transform: uppercase; }
+.service-options { display: flex; flex-wrap: wrap; gap: 8px; }
+.service-chip { position: relative; cursor: pointer; }
+.service-chip input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.service-chip span {
+  display: block;
+  padding: 9px 14px;
+  border: 1px solid #26341a55;
+  border-radius: 25px;
+  font-size: 11px;
+  transition: background .2s, color .2s;
+}
+.service-chip input:checked + span { background: var(--bg); color: var(--lime); }
+.service-chip input:focus-visible + span { outline: 2px solid var(--bg); outline-offset: 3px; }
+.submit-button {
+  width: 100%;
+  padding: 19px 24px;
+  border-radius: 3px;
+  background: var(--bg);
+  color: var(--lime);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  transition: background .3s, transform .3s;
+}
+.submit-button:hover { background: #26341a; transform: translateY(-2px); }
+.submit-button span:last-child { font-size: 22px; }
+.form-help { color: #43532d; font-size: 10px; line-height: 1.6; margin-top: 12px; }
+#form-status { min-height: 18px; margin-top: 10px; color: #26341a; font-size: 12px; line-height: 1.6; }
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 22px;
+  padding: 30px var(--pad);
+}
+.footer .logo { font-size: 22px; }
+.footer .mono { color: var(--muted); font-size: 9px; }
+.back-top { font-size: 11px; display: flex; gap: 18px; align-items: center; }
+
+/* ───────────── PROJECT DIALOG ───────────── */
+.case-dialog {
+  width: min(900px, calc(100% - 32px));
+  max-height: 88svh;
+  padding: 0;
+  border: 1px solid #ffffff25;
+  background: #131710;
+  color: var(--ink);
+  border-radius: 8px;
+  overflow-y: auto;
+}
+.case-dialog::backdrop { background: #030502d9; backdrop-filter: blur(15px); }
+.case-dialog[open] { animation: modal-in .5s var(--ease); }
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(40px) scale(.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.dialog-top {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 25px;
+  background: #131710ed;
+  backdrop-filter: blur(15px);
+  border-bottom: 1px solid var(--line);
+}
+.dialog-close {
+  border: 1px solid var(--line);
+  background: transparent;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  font-size: 23px;
+}
+.dialog-art { height: 310px; position: relative; overflow: hidden; isolation: isolate; }
+.dialog-art .visual-layer { position: absolute; inset: 0; }
+.dialog-art .orbit-word { font-size: 130px; top: 8%; }
+.dialog-art .chrome-orb { width: 190px; left: calc(50% - 95px); top: 35%; }
+.dialog-art .void-word { font-size: 135px; }
+.dialog-art .portal { width: 190px; left: calc(50% - 95px); }
+.dialog-art .terra-word { font-size: 230px; }
+.dialog-content { padding: 35px clamp(22px, 5vw, 55px) 50px; }
+.dialog-content h2 { font-size: 55px; letter-spacing: -.06em; font-weight: 400; }
+.dialog-description { color: var(--muted); line-height: 1.8; font-size: 15px; margin-top: 20px; max-width: 650px; }
+.dialog-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; border-top: 1px solid var(--line); margin-top: 30px; padding-top: 23px; }
+.dialog-meta p { margin-top: 9px; font-size: 13px; line-height: 1.7; }
+.dialog-link { display: inline-flex; gap: 30px; color: var(--lime); margin-top: 35px; font-size: 14px; }
+
+/* ───────────── RESPONSIVE ───────────── */
+@media (min-width: 1600px) {
+  .hero h1 { font-size: 180px; }
+  .hero-content { padding-top: 0; }
+}
+@media (max-width: 1000px) {
+  .hero { min-height: 750px; }
+  .hero h1 { font-size: 12vw; }
+  .object-caption { top: 23%; }
+  .nav { gap: 22px; }
+  .about-grid { grid-template-columns: 1fr 2.2fr; gap: 25px; }
+  .process-layout { gap: 40px; }
+  .contact-layout { gap: 40px; }
+}
+@media (max-width: 700px) {
+  .header { padding-block: 17px; }
+  .logo { font-size: 23px; }
+  .menu-toggle { display: block; position: relative; z-index: 2; }
+  .nav {
+    position: fixed;
+    inset: 0;
+    height: 100dvh;
+    background: #0c100af7;
+    backdrop-filter: blur(25px);
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 90px var(--pad);
+    gap: 30px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-15px);
+    transition: opacity .35s, visibility .35s, transform .5s var(--ease);
+  }
+  .nav > a { font-size: 35px; letter-spacing: -.05em; }
+  .nav .nav-cta { font-size: 17px; margin-top: 20px; letter-spacing: 0; }
+  .header.menu-open .nav { opacity: 1; visibility: visible; transform: none; }
+  .header.menu-open .menu-toggle span:first-child { transform: translateY(3.5px) rotate(45deg); }
+  .header.menu-open .menu-toggle span:last-child { transform: translateY(-3.5px) rotate(-45deg); }
+  .header.menu-open .logo { z-index: 2; }
+  .hero { min-height: 810px; max-height: 1050px; justify-content: flex-start; }
+  .hero-content { padding-top: 160px; }
+  .hero-topline { font-size: 9px; margin-bottom: 30px; }
+  .hero h1 { font-size: clamp(67px, 14.2vw, 100px); }
+  .hero-sub { margin-top: 25px; gap: 23px; }
+  .hero-sub p { max-width: 230px; font-size: 12px; }
+  .round-link { width: 51px; height: 51px; }
+  .object-caption { display: none; }
+  .hero-bottom { bottom: 25px; align-items: center; }
+  .scroll-cue > span { display: none; }
+  .shape-button { padding: 10px 12px; font-size: 9px; }
+  .marquee { padding-block: 18px; }
+  .marquee-group { font-size: 12px; gap: 25px; padding-right: 25px; }
+  .section-head { display: block; margin-bottom: 35px; }
+  .section-kicker { margin-bottom: 28px; font-size: 10px; }
+  .work, .process { padding-block: 75px; }
+  .work-heading { width: 100%; }
+  .section-title { font-size: 48px; }
+  .projects { grid-template-columns: 1fr; gap: 40px; }
+  .project:nth-child(2) { padding-top: 0; }
+  .project:nth-child(3) { grid-column: auto; }
+  .project-visual, .project:nth-child(3) .project-visual { height: 420px; }
+  .project-arrow { transform: none; width: 36px; height: 36px; font-size: 18px; }
+  .project-info h3 { font-size: 21px; }
+  .project-info span { font-size: 9px; }
+  .orbit-word { font-size: 115px; }
+  .void-word { font-size: 120px; }
+  .terra-word { font-size: 150px; top: 31%; }
+  .leaf { width: 38%; right: 14%; height: 68%; top: 34%; }
+  .leaf.two { width: 26%; height: 43%; right: 5%; top: 64%; }
+  .about { padding-block: 70px; }
+  .about-grid { grid-template-columns: 1fr; gap: 0; }
+  .about-text { font-size: 36px; }
+  .about-bottom { gap: 24px; margin-top: 30px; }
+  .about-bottom p { font-size: 12px; }
+  .signature { font-size: 27px; }
+  .principles { margin-top: 45px; }
+  .principle { padding-top: 23px; padding-right: 10px; }
+  .principle + .principle { padding-left: 15px; }
+  .principle b { font-size: 53px; }
+  .principle span { font-size: 8px; letter-spacing: 0; }
+  .process-layout { grid-template-columns: 1fr; gap: 40px; }
+  .process-intro .section-title { margin-top: 0; }
+  .process-intro p { max-width: 330px; }
+  .process-item summary { padding-block: 24px; }
+  .process-body { padding-left: 37px; padding-right: 0; }
+  .contact { padding-block: 65px 35px; }
+  .contact-title { font-size: 17vw; margin-top: 30px; }
+  .contact-title .star { margin-left: 0; }
+  .contact-layout { grid-template-columns: 1fr; gap: 40px; margin-top: 40px; padding-top: 30px; }
+  .contact-copy p { font-size: 14px; max-width: 280px; }
+  .contact-email { font-size: 28px; margin-top: 20px; }
+  .contact-note { display: none; }
+  .footer { gap: 22px; }
+  .footer > .mono { order: 3; width: 100%; }
+  .dialog-content h2 { font-size: 42px; }
+  .dialog-art { height: 260px; }
+  .dialog-art .terra-word { font-size: 155px; }
+}
+@media (max-width: 380px) {
+  .hero h1 { font-size: 62px; }
+  .hero { min-height: 770px; }
+  .shape-button { padding-inline: 9px; }
+  .form-row { grid-template-columns: 1fr; gap: 0; }
+  .about-text { font-size: 31px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .js .reveal { opacity: 1; transform: none; }
+}
+</style>
+</head>
+
+<body>
+<a class="skip" href="#main">Перейти к содержимому</a>
+<div class="progress" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+
+<header class="header" id="header">
+  <a href="#home" class="logo" aria-label="Aether — на главную">
+    <span class="brand-mark" aria-hidden="true"></span>
+    AETHER<sup>®</sup>
+  </a>
+
+  <nav class="nav" id="navigation" aria-label="Основная навигация">
+    <a href="#work">Проекты</a>
+    <a href="#about">Философия</a>
+    <a href="#process">Подход</a>
+    <a href="#contact" class="nav-cta">Обсудить проект <span aria-hidden="true">↗</span></a>
+  </nav>
+
+  <button class="menu-toggle" id="menu-toggle"
+    aria-label="Открыть меню" aria-expanded="false" aria-controls="navigation">
+    <span></span><span></span>
+  </button>
+</header>
+
+<main id="main">
+  <section class="hero wrap" id="home" aria-labelledby="hero-title">
+    <div class="hero-grid" aria-hidden="true"></div>
+    <canvas id="universe" aria-hidden="true"></canvas>
+
+    <div class="hero-content">
+      <div class="hero-topline mono">
+        <span class="status-dot" aria-hidden="true"></span>
+        Independent digital design studio
+      </div>
+      <h1 id="hero-title">
+        <span class="line"><span>Beyond</span></span>
+        <span class="line"><span class="outline">the ordinary.</span></span>
+        <span class="line"><span>Into <em>feeling.</em></span></span>
+      </h1>
+      <div class="hero-sub">
+        <a class="round-link" href="#work" aria-label="Посмотреть проекты">↘</a>
+        <p>Превращаем сложные идеи в цифровой опыт, который невозможно не почувствовать.</p>
+      </div>
+    </div>
+
+    <div class="object-caption mono" aria-hidden="true">
+      LIVE MATTER / 001<br>
+      <span id="shape-caption">SPHERICAL SYSTEM</span><br>
+      MOVE TO INTERACT
+    </div>
+
+    <div class="hero-bottom">
+      <a href="#work" class="scroll-cue">
+        <i aria-hidden="true"></i>
+        <span class="mono">Scroll to discover</span>
+        <span class="sr-only">Перейти к проектам</span>
+      </a>
+
+      <div class="shape-controls" role="group" aria-label="Форма скульптуры из частиц">
+        <button class="shape-button" data-shape="0" aria-pressed="true">01 / Sphere</button>
+        <button class="shape-button" data-shape="1" aria-pressed="false">02 / Orbit</button>
+        <button class="shape-button" data-shape="2" aria-pressed="false">03 / Wave</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="marquee" aria-label="Стратегия, айдентика, цифровой опыт, креативная разработка">
+    <div class="marquee-track" aria-hidden="true">
+      <div class="marquee-group">
+        <span>STRATEGY FIRST</span><b>✳</b>
+        <span>DIGITAL EXPERIENCES</span><b>✳</b>
+        <span>BRAND SYSTEMS</span><b>✳</b>
+        <span>CREATIVE DEVELOPMENT</span><b>✳</b>
+        <span>DESIGNED TO FEEL</span><b>✳</b>
+      </div>
+      <div class="marquee-group">
+        <span>STRATEGY FIRST</span><b>✳</b>
+        <span>DIGITAL EXPERIENCES</span><b>✳</b>
+        <span>BRAND SYSTEMS</span><b>✳</b>
+        <span>CREATIVE DEVELOPMENT</span><b>✳</b>
+        <span>DESIGNED TO FEEL</span><b>✳</b>
+      </div>
+    </div>
+  </div>
+
+  <section class="work wrap" id="work" aria-labelledby="work-title">
+    <div class="section-head reveal">
+      <div class="section-kicker mono"><span class="num">(01)</span> Selected directions</div>
+      <div class="work-heading">
+        <h2 class="section-title" id="work-title">Не просто сайты.<br><em>Точки притяжения.</em></h2>
+        <p>Три концептуальных мира. Три разных характера. Один принцип: у сильной идеи должна быть собственная форма.</p>
+      </div>
+    </div>
+
+    <div class="projects">
+      <article class="project reveal">
+        <button class="project-open" data-project="orbit" aria-label="Открыть концепт ORBIT">
+          <div class="project-visual art-orbit">
+            <div class="visual-layer">
+              <div class="orbit-word">ORBIT</div>
+              <div class="chrome-orb"></div>
+            </div>
+            <span class="project-tag mono">Concept / Fintech</span>
+            <span class="project-arrow" aria-hidden="true">↗</span>
+            <div class="art-footer mono"><span>Your money.<br>A new perspective.</span><span>O® — 001</span></div>
+          </div>
+          <div class="project-info">
+            <h3>ORBIT®</h3>
+            <span class="mono">Strategy · Identity · Digital</span>
+          </div>
+        </button>
+      </article>
+
+      <article class="project reveal">
+        <button class="project-open" data-project="void" aria-label="Открыть концепт VOID">
+          <div class="project-visual art-void">
+            <div class="visual-layer">
+              <div class="portal"></div>
+              <div class="void-word">void.</div>
+            </div>
+            <span class="project-tag mono">Concept / Culture</span>
+            <span class="project-arrow" aria-hidden="true">↗</span>
+            <div class="art-footer mono"><span>A space for<br>the unexpected.</span><span>ENTER ANOTHER REALITY</span></div>
+          </div>
+          <div class="project-info">
+            <h3>VOID — Art beyond walls</h3>
+            <span class="mono">Art direction · Experience</span>
+          </div>
+        </button>
+      </article>
+
+      <article class="project reveal">
+        <button class="project-open" data-project="terra" aria-label="Открыть концепт TERRA">
+          <div class="project-visual art-terra">
+            <div class="visual-layer">
+              <div class="terra-word">terra.</div>
+              <div class="leaf"></div>
+              <div class="leaf two"></div>
+            </div>
+            <span class="project-tag mono">Concept / Future living</span>
+            <span class="project-arrow" aria-hidden="true">↗</span>
+            <div class="art-footer mono"><span>Less footprint.<br>More future.</span><span>NATURALLY DIFFERENT ↗</span></div>
+          </div>
+          <div class="project-info">
+            <h3>TERRA — A better kind of living</h3>
+            <span class="mono">Positioning · Brand platform · Web</span>
+          </div>
+        </button>
+      </article>
+    </div>
+  </section>
+
+  <section class="about wrap" id="about" aria-labelledby="about-title">
+    <div class="about-grid">
+      <div class="section-kicker mono reveal"><span class="num">(02)</span> Our point of view</div>
+      <div>
+        <h2 class="about-text reveal" id="about-title">
+          Интернету не нужен<br>
+          ещё один <span class="dim">обычный сайт.</span><br>
+          Ему нужны <span class="accent">смелые идеи,</span>
+          которые обретают жизнь.
+        </h2>
+        <div class="about-bottom reveal">
+          <p>Мы соединяем стратегию, дизайн и код в одну систему. Не украшаем бизнес — находим его характер и делаем его видимым.</p>
+          <div>
+            <p>Каждая деталь работает на ощущение. Каждое движение имеет смысл. Ничего случайного.</p>
+            <div class="signature" style="margin-top:22px">Less, but extraordinary.</div>
+          </div>
+        </div>
+        <div class="principles reveal">
+          <div class="principle"><b>01</b><span class="mono">Цельная идея</span></div>
+          <div class="principle"><b>0</b><span class="mono">Готовых шаблонов</span></div>
+          <div class="principle"><b>∞</b><span class="mono">Возможных форм</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="process wrap" id="process" aria-labelledby="process-title">
+    <div class="process-layout">
+      <div class="process-intro reveal">
+        <div class="section-kicker mono"><span class="num">(03)</span> The way we work</div>
+        <h2 class="section-title" id="process-title">От первого<br><em>«а что если?»</em></h2>
+        <p>До последнего пикселя. Прозрачный процесс, прямая коммуникация и внимание к тому, что действительно важно.</p>
+      </div>
+
+      <div class="process-list reveal">
+        <details class="process-item" open>
+          <summary><span class="mono">01</span><h3>Погружаемся</h3><span class="plus" aria-hidden="true">+</span></summary>
+          <div class="process-body">
+            <p>Разбираемся в бизнесе, людях и контексте. Задаём неудобные вопросы. Находим идею, которая отделяет вас от всех остальных.</p>
+            <div class="process-tags"><span>Исследование</span><span>Стратегия</span><span>Позиционирование</span></div>
+          </div>
+        </details>
+        <details class="process-item">
+          <summary><span class="mono">02</span><h3>Находим форму</h3><span class="plus" aria-hidden="true">+</span></summary>
+          <div class="process-body">
+            <p>Создаём визуальный язык: от типографики и цвета до логики интерфейса. Проверяем концепцию на реальных сценариях, а не только на красивых макетах.</p>
+            <div class="process-tags"><span>Арт-дирекшн</span><span>UX / UI</span><span>Дизайн-система</span></div>
+          </div>
+        </details>
+        <details class="process-item">
+          <summary><span class="mono">03</span><h3>Добавляем жизнь</h3><span class="plus" aria-hidden="true">+</span></summary>
+          <div class="process-body">
+            <p>Превращаем дизайн в живой продукт. Создаём взаимодействия, выстраиваем ритм анимаций, заботимся о скорости, адаптивности и доступности.</p>
+            <div class="process-tags"><span>Разработка</span><span>Motion</span><span>Creative coding</span></div>
+          </div>
+        </details>
+        <details class="process-item">
+          <summary><span class="mono">04</span><h3>Выпускаем в мир</h3><span class="plus" aria-hidden="true">+</span></summary>
+          <div class="process-body">
+            <p>Тестируем, шлифуем детали и готовим запуск. Передаём понятную систему, которую можно развивать вместе с вашим бизнесом.</p>
+            <div class="process-tags"><span>Тестирование</span><span>Запуск</span><span>Развитие</span></div>
+          </div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section class="contact wrap" id="contact" aria-labelledby="contact-title">
+    <div class="section-kicker mono reveal"><span class="num">(04)</span> Next starts here</div>
+    <h2 class="contact-title reveal" id="contact-title">Let’s make<br><em>something matter.</em><span class="star" aria-hidden="true">✳</span></h2>
+
+    <div class="contact-layout">
+      <div class="contact-copy reveal">
+        <p>Есть идея, которая не даёт покоя? Давайте придадим ей форму.</p>
+        <a class="contact-email" id="contact-email" href="mailto:hello@example.com">hello@example.com ↗</a>
+        <div class="contact-note mono">Разные часовые пояса.<br>Одна общая частота.<br>Работаем там, где есть хорошие идеи.</div>
+      </div>
+
+      <form class="brief-form reveal" id="brief-form">
+        <div class="form-row">
+          <label class="field">
+            <span>Как вас зовут</span>
+            <input name="name" autocomplete="name" placeholder="Ваше имя" required maxlength="100">
+          </label>
+          <label class="field">
+            <span>Ваша почта</span>
+            <input name="email" type="email" autocomplete="email" placeholder="you@company.com" required maxlength="180">
+          </label>
+        </div>
+
+        <fieldset class="services-picker">
+          <legend>Что будем создавать?</legend>
+          <div class="service-options">
+            <label class="service-chip"><input type="checkbox" name="service" value="Сайт" checked><span>Сайт</span></label>
+            <label class="service-chip"><input type="checkbox" name="service" value="Брендинг"><span>Брендинг</span></label>
+            <label class="service-chip"><input type="checkbox" name="service" value="Digital experience"><span>Digital experience</span></label>
+            <label class="service-chip"><input type="checkbox" name="service" value="Что-то новое"><span>Что-то новое ↗</span></label>
+          </div>
+        </fieldset>
+
+        <label class="field">
+          <span>Пара слов об идее</span>
+          <textarea name="message" placeholder="Что вы хотите изменить?" required maxlength="2500"></textarea>
+        </label>
+
+        <button class="submit-button" type="submit"><span>Подготовить письмо</span><span aria-hidden="true">↗</span></button>
+        <p class="form-help">Откроется ваш почтовый клиент с готовым брифом. Форма не отправляет данные на сервер.</p>
+        <p id="form-status" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <a href="#home" class="logo" aria-label="Aether — наверх">
+    <span class="brand-mark" aria-hidden="true"></span>AETHER<sup>®</sup>
+  </a>
+  <p class="mono">© <span id="year">2026</span> AETHER STUDIO · Independent by design · Concept edition</p>
+  <a href="#home" class="back-top">Вернуться к началу <span aria-hidden="true">↑</span></a>
+</footer>
+
+<dialog class="case-dialog" id="case-dialog" aria-labelledby="dialog-title">
+  <div class="dialog-top">
+    <span class="mono muted">AETHER / Concept study</span>
+    <button class="dialog-close" id="dialog-close" aria-label="Закрыть проект" autofocus>×</button>
+  </div>
+  <div class="dialog-art" id="dialog-art" aria-hidden="true"></div>
+  <div class="dialog-content">
+    <h2 id="dialog-title"></h2>
+    <p class="dialog-description" id="dialog-description"></p>
+    <div class="dialog-meta">
+      <div><span class="mono muted">Направление</span><p id="dialog-scope"></p></div>
+      <div><span class="mono muted">Ключевая идея</span><p id="dialog-idea"></p></div>
+    </div>
+    <a href="#contact" class="dialog-link" id="dialog-contact">Создадим ваш собственный мир <span aria-hidden="true">↗</span></a>
+  </div>
+</dialog>
+
+<script>
+(() => {
+  'use strict';
+  document.documentElement.classList.add('js');
+
+  // Замените на реальную почту перед публикацией.
+  const CONTACT_EMAIL = 'hello@example.com';
+
+  const $ = (selector, root = document) => root.querySelector(selector);
+  const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+  const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let reducedMotion = motionQuery.matches;
+
+  $('#year').textContent = new Date().getFullYear();
+  $('#contact-email').textContent = CONTACT_EMAIL + ' ↗';
+  $('#contact-email').href = 'mailto:' + CONTACT_EMAIL;
+
+  /* ───────────── SCROLL & REVEAL ───────────── */
+  const header = $('#header');
+  const progress = $('.progress');
+  let scrollQueued = false;
+
+  function updateScroll() {
+    const y = window.scrollY;
+    const length = document.documentElement.scrollHeight - window.innerHeight;
+    header.classList.toggle('scrolled', y > 25);
+    progress.style.transform = `scaleX(${length > 0 ? y / length : 0})`;
+    scrollQueued = false;
+  }
+
+  window.addEventListener('scroll', () => {
+    if (!scrollQueued) {
+      scrollQueued = true;
+      requestAnimationFrame(updateScroll);
+    }
+  }, { passive: true });
+  window.addEventListener('resize', updateScroll, { passive: true });
+  updateScroll();
+
+  if ('IntersectionObserver' in window) {
+    const revealObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: .08, rootMargin: '0px 0px -25px 0px' });
+
+    $$('.reveal').forEach(element => revealObserver.observe(element));
+  } else {
+    $$('.reveal').forEach(element => element.classList.add('visible'));
+  }
+
+  /* ───────────── MOBILE MENU ───────────── */
+  const menuToggle = $('#menu-toggle');
+  const navigation = $('#navigation');
+
+  function setMenu(open) {
+    header.classList.toggle('menu-open', open);
+    menuToggle.setAttribute('aria-expanded', String(open));
+    menuToggle.setAttribute('aria-label', open ? 'Закрыть меню' : 'Открыть меню');
+  }
+
+  menuToggle.addEventListener('click', () => {
+    setMenu(menuToggle.getAttribute('aria-expanded') !== 'true');
+  });
+
+  $$('.nav a').forEach(link => link.addEventListener('click', () => setMenu(false)));
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && header.classList.contains('menu-open')) {
+      setMenu(false);
+      menuToggle.focus();
+    }
+    if (event.key === 'Tab' && header.classList.contains('menu-open')) {
+      const first = $('.logo', header);
+      if (!event.shiftKey && document.activeElement === menuToggle) {
+        event.preventDefault();
+        first.focus();
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        menuToggle.focus();
+      }
+    }
+  });
+
+  window.matchMedia('(max-width: 700px)').addEventListener('change', () => setMenu(false));
+
+  /* ───────────── ACCORDION ───────────── */
+  const details = $$('.process-item');
+  details.forEach(item => {
+    item.addEventListener('toggle', () => {
+      if (item.open) details.forEach(other => {
+        if (other !== item) other.open = false;
+      });
+    });
+  });
+
+  /* ───────────── CASE STUDIES ───────────── */
+  const cases = {
+    orbit: {
+      title: 'ORBIT®',
+      description: 'Концепция финансового бренда, который возвращает человеку ощущение контроля. Вместо визуального шума — спокойная типографика, чистая структура и металлическая орбита как символ движения капитала. Это исследование визуального направления, а не кейс реального клиента.',
+      scope: 'Позиционирование · Визуальная система · Веб-концепция',
+      idea: 'Финансы с новой точки зрения.',
+      art: 'art-orbit'
+    },
+    void: {
+      title: 'VOID.',
+      description: 'Цифровой вход в пространство современного искусства. Архитектура портала, глубокий фиолетовый и выразительная антиква создают ощущение перехода в другую реальность. Концепция показывает, как культурный проект может звучать за пределами выставочного зала.',
+      scope: 'Арт-дирекшн · Визуальная идентичность · Digital experience',
+      idea: 'Искусство начинается до входа в галерею.',
+      art: 'art-void'
+    },
+    terra: {
+      title: 'TERRA',
+      description: 'Исследование бренда осознанного образа жизни — без привычной визуальной скромности эко-категории. Крупная типографика и насыщенный природный цвет делают устойчивое развитие не компромиссом, а желанным выбором. Все материалы представлены как авторская концепция.',
+      scope: 'Платформа бренда · Айдентика · Веб-концепция',
+      idea: 'Меньше след. Больше будущего.',
+      art: 'art-terra'
+    }
+  };
+
+  const dialog = $('#case-dialog');
+  let lastProjectTrigger = null;
+
+  $$('.project-open').forEach(button => {
+    button.addEventListener('click', () => {
+      const project = cases[button.dataset.project];
+      lastProjectTrigger = button;
+      $('#dialog-title').textContent = project.title;
+      $('#dialog-description').textContent = project.description;
+      $('#dialog-scope').textContent = project.scope;
+      $('#dialog-idea').textContent = project.idea;
+
+      const art = $('#dialog-art');
+      art.className = 'dialog-art ' + project.art;
+      art.replaceChildren($('.visual-layer', button).cloneNode(true));
+
+      dialog.showModal();
+      dialog.scrollTop = 0;
+      document.body.classList.add('modal-open');
+    });
+  });
+
+  $('#dialog-close').addEventListener('click', () => dialog.close());
+
+  dialog.addEventListener('click', event => {
+    if (event.target !== dialog) return;
+    const rect = dialog.getBoundingClientRect();
+    if (
+      event.clientX < rect.left || event.clientX > rect.right ||
+      event.clientY < rect.top || event.clientY > rect.bottom
+    ) dialog.close();
+  });
+
+  dialog.addEventListener('close', () => {
+    document.body.classList.remove('modal-open');
+    lastProjectTrigger?.focus({ preventScroll: true });
+  });
+
+  $('#dialog-contact').addEventListener('click', event => {
+    event.preventDefault();
+    dialog.close();
+    requestAnimationFrame(() => {
+      $('#contact').scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth' });
+      $('input[name="name"]').focus({ preventScroll: true });
+    });
+  });
+
+  /* ───────────── HONEST, SERVERLESS FORM ───────────── */
+  $('#brief-form').addEventListener('submit', event => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    if (!form.reportValidity()) return;
+
+    const data = new FormData(form);
+    const name = String(data.get('name')).trim();
+    const email = String(data.get('email')).trim();
+    const message = String(data.get('message')).trim();
+
+    if (!name || !message) {
+      $('#form-status').textContent = 'Добавьте имя и несколько слов о проекте.';
+      return;
+    }
+
+    const services = data.getAll('service').join(', ') || 'Обсудим вместе';
+    const subject = 'Новый проект / ' + name;
+    const body = [
+      'Здравствуйте, AETHER!',
+      '',
+      'Меня зовут: ' + name,
+      'Почта для ответа: ' + email,
+      'Интересует: ' + services,
+      '',
+      'О проекте:',
+      message
+    ].join('\n');
+
+    const url = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    $('#form-status').textContent =
+      'Письмо подготовлено. Отправьте его из почтового приложения. Если оно не открылось, воспользуйтесь адресом слева.';
+    window.location.href = url;
+  });
+
+  /* ───────────── PARTICLE ENGINE ─────────────
+     Pure Canvas 2D + 3D projection.
+     Fibonacci sphere → torus → flowing sheet.
+     No textures, dependencies or external assets.
+  ──────────────────────────────────────────── */
+  const canvas = $('#universe');
+  const ctx = canvas.getContext('2d', { alpha: true });
+  if (!ctx) return;
+
+  const hero = $('#home');
+  const shapeButtons = $$('.shape-button');
+  const captions = ['SPHERICAL SYSTEM', 'TOROIDAL SYSTEM', 'FLUID FIELD'];
+
+  const TAU = Math.PI * 2;
+  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+  const mobile = window.matchMedia('(max-width: 700px)').matches;
+  const count = mobile ? 760 : 1450;
+  const particles = [];
+  const projected = [];
+  const dust = [];
+  const pointer = { x: -9999, y: -9999, nx: 0, ny: 0, active: false };
+  const rotation = { x: -.16, y: 0 };
+
+  let width = 0, height = 0, dpr = 1;
+  let shape = 0;
+  let time = 0;
+  let lastTime = 0;
+  let frame = 0;
+  let inView = true;
+  let burst = 0;
+
+  // Deterministic random generator keeps the composition stable.
+  let seed = 72431;
+  function random() {
+    seed = (seed * 16807) % 2147483647;
+    return (seed - 1) / 2147483646;
+  }
+
+  for (let i = 0; i < count; i++) {
+    const v = i / (count - 1);
+    const y = 1 - v * 2;
+    const radius = Math.sqrt(Math.max(0, 1 - y * y));
+    const angle = goldenAngle * i;
+
+    const sphere = {
+      x: Math.cos(angle) * radius,
+      y,
+      z: Math.sin(angle) * radius
+    };
+
+    const u = v * TAU * 18;
+    const ring = i * goldenAngle;
+    const torus = {
+      x: (.77 + .29 * Math.cos(ring)) * Math.cos(u),
+      y: .29 * Math.sin(ring),
+      z: (.77 + .29 * Math.cos(ring)) * Math.sin(u)
+    };
+
+    const columns = Math.ceil(Math.sqrt(count * 1.7));
+    const rows = Math.ceil(count / columns);
+    const wave = {
+      x: ((i % columns) / (columns - 1) - .5) * 2.5,
+      y: 0,
+      z: (Math.floor(i / columns) / (rows - 1) - .5) * 2
+    };
+    wave.y = Math.sin(wave.x * 3 + wave.z * 2) * .2;
+
+    particles.push({
+      targets: [sphere, torus, wave],
+      x: sphere.x,
+      y: sphere.y,
+      z: sphere.z,
+      size: .5 + random() * 1.25,
+      phase: random() * TAU,
+      bright: random() > .93
+    });
+    projected.push({ x: 0, y: 0, z: 0, size: 0, alpha: 0 });
+  }
+
+  for (let i = 0; i < 65; i++) {
+    dust.push({ x: random(), y: random(), size: random() * 1.2 + .2, phase: random() * TAU });
+  }
+
+  function resize() {
+    const bounds = hero.getBoundingClientRect();
+    width = bounds.width;
+    height = bounds.height;
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    render(0);
+  }
+
+  function render(dt) {
+    ctx.clearRect(0, 0, width, height);
+
+    const narrow = width < 701;
+    const centerX = width * (narrow ? .63 : .735);
+    const centerY = height * (narrow ? .69 : .49);
+    const scale = narrow
+      ? Math.min(width * .54, height * .245)
+      : Math.min(width * .265, height * .39);
+
+    const ease = reducedMotion ? 1 : 1 - Math.exp(-dt * 4.4);
+    const rotationEase = reducedMotion ? 1 : 1 - Math.exp(-dt * 2.2);
+    rotation.x += ((shape === 1 ? .72 : shape === 2 ? .65 : -.16) + pointer.ny * .18 - rotation.x) * rotationEase;
+    rotation.y += (pointer.nx * .26 - rotation.y) * rotationEase;
+
+    const ay = time * .105 + rotation.y;
+    const ax = rotation.x;
+    const cy = Math.cos(ay), sy = Math.sin(ay);
+    const cx = Math.cos(ax), sx = Math.sin(ax);
+    const tilt = -.17;
+    const ct = Math.cos(tilt), st = Math.sin(tilt);
+    burst *= Math.exp(-dt * 2.7);
+
+    // Soft volume behind the point cloud.
+    const halo = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, scale * 1.5);
+    halo.addColorStop(0, 'rgba(155,210,75,.065)');
+    halo.addColorStop(.5, 'rgba(100,155,52,.025)');
+    halo.addColorStop(1, 'rgba(70,120,30,0)');
+    ctx.fillStyle = halo;
+    ctx.fillRect(0, 0, width, height);
+
+    // Ambient field.
+    for (const dot of dust) {
+      const x = dot.x * width;
+      const y = (dot.y * height - time * (3 + dot.size) + height * 100) % height;
+      const alpha = .11 + (Math.sin(time * .5 + dot.phase) + 1) * .07;
+      ctx.fillStyle = `rgba(201,223,166,${alpha})`;
+      ctx.fillRect(x, y, dot.size, dot.size);
+    }
+
+    // Fine orbital guides.
+    ctx.save();
+    ctx.translate(centerX, centerY);
+    ctx.rotate(-.24);
+    ctx.strokeStyle = 'rgba(196,233,145,.085)';
+    ctx.lineWidth = .7;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, scale * 1.32, scale * .43, 0, 0, TAU);
+    ctx.stroke();
+    ctx.setLineDash([2, 9]);
+    ctx.strokeStyle = 'rgba(196,233,145,.1)';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, scale * 1.48, scale * 1.1, .37, 0, TAU);
+    ctx.stroke();
+    ctx.restore();
+
+    for (let i = 0; i < count; i++) {
+      const particle = particles[i];
+      const target = particle.targets[shape];
+
+      let targetY = target.y;
+      if (shape === 2) {
+        targetY = Math.sin(target.x * 3 + time * .9) * .18 +
+          Math.cos(target.z * 3.4 + time * .65) * .15;
+      }
+
+      particle.x += (target.x - particle.x) * ease;
+      particle.y += (targetY - particle.y) * ease;
+      particle.z += (target.z - particle.z) * ease;
+
+      const breathe = 1 + Math.sin(time * .75 + particle.phase) * .012 + burst * .13;
+      const px = particle.x * breathe;
+      const py = particle.y * breathe;
+      const pz = particle.z * breathe;
+
+      const x1 = px * cy - pz * sy;
+      const z1 = px * sy + pz * cy;
+      const y1 = py * cx - z1 * sx;
+      const z2 = py * sx + z1 * cx;
+
+      const x2 = x1 * ct - y1 * st;
+      const y2 = x1 * st + y1 * ct;
+      const perspective = 3.5 / (3.5 + z2);
+
+      let screenX = centerX + x2 * scale * perspective;
+      let screenY = centerY + y2 * scale * perspective;
+
+      if (pointer.active && !reducedMotion) {
+        const dx = screenX - pointer.x;
+        const dy = screenY - pointer.y;
+        const distance = Math.hypot(dx, dy);
+        if (distance < 140 && distance > .01) {
+          const force = Math.pow(1 - distance / 140, 2) * 31;
+          screenX += dx / distance * force;
+          screenY += dy / distance * force;
+        }
+      }
+
+      const depth = Math.max(.12, Math.min(1, (1.6 - z2) / 2.7));
+      const point = projected[i];
+      point.x = screenX;
+      point.y = screenY;
+      point.z = z2;
+      point.size = particle.size * perspective * (narrow ? .85 : 1);
+      point.alpha = depth * .84 + .08;
+    }
+
+    ctx.globalCompositeOperation = 'lighter';
+
+    // Sparse threads: linear complexity, no expensive all-pairs search.
+    ctx.lineWidth = .55;
+    for (let i = 0; i < count; i += 4) {
+      const a = projected[i];
+      const b = projected[(i + (shape === 2 ? 1 : 21)) % count];
+      const distance = Math.hypot(a.x - b.x, a.y - b.y);
+      if (distance < 47 && a.z < .45 && b.z < .45) {
+        ctx.strokeStyle = `rgba(191,240,127,${(1 - distance / 47) * .15})`;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
+    }
+
+    // Back points first, front points second.
+    for (let pass = 0; pass < 2; pass++) {
+      for (let i = 0; i < count; i++) {
+        const p = projected[i];
+        if ((p.z > 0 ? 0 : 1) !== pass) continue;
+
+        const bright = particles[i].bright;
+        ctx.fillStyle = bright
+          ? `rgba(243,255,214,${p.alpha})`
+          : `rgba(190,240,119,${p.alpha * .82})`;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, TAU);
+        ctx.fill();
+
+        if (bright && p.z < 0) {
+          ctx.fillStyle = `rgba(211,255,147,${p.alpha * .06})`;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * 4.2, 0, TAU);
+          ctx.fill();
+        }
+      }
+    }
+
+    ctx.globalCompositeOperation = 'source-over';
+
+    // Technical annotation anchored to the object.
+    if (!narrow) {
+      const x = centerX + scale * .77;
+      const y = centerY + scale * .75;
+      ctx.strokeStyle = 'rgba(192,218,161,.28)';
+      ctx.lineWidth = .7;
+      ctx.beginPath();
+      ctx.moveTo(x - 45, y - 30);
+      ctx.lineTo(x, y);
+      ctx.lineTo(x + 65, y);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(188,209,161,.6)';
+      ctx.font = '9px "Courier New", monospace';
+      ctx.fillText(`${String(count).padStart(4, '0')} POINTS / LIVE`, x + 8, y + 17);
+      ctx.fillStyle = '#d3ff67';
+      ctx.fillRect(x - 47, y - 32, 3, 3);
+    }
+  }
+
+  function tick(timestamp) {
+    frame = 0;
+    if (document.hidden || !inView || reducedMotion) return;
+
+    const dt = lastTime ? Math.min((timestamp - lastTime) / 1000, .04) : 1 / 60;
+    lastTime = timestamp;
+    time += dt;
+    render(dt);
+    frame = requestAnimationFrame(tick);
+  }
+
+  function start() {
+    if (!frame && !document.hidden && inView && !reducedMotion) {
+      lastTime = 0;
+      frame = requestAnimationFrame(tick);
+    }
+  }
+
+  function stop() {
+    cancelAnimationFrame(frame);
+    frame = 0;
+    lastTime = 0;
+  }
+
+  shapeButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      shape = Number(button.dataset.shape);
+      burst = reducedMotion ? 0 : 1;
+
+      shapeButtons.forEach(item => {
+        item.setAttribute('aria-pressed', String(item === button));
+      });
+      $('#shape-caption').textContent = captions[shape];
+
+      if (reducedMotion) render(1);
+      else start();
+    });
+  });
+
+  hero.addEventListener('pointermove', event => {
+    if (event.pointerType === 'touch' || reducedMotion) return;
+    const bounds = hero.getBoundingClientRect();
+    pointer.x = event.clientX - bounds.left;
+    pointer.y = event.clientY - bounds.top;
+    pointer.nx = pointer.x / width * 2 - 1;
+    pointer.ny = pointer.y / height * 2 - 1;
+    pointer.active = true;
+  }, { passive: true });
+
+  hero.addEventListener('pointerleave', () => {
+    pointer.active = false;
+    pointer.nx = 0;
+    pointer.ny = 0;
+  });
+
+  hero.addEventListener('pointerdown', event => {
+    if (!reducedMotion && !event.target.closest('a, button')) burst = 1.8;
+  });
+
+  if ('IntersectionObserver' in window) {
+    const canvasObserver = new IntersectionObserver(entries => {
+      inView = entries[0].isIntersecting;
+      if (inView) start();
+      else stop();
+    }, { threshold: 0 });
+    canvasObserver.observe(hero);
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) stop();
+    else start();
+  });
+
+  motionQuery.addEventListener('change', event => {
+    reducedMotion = event.matches;
+    if (reducedMotion) {
+      stop();
+      pointer.active = false;
+      pointer.nx = pointer.ny = 0;
+      burst = 0;
+      render(1);
+    } else start();
+  });
+
+  if ('ResizeObserver' in window) {
+    new ResizeObserver(resize).observe(hero);
+  } else {
+    window.addEventListener('resize', resize, { passive: true });
+  }
+
+  resize();
+  if (reducedMotion) render(1);
+  else start();
+})();
+</script>
+</body>
+</html>

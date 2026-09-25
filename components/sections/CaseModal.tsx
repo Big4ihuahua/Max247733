@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { gsap, Flip, prefersReducedMotion } from "@/lib/gsap";
 import { useIsoLayoutEffect } from "@/hooks/useIsoLayoutEffect";
 import { getLenis } from "@/lib/lenis";
@@ -70,7 +71,7 @@ export function CaseModal({ index, flip, onClose, onNavigate }: Props) {
     });
   };
 
-  return (
+  return createPortal(
     <div ref={ref} className="case-modal" role="dialog" aria-modal="true" aria-labelledby="case-modal-title">
       <div className="modal-backdrop" onClick={close} />
       <button type="button" className="modal-close" onClick={close} aria-label="Закрыть кейс">
@@ -80,7 +81,8 @@ export function CaseModal({ index, flip, onClose, onNavigate }: Props) {
       <div className="modal-scroll" data-lenis-prevent>
         <ModalContent key={c.slug} c={c} nextTitle={cases[next].title} onNext={goNext} />
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 

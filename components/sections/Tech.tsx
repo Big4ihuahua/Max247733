@@ -149,7 +149,7 @@ export function Tech() {
     <section id="tech" data-section="tech" className="section tech">
       <div className="tech-layout">
         <div className="tech-copy">
-          <SectionLabel index="06" label="Технологии" />
+          <SectionLabel id="tech" />
           <h2 className="h2" data-split>
             Стек,
             <br />
