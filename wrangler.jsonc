@@ -1,0 +1,29 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Must match the Worker name in the Cloudflare dashboard.
+  "name": "max247733",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-09-25",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  // Runs before every `wrangler deploy`, `wrangler versions upload` and `wrangler dev`, so Cloudflare
+  // builds don't depend on the build command configured in the dashboard.
+  "build": {
+    "command": "npm run cf:build"
+  },
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "max247733"
+    }
+  ],
+  "images": {
+    "binding": "IMAGES"
+  },
+  "observability": {
+    "enabled": true
+  }
+}

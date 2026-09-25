@@ -28,11 +28,19 @@ npm run typecheck
 | `NEXT_PUBLIC_SITE_URL` | канонический адрес для SEO, Open Graph и sitemap |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | заявки из брифа приходят в Telegram; без них API принимает заявку и в dev-режиме пишет её в консоль |
 
-## Деплой на Vercel
+## Деплой на Cloudflare Workers
 
-1. Импортируйте репозиторий на [vercel.com/new](https://vercel.com/new), фреймворк определится автоматически.
-2. Добавьте переменные окружения из таблицы выше.
-3. Deploy. Команды по умолчанию (`npm install`, `next build`) менять не нужно.
+Репозиторий подключён к Workers Builds (воркер `max247733`). Сборка идёт через адаптер OpenNext:
+
+- `wrangler.jsonc` сам запускает `npm run cf:build` перед `wrangler deploy` (ветка `main`) и `wrangler versions upload`
+  (превью для остальных веток). Поэтому команду сборки в панели Cloudflare можно оставить любой или пустой.
+- Конфиг OpenNext лежит в `cloudflare/open-next.config.ts`, а не в корне, — причина описана в самом файле.
+- Имя `name` в `wrangler.jsonc` должно совпадать с именем воркера в панели Cloudflare.
+
+Локально: `npm run preview` — собрать и запустить воркер в `workerd`, `npm run deploy` — выложить (нужен `wrangler login`).
+Переменные окружения из таблицы выше задаются в панели: Worker → Settings → Variables and Secrets.
+
+Сайт по-прежнему можно развернуть и на Vercel: там команды по умолчанию (`npm install`, `next build`) менять не нужно.
 
 ## Где что менять
 
