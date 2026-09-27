@@ -74,7 +74,15 @@ export function Particles({ count, mobile }: { count: number; mobile: boolean })
     scatter: 0,
     mouse: 0,
   });
+  // A new particle budget starts over from "chaos"; let the next frame morph it back to the current shape.
+  useEffect(() => {
+    const c = ctl.current;
+    c.tween?.kill();
+    c.target = "chaos";
+  }, [data]);
+
   const burst = useRef({ v: 0 });
+  const reduced = useMemo(() => window.matchMedia("(prefers-reduced-motion: reduce)"), []);
   const tmp = useMemo(
     () => ({
       ray: new THREE.Raycaster(),
@@ -157,7 +165,7 @@ export function Particles({ count, mobile }: { count: number; mobile: boolean })
     const t = state.clock.elapsedTime;
     dt = Math.min(dt, 0.05);
 
-    if (s.section === "hero" && s.revealed) {
+    if (s.section === "hero" && s.revealed && !reduced.matches) {
       c.heroTime += dt;
       if (c.heroTime > HERO_INTERVAL) {
         c.heroTime = 0;

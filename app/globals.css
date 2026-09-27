@@ -143,6 +143,88 @@ main,
   display: block;
 }
 
+/* ───────────── Static scene mode ───────────── */
+/* Replaces the canvas when the visitor picks the light mode, prefers reduced motion, saves data or has no WebGL. */
+
+.scene-backdrop,
+.hero-art {
+  display: none;
+}
+.scene-static .scene-backdrop {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(40vmax 32vmax at 78% 18%, rgba(168, 155, 255, 0.14), transparent 70%),
+    radial-gradient(34vmax 28vmax at 12% 62%, rgba(124, 245, 200, 0.09), transparent 70%),
+    radial-gradient(30vmax 24vmax at 70% 92%, rgba(255, 179, 138, 0.08), transparent 70%),
+    var(--bg);
+}
+.scene-static .hero-art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* Faint on phones, where the mark sits behind the headline. */
+  opacity: 0.3;
+}
+.hero-art-grid {
+  fill: var(--line-strong);
+}
+@media (min-width: 1024px) {
+  .scene-static .hero-art {
+    opacity: 0.9;
+  }
+}
+/* Flat screenshots stand in for the 3D phone and laptop. */
+.scene-static .device-anchor {
+  background: var(--shot) top center / cover no-repeat, var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 1.5rem;
+}
+.scene-static #device-phone {
+  --shot: url("/works/textures/phone-yadro.webp");
+  width: min(100%, 20rem);
+  margin-inline: auto;
+  border-radius: 2.25rem;
+}
+.scene-static #device-laptop {
+  --shot: url("/works/textures/laptop-torq.webp");
+}
+
+.scene-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 2.75rem;
+  padding: 0 1rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: none;
+  color: var(--text);
+  transition:
+    border-color 0.3s,
+    color 0.3s;
+}
+.scene-toggle:hover:not(:disabled) {
+  border-color: var(--mint);
+}
+.scene-toggle:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+.scene-toggle-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  border: 1px solid var(--muted);
+}
+.scene-toggle[aria-pressed="true"] .scene-toggle-dot {
+  background: var(--mint);
+  border-color: var(--mint);
+}
+
 /* ───────────── Typography ───────────── */
 
 .mono-label {

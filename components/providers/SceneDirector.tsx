@@ -18,8 +18,10 @@ export function SceneDirector() {
       });
     });
 
+    // Reduced motion keeps the 3D still even when the visitor opted back into the full scene.
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
     const onMove = (e: PointerEvent) => {
-      if (e.pointerType !== "mouse") return;
+      if (e.pointerType !== "mouse" || reduced.matches) return;
       const p = sceneStore.state.pointer;
       p.x = (e.clientX / window.innerWidth) * 2 - 1;
       p.y = -(e.clientY / window.innerHeight) * 2 + 1;

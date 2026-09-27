@@ -8,6 +8,7 @@ import { useSceneStore } from "@/lib/scene-store";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 import { StatusBadge } from "@/components/ui/LiveClock";
 import { LogoMark } from "@/components/ui/Icons";
+import { SceneToggle } from "@/components/ui/SceneToggle";
 
 const CLOSED = "circle(0% at calc(100% - 3.25rem) 2.6rem)";
 const OPEN = "circle(150% at calc(100% - 3.25rem) 2.6rem)";
@@ -163,6 +164,7 @@ function Menu({ open, onClose }: { open: boolean; onClose: () => void }) {
           {site.phone}
         </a>
         <StatusBadge />
+        <SceneToggle tabIndex={tab} />
       </div>
     </div>
   );

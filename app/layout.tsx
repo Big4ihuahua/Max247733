@@ -3,6 +3,7 @@ import { JetBrains_Mono, Manrope, Unbounded } from "next/font/google";
 import localFont from "next/font/local";
 import { site } from "@/data/site";
 import { services } from "@/data/services";
+import { SCENE_PREF_KEY, STATIC_CLASS } from "@/lib/scene-mode";
 import "./globals.css";
 
 const unbounded = Unbounded({ subsets: ["latin", "cyrillic"], variable: "--font-unbounded", display: "swap" });
@@ -29,8 +30,9 @@ export const viewport: Viewport = {
   colorScheme: "dark",
 };
 
-// Runs before first paint: decides preloader/cursor mode without a flash of the wrong state.
-const boot = `(function(){var d=document.documentElement;d.classList.add('js');try{var r=matchMedia('(prefers-reduced-motion: reduce)').matches;if(r||sessionStorage.getItem('${site.storageKey}'))d.classList.add('skip-preload');else d.classList.add('is-loading');if(!r&&matchMedia('(pointer: fine)').matches)d.classList.add('has-cursor')}catch(e){d.classList.add('skip-preload')}})();`;
+// Runs before first paint: decides preloader/cursor mode and whether the WebGL scene is replaced by the static
+// backdrop (visitor choice, reduced motion or Save-Data), without a flash of the wrong state.
+const boot = `(function(){var d=document.documentElement;d.classList.add('js');try{var r=matchMedia('(prefers-reduced-motion: reduce)').matches;if(r||sessionStorage.getItem('${site.storageKey}'))d.classList.add('skip-preload');else d.classList.add('is-loading');if(!r&&matchMedia('(pointer: fine)').matches)d.classList.add('has-cursor')}catch(e){d.classList.add('skip-preload')}try{var p=localStorage.getItem('${SCENE_PREF_KEY}'),c=navigator.connection,s=p==='static'?'user':p==='full'?'':r?'reduced-motion':c&&c.saveData?'save-data':'';if(s){d.classList.add('${STATIC_CLASS}');d.dataset.sceneReason=s}}catch(e){}})();`;
 
 const jsonLd = {
   "@context": "https://schema.org",

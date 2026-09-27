@@ -7,6 +7,7 @@ import { sectionTotal, site } from "@/data/site";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 import { LiveClock, StatusBadge } from "@/components/ui/LiveClock";
 import { ArrowIcon } from "@/components/ui/Icons";
+import { HeroArt } from "@/components/ui/HeroArt";
 
 const WORDS = ["Сайты", "Веб-приложения", "Мобильные приложения", "Программы и боты"];
 
@@ -86,7 +87,9 @@ export function Hero() {
 
   return (
     <section id="hero" ref={root} data-section="hero" className="hero">
-      <div id="hero-anchor" className="hero-anchor" aria-hidden="true" />
+      <div id="hero-anchor" className="hero-anchor" aria-hidden="true">
+        <HeroArt />
+      </div>
       <div className="hero-inner">
         <div className="hero-top" data-hero-hide data-hero-fade>
           <span className="mono-label">

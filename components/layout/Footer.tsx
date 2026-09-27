@@ -7,6 +7,7 @@ import { menuLinks, site } from "@/data/site";
 import { MagneticButton } from "@/components/ui/MagneticButton";
 import { LiveClock } from "@/components/ui/LiveClock";
 import { ArrowUpIcon } from "@/components/ui/Icons";
+import { SceneToggle } from "@/components/ui/SceneToggle";
 
 export function Footer() {
   const giant = useRef<HTMLDivElement>(null);
@@ -123,6 +124,7 @@ export function Footer() {
           © {site.founded}—2026 {site.fullName}
         </span>
         <span className="mono-label text-muted">Сделано с любовью к деталям</span>
+        <SceneToggle />
         <MagneticButton variant="ghost" className="to-top" onClick={() => scrollToTarget(0)}>
           Наверх <ArrowUpIcon className="icon-arrow" />
         </MagneticButton>
